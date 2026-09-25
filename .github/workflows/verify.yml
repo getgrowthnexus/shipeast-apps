@@ -1,6 +1,6 @@
 name: Verify
 
-# The verification gate (execution-all-three-plan.md P0-03).
+# The verification gate (P0-03).
 #
 # Before this existed, the two APK workflows built and *published* release
 # artifacts on every push to main without ever running `flutter analyze` or
@@ -82,6 +82,17 @@ jobs:
       # import-free module precisely so those cases can be pinned here.
       - name: Test the overseas enquiry queue
         run: node --test tools/test-overseas-status.mjs
+
+      # Merchant pickup coordinates (P5-06). A mis-parsed pair is stored on
+      # every future order and sends a driver to the wrong place.
+      - name: Test the merchant location parser
+        run: node --test tools/test-location-input.mjs
+
+      # The admin copy of the promo eligibility rules must agree with
+      # functions/src/eligibility.ts, or the panel describes a promo that
+      # redemption then rejects.
+      - name: Test the admin promo eligibility rules
+        run: node --test tools/test-promo-eligibility.mjs
 
   flutter:
     name: Flutter (${{ matrix.app }})

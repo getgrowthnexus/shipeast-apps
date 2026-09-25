@@ -1,4 +1,4 @@
-# Toolchain pin (execution-all-three-plan.md P0-02).
+# Toolchain pin (P0-02).
 #
 # Both apps declare `sdk: ^3.11.5` in pubspec.yaml, so the Flutter version must
 # be one that bundles Dart >= 3.11.5. Flutter 3.44.7 is that version.

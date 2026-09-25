@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ShipEast shares your live location with the customer during a delivery.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ShipEast uses the camera for your profile photo, registration documents and proof of delivery.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ShipEast needs access to your photo library for your profile photo, registration documents and proof of delivery.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

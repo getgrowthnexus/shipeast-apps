@@ -2,8 +2,6 @@
 
 **Status:** canonical · **Owner:** platform · **Established:** 2026-07-21 (P0-04)
 **Firebase project (prod):** `shipeast-1a1f6`
-**Resolves:** [all-three-apps-audit.md](all-three-apps-audit.md) §2, §5, §6, §11, §12, §13
-**Implemented by:** [execution-all-three-plan.md](execution-all-three-plan.md) Phases 1–3
 
 ---
 

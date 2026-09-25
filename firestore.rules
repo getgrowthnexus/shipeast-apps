@@ -2,7 +2,7 @@ rules_version = '2';
 
 // ShipEast Firestore security rules.
 // Source of truth for shapes and vocabulary: SCHEMA.md
-// Implements execution-all-three-plan.md P2-01 (audit §7.1).
+// Implements work item P2-01.
 //
 // Before this file existed the database was either world-readable and
 // world-writable, or governed by undocumented console edits. Anyone who
