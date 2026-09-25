@@ -1,6 +1,6 @@
 # Rollback Plan
 
-**Implements:** [execution-all-three-plan.md](execution-all-three-plan.md) P2-06
+**Implements:** work item P2-06
 **Scope:** every deployable artifact — client APKs, admin panel, rules, indexes, functions, data.
 
 > A rollback plan that has never been executed is a hypothesis. **Rehearse the data restore on

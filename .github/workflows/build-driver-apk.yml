@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   # No artifact publishes from code that does not analyze and test clean
-  # (execution-all-three-plan.md P0-03).
+  # (P0-03).
   verify:
     uses: ./.github/workflows/verify.yml
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Verifies the canonical order lifecycle is identical across all three apps.
-   (execution-all-three-plan.md P1-02)
+   (P1-02)
 
    Two checks:
      1. The two Dart copies are byte-identical.

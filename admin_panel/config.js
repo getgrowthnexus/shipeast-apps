@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    ShipEast Admin Portal — environment configuration
-   Extracted from app.js (execution-all-three-plan.md P0-01).
+   Extracted from app.js (P0-01).
    ═══════════════════════════════════════════════════════════════
 
    Why this file exists

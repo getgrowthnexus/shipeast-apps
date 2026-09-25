@@ -1,39 +1,39 @@
-# ShipEast
+# ShipEast: notes for Claude
 
-Monorepo for the ShipEast delivery platform (imported from
-`derionscarlett-lang/Shipeast-App` with full history).
+Start with `README.md`: it maps the four parts (customer app, driver app, admin panel,
+Firebase backend), how an order moves between them, and the current known gaps.
+`SCHEMA.md` is the source of truth for every Firestore collection and field; code
+comments cite it as `SCHEMA.md §x`.
 
-| Folder | What it is | How it ships |
-|---|---|---|
-| `customer_app/` | Flutter customer app (`com.shipeast.customerapp`) | APK via `build-customer-apk.yml` |
-| `driver_app/` | Flutter driver app (`com.shipeast.shipeast_driver`) | APK via `build-driver-apk.yml` |
-| `admin_panel/` | Admin web portal (unbundled ES modules, no build step) | Firebase Hosting via `deploy-admin.yml` |
-| `functions/` | Firebase Cloud Functions (TypeScript) | `firebase deploy` |
-| `firestore.rules`, `storage.rules`, `test/rules/` | Security rules and their emulator tests | `firebase deploy` |
-| `tools/` | Parity checks, migrations and JS unit tests run by CI | — |
+| Folder | Package / target |
+|---|---|
+| `customer_app/` | Flutter, `com.shipeast.customerapp` |
+| `driver_app/` | Flutter, `com.shipeast.shipeast_driver` |
+| `admin_panel/` | Unbundled ES modules on Firebase Hosting |
+| `functions/` | Cloud Functions (TypeScript, Node 20) |
 
-Flutter is pinned in `.tool-versions` (single source of truth for CI and local).
+Toolchain versions are pinned in `.tool-versions`. Flutter isn't installed in every
+environment, so a Dart change may only be checkable in CI.
 
 ## Finding the latest APKs
 
-Every push to `main` runs `verify.yml` first, then builds both APKs. When they pass:
+Every push to `main` runs `verify.yml`, then `build-customer-apk.yml` and
+`build-driver-apk.yml`. When they pass, the GitHub Releases `customer-latest` and
+`driver-latest` are replaced with new debug-signed APKs (`shipeast-customer.apk`,
+`shipeast-driver.apk`); the release notes name the commit. The same files are attached
+to each run as artifacts. Builds on other branches can be started with
+`workflow_dispatch`; those produce only artifacts, not releases.
 
-- **GitHub Releases** `customer-latest` and `driver-latest` are replaced with the new
-  debug-signed APKs (`shipeast-customer.apk`, `shipeast-driver.apk`). Each release's
-  notes name the commit it was built from.
-- The same APKs are also uploaded as workflow run artifacts
-  (`shipeast-customer-apk`, `shipeast-driver-apk`).
+To tell the user what's installable, check the latest runs of both APK workflows on
+`main` and the two releases, and report each APK's commit and any failure.
 
-To tell the user what's installable, check the latest runs of "Build Customer APK" and
-"Build Driver APK" on `main` and the two releases above; report the commit each APK was
-built from and whether any build failed (and why). Builds can also be started by hand
-through `workflow_dispatch`.
+## Conventions that CI enforces
 
-## CI notes
-
-- `verify.yml` gates everything: status-parity checks, Flutter analyze/test for both
-  apps, Firestore rules tests, Functions build/lint/test, and admin panel lint.
-- `deploy-admin.yml` needs the `FIREBASE_SERVICE_ACCOUNT_SHIPEAST_1A1F6` repository
-  secret; without it the deploy step fails (the APK builds don't need any secrets).
-- Planning and audit docs live at the root (`PLAN.md`, `execution-all-three-plan.md`,
-  `full-audit-*.md`, `SCHEMA.md`, `ROLLBACK.md`).
+- The order-status lifecycle is duplicated in `customer_app`, `driver_app`,
+  `admin_panel/order-status.js` and `functions/src/orderStatus.ts`;
+  `tools/check-status-parity.mjs` fails CI if they drift. Change all four together.
+- Admin panel logic lives in import-free modules so `tools/test-*.mjs` can test it in
+  plain Node. Keep new logic there, not in `app.js`.
+- Money is stored as integers (SCHEMA.md §a).
+- `deploy-admin.yml` skips publishing when the `FIREBASE_SERVICE_ACCOUNT_SHIPEAST_1A1F6`
+  secret is missing; the APK builds need no secrets.
