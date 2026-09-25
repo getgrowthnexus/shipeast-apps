@@ -1,0 +1,22 @@
+# Toolchain pin (execution-all-three-plan.md P0-02).
+#
+# Both apps declare `sdk: ^3.11.5` in pubspec.yaml, so the Flutter version must
+# be one that bundles Dart >= 3.11.5. Flutter 3.44.7 is that version.
+#
+# It was NOT derived from the `flutter: ">=3.38.4"` line in pubspec.lock — that
+# is a *minimum constraint* computed from the dependency graph, not the SDK
+# that produced the lockfile. Pinning 3.38.4 on that reading failed CI
+# immediately: it ships Dart 3.10.3, and `pub get` rejected it with
+#
+#   The current Dart SDK version is 3.10.3.
+#   Because shipeast_customer requires SDK version ^3.11.5, version solving failed.
+#   * Try using the Flutter SDK version: 3.44.7.
+#
+# 3.44.7 is pub's own resolution of the constraint, which is the authoritative
+# source for this and the reason it is pinned here rather than guessed again.
+#
+# CI reads this file (.github/workflows/verify.yml and both APK workflows)
+# rather than tracking `channel: stable`, so a Flutter release cannot silently
+# change the build. When raising this pin, run `flutter pub get` in both apps
+# and commit the resulting lockfile changes in the same commit.
+flutter 3.44.7-stable

@@ -1,0 +1,21 @@
+# Node dependencies — installed by `npm ci` in CI, never committed.
+# Lockfiles ARE committed; `npm ci` requires them.
+node_modules/
+
+# Firebase emulator artifacts
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Compiled Cloud Functions output
+functions/lib/
+
+# Local preview harness (tools/dev-up.sh)
+.dev-logs/
+
+# Local service-account key for one-off admin bootstrap / manual deploy (never committed)
+.secret/
+
+# Build artifacts — release APKs are published to GitHub Releases by CI, not git
+dist/

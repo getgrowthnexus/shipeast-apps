@@ -1,0 +1,83 @@
+name: Build Driver APK
+
+# Builds an installable (debug-signed) release APK of the ShipEast driver app
+# on GitHub's servers, uploads it as a run artifact, and publishes it to the
+# "driver-latest" GitHub Release so there is a stable download link.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # No artifact publishes from code that does not analyze and test clean
+  # (execution-all-three-plan.md P0-03).
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  build-apk:
+    needs: verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: driver_app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Read pinned Flutter version
+        id: toolchain
+        working-directory: .
+        run: |
+          version="$(awk '/^flutter /{print $2}' .tool-versions | sed 's/-stable$//')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Flutter ${{ steps.toolchain.outputs.version }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.toolchain.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Flutter / Dart versions
+        run: flutter --version
+
+      - name: Accept Android SDK licenses
+        run: yes | flutter doctor --android-licenses || true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Analysis and tests now run in the `verify` job this build depends on,
+      # where they are a real gate rather than informational (P0-03).
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Stage APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk shipeast-driver.apk
+
+      - name: Upload APK as run artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shipeast-driver-apk
+          path: driver_app/shipeast-driver.apk
+          if-no-files-found: error
+
+      - name: Publish to "driver-latest" Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete driver-latest --yes --cleanup-tag || true
+          gh release create driver-latest shipeast-driver.apk \
+            --title "ShipEast Driver (latest)" \
+            --notes "Debug-signed APK for sideloading onto Android phones. Built from commit ${GITHUB_SHA}. Enable 'Install unknown apps' for your browser/Files app, then open the APK to install."

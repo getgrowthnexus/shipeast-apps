@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#C8102E"/>
+<!-- Canonical host. Firebase serves this panel on two permanent default domains
+     (…web.app / …firebaseapp.com) that cannot be removed. Bounce ONLY those two
+     exact hosts to the branded domain, preserving path/query/hash. Matched by
+     exact hostname so PR preview channels (shipeast-1a1f6--pr…​.web.app) and
+     localhost are left alone. Runs before any app script so the wrong-URL page
+     never renders. -->
+<script>
+(function () {
+  var defaults = ['shipeast-1a1f6.web.app', 'shipeast-1a1f6.firebaseapp.com'];
+  if (defaults.indexOf(location.hostname) !== -1) {
+    location.replace('https://admin.shipeastja.com' + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<meta name="description" content="ShipEast Admin Portal — orders, drivers, merchants and analytics for ShipEast Couriers &amp; Bearer Services Ltd, Jamaica."/>
+<title>ShipEast Admin Portal</title>
+<!-- Favicon set. `/favicon.ico` is the multi-size (16→256) file the brand
+     supplied: it is what legacy Edge/IE, pinned-site tiles, RSS readers and
+     anything that blind-probes the site root will fetch, so it stays at the
+     document root and not under assets/. The two PNGs cover modern browser tabs
+     at 1x and 2x, apple-touch-icon covers "Add to Home Screen" on iOS/iPadOS
+     (which ignores alpha, so that one is flattened onto white), and the
+     manifest carries the Android/desktop-install sizes including a full-bleed
+     maskable. No SVG icon is declared any more — a declared SVG outranks every
+     raster hint in Chrome and Firefox, and the brand mark is raster artwork. -->
+<link rel="icon" href="favicon.ico" sizes="32x32"/>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png"/>
+<link rel="manifest" href="site.webmanifest"/>
+<meta name="apple-mobile-web-app-title" content="ShipEast Admin"/>
+<link rel="preload" href="assets/brand/shipeast-logo.png" as="image"/>
+<link rel="preload" href="assets/fonts/jakarta-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ══ PHOSPHOR ICON SPRITE (MIT — phosphoricons.com) ══ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-dashboard" viewBox="0 0 256 256"><path d="M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,64H56V56h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,64H152V56h48v48Zm-96,32H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm0,64H56V152h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Zm0,64H152V152h48v48Z"/></symbol>
+<symbol id="i-dashboard-f" viewBox="0 0 256 256"><path d="M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z"/></symbol>
+<symbol id="i-orders" viewBox="0 0 256 256"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"/></symbol>
+<symbol id="i-orders-f" viewBox="0 0 256 256"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.35,44L178.57,92.29l-80.35-44Zm0,88L47.65,76,81.56,57.43l80.35,44Zm88,55.85h0l-80,43.79V133.83l32-17.51V152a8,8,0,0,0,16,0V107.56l32-17.51v85.76Z"/></symbol>
+<symbol id="i-drivers" viewBox="0 0 256 256"><path d="M240,104H229.2L201.42,41.5A16,16,0,0,0,186.8,32H69.2a16,16,0,0,0-14.62,9.5L26.8,104H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16V184h96v16a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V120h8a8,8,0,0,0,0-16ZM69.2,48H186.8l24.89,56H44.31ZM64,200H40V184H64Zm128,0V184h24v16Zm24-32H40V120H216ZM56,144a8,8,0,0,1,8-8H80a8,8,0,0,1,0,16H64A8,8,0,0,1,56,144Zm112,0a8,8,0,0,1,8-8h16a8,8,0,0,1,0,16H176A8,8,0,0,1,168,144Z"/></symbol>
+<symbol id="i-drivers-f" viewBox="0 0 256 256"><path d="M240,104H229.2L201.42,41.5A16,16,0,0,0,186.8,32H69.2a16,16,0,0,0-14.62,9.5L26.8,104H16a8,8,0,0,0,0,16h8v80a16,16,0,0,0,16,16H64a16,16,0,0,0,16-16v-8h96v8a16,16,0,0,0,16,16h24a16,16,0,0,0,16-16V120h8a8,8,0,0,0,0-16ZM80,152H56a8,8,0,0,1,0-16H80a8,8,0,0,1,0,16Zm120,0H176a8,8,0,0,1,0-16h24a8,8,0,0,1,0,16ZM44.31,104,69.2,48H186.8l24.89,56Z"/></symbol>
+<symbol id="i-merchants" viewBox="0 0 256 256"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z"/></symbol>
+<symbol id="i-merchants-f" viewBox="0 0 256 256"><path d="M231.69,93.81,217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.81A7.94,7.94,0,0,0,24,96v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96A7.94,7.94,0,0,0,231.69,93.81ZM88,112a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8H88Zm64,0a24,24,0,0,1-48,0v-8h48Zm64,0a24,24,0,0,1-11.07,20.2,8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48Z"/></symbol>
+<symbol id="i-notifications" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></symbol>
+<symbol id="i-notifications-f" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216Z"/></symbol>
+<symbol id="i-promos" viewBox="0 0 256 256"><path d="M232,104a8,8,0,0,0,8-8V64a16,16,0,0,0-16-16H32A16,16,0,0,0,16,64V96a8,8,0,0,0,8,8,24,24,0,0,1,0,48,8,8,0,0,0-8,8v32a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V160a8,8,0,0,0-8-8,24,24,0,0,1,0-48ZM32,167.2a40,40,0,0,0,0-78.4V64H88V192H32Zm192,0V192H104V64H224V88.8a40,40,0,0,0,0,78.4Z"/></symbol>
+<symbol id="i-promos-f" viewBox="0 0 256 256"><path d="M232,104a8,8,0,0,0,8-8V64a16,16,0,0,0-16-16H32A16,16,0,0,0,16,64V96a8,8,0,0,0,8,8,24,24,0,0,1,0,48,8,8,0,0,0-8,8v32a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V160a8,8,0,0,0-8-8,24,24,0,0,1,0-48ZM32,167.2a40,40,0,0,0,0-78.4V64H88V192H32Z"/></symbol>
+<symbol id="i-analytics" viewBox="0 0 256 256"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></symbol>
+<symbol id="i-analytics-f" viewBox="0 0 256 256"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1,0-16h8V136a8,8,0,0,1,8-8H72a8,8,0,0,1,8,8v64H96V88a8,8,0,0,1,8-8h32a8,8,0,0,1,8,8V200h16V40a8,8,0,0,1,8-8h40a8,8,0,0,1,8,8V200h8A8,8,0,0,1,232,208Z"/></symbol>
+<symbol id="i-logout" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></symbol>
+<symbol id="i-menu" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"/></symbol>
+<symbol id="i-view" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/></symbol>
+<symbol id="i-edit" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></symbol>
+<symbol id="i-delete" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></symbol>
+<symbol id="i-search" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+<symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+<symbol id="i-close" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+<symbol id="i-revenue" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-68a28,28,0,0,1-28,28h-4v8a8,8,0,0,1-16,0v-8H104a8,8,0,0,1,0-16h36a12,12,0,0,0,0-24H116a28,28,0,0,1,0-56h4V72a8,8,0,0,1,16,0v8h16a8,8,0,0,1,0,16H116a12,12,0,0,0,0,24h24A28,28,0,0,1,168,148Z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.9,123.66Z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></symbol>
+<symbol id="i-star" viewBox="0 0 256 256"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></symbol>
+<symbol id="i-star-f" viewBox="0 0 256 256"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></symbol>
+<symbol id="i-send" viewBox="0 0 256 256"><path d="M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z"/></symbol>
+<symbol id="i-moon" viewBox="0 0 256 256"><path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z"/></symbol>
+<symbol id="i-sun" viewBox="0 0 256 256"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></symbol>
+<symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
+<symbol id="i-envelope" viewBox="0 0 256 256"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Zm-68-56a12,12,0,1,1-12-12A12,12,0,0,1,140,152Z"/></symbol>
+<!-- Eye with a strike-through, rather than Phosphor's eye-slash: the slash is
+     drawn as its own filled bar so the glyph stays legible at the 18px the
+     reveal toggle renders it at. -->
+<symbol id="i-view-off" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/><path d="M212.24,54.86a8,8,0,0,0-11.31-11.32l-160,160a8,8,0,0,0,11.31,11.32Z"/></symbol>
+<symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z"/></symbol>
+<symbol id="i-success" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+<symbol id="i-error" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+<symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-4,48a12,12,0,1,1-12,12A12,12,0,0,1,124,72Zm12,112a16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40a8,8,0,0,1,0,16Z"/></symbol>
+<symbol id="i-cat-food" viewBox="0 0 256 256"><path d="M72,88V40a8,8,0,0,1,16,0V88a8,8,0,0,1-16,0ZM216,40V224a8,8,0,0,1-16,0V176H152a8,8,0,0,1-8-8,268.75,268.75,0,0,1,7.22-56.88c9.78-40.49,28.32-67.63,53.63-78.47A8,8,0,0,1,216,40ZM200,53.9c-32.17,24.57-38.47,84.42-39.7,106.1H200ZM119.89,38.69a8,8,0,1,0-15.78,2.63L112,88.63a32,32,0,0,1-64,0l7.88-47.31a8,8,0,1,0-15.78-2.63l-8,48A8.17,8.17,0,0,0,32,88a48.07,48.07,0,0,0,40,47.32V224a8,8,0,0,0,16,0V135.32A48.07,48.07,0,0,0,128,88a8.17,8.17,0,0,0-.11-1.31Z"/></symbol>
+<symbol id="i-cat-grocery" viewBox="0 0 256 256"><path d="M230.14,58.87A8,8,0,0,0,224,56H62.68L56.6,22.57A8,8,0,0,0,48.73,16H24a8,8,0,0,0,0,16h18L67.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,160,204a28,28,0,1,0,28-28H91.17a8,8,0,0,1-7.87-6.57L80.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,230.14,58.87ZM104,204a12,12,0,1,1-12-12A12,12,0,0,1,104,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,200,204Zm4-74.57A8,8,0,0,1,196.1,136H77.22L65.59,72H214.41Z"/></symbol>
+<symbol id="i-cat-pharmacy" viewBox="0 0 256 256"><path d="M216.42,39.6a53.26,53.26,0,0,0-75.32,0L39.6,141.09a53.26,53.26,0,0,0,75.32,75.31h0L216.43,114.91A53.31,53.31,0,0,0,216.42,39.6ZM103.61,205.09h0a37.26,37.26,0,0,1-52.7-52.69L96,107.31,148.7,160ZM205.11,103.6,160,148.69,107.32,96l45.1-45.09a37.26,37.26,0,0,1,52.69,52.69ZM189.68,82.34a8,8,0,0,1,0,11.32l-24,24a8,8,0,1,1-11.31-11.32l24-24A8,8,0,0,1,189.68,82.34Z"/></symbol>
+<symbol id="i-cat-packages" viewBox="0 0 256 256"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"/></symbol>
+<symbol id="i-undo" viewBox="0 0 256 256"><path d="M232,144a64.07,64.07,0,0,1-64,64H80a8,8,0,0,1,0-16h88a48,48,0,0,0,0-96H51.31l34.35,34.34a8,8,0,0,1-11.32,11.32l-48-48a8,8,0,0,1,0-11.32l48-48A8,8,0,0,1,85.66,45.66L51.31,80H168A64.07,64.07,0,0,1,232,144Z"/></symbol>
+<symbol id="i-users" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"/></symbol>
+<symbol id="i-receipt" viewBox="0 0 256 256"><path d="M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28.42,14.21a8,8,0,0,1-7.16,0L128,200.94,99.58,215.15a8,8,0,0,1-7.16,0L64,200.94,35.58,215.15A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V195.06l20.42-10.22a8,8,0,0,1,7.16,0L96,199.06l28.42-14.22a8,8,0,0,1,7.16,0L160,199.06l28.42-14.22a8,8,0,0,1,7.16,0L216,195.06Z"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 256 256"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"/></symbol>
+</svg>
+
+<!-- ══ TOASTS ══ -->
+<div id="toast-host" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-page">
+  <div class="lc">
+    <!-- The real brand lockup. It is single-colour #FF0043 drawn for white
+         stock, which is why the card is authored white in both themes (see
+         styles.css §LOGIN) instead of following --card into the dark theme. -->
+    <img class="lc-mark" src="assets/brand/shipeast-logo.png" width="700" height="328"
+         alt="ShipEast Couriers &amp; Bearer Service"/>
+    <div class="lc-eyebrow"><span>Admin Portal</span></div>
+    <h1 class="lc-title">Welcome back</h1>
+    <p class="lc-lede">Sign in to manage orders, drivers and merchants.</p>
+    <div class="lf">
+      <label for="l-email">Email Address</label>
+      <div class="lf-box">
+        <svg class="ic lf-ic" aria-hidden="true"><use href="#i-envelope"/></svg>
+        <input type="email" id="l-email" autocomplete="username" spellcheck="false" placeholder="you@shipeastja.com"/>
+      </div>
+    </div>
+    <div class="lf">
+      <label for="l-pass">Password</label>
+      <div class="lf-box">
+        <svg class="ic lf-ic" aria-hidden="true"><use href="#i-lock"/></svg>
+        <input type="password" id="l-pass" autocomplete="current-password" placeholder="••••••••"/>
+        <button type="button" class="lf-eye" id="l-eye" aria-label="Show password" aria-pressed="false" tabindex="0">
+          <svg class="ic" aria-hidden="true"><use href="#i-view"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="l-err" role="alert"></div>
+    <button class="btn btn-primary lc-cta" id="login-btn">Sign In<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+    <div class="l-foot">
+      <svg class="ic ic-xs" aria-hidden="true"><use href="#i-lock"/></svg>
+      <span>ShipEast Couriers &amp; Bearer Services Ltd · Jamaica</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark" aria-hidden="true">SE</div>
+      <div class="sb-word">
+        <div class="slt">Ship<span>East</span></div>
+        <div class="sls">Couriers &amp; Bearer Service</div>
+      </div>
+    </div>
+    <nav class="sb-nav" aria-label="Main">
+      <div class="sb-sec">Operations</div>
+      <div class="ni active" data-page="dashboard" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-dashboard"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-dashboard-f"/></svg>
+        <span class="lbl">Dashboard</span>
+      </div>
+      <div class="ni" data-page="orders" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-orders"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-orders-f"/></svg>
+        <span class="lbl">Orders</span>
+      </div>
+      <div class="ni" data-page="drivers" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-drivers"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-drivers-f"/></svg>
+        <span class="lbl">Drivers</span>
+      </div>
+      <div class="ni" data-page="merchants" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-merchants"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-merchants-f"/></svg>
+        <span class="lbl">Merchants</span>
+      </div>
+      <!-- P5-05: the users collection had no admin surface at all. -->
+      <div class="ni" data-page="customers" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-users"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-users"/></svg>
+        <span class="lbl">Customers</span>
+      </div>
+      <!-- Shop-and-deliver requests: a customer abroad asks us to buy from a
+           local Jamaican store and deliver to their family. Not shipping. The
+           customer app used to point a WebView at two placeholder form URLs and
+           write nothing anywhere; there was no queue for a request to land in,
+           so there was no page to build. -->
+      <div class="ni" data-page="overseas" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-send"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-send"/></svg>
+        <span class="lbl">Shop &amp; Deliver</span>
+      </div>
+      <div class="sb-sec">Growth</div>
+      <div class="ni" data-page="notifications" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-notifications"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-notifications-f"/></svg>
+        <span class="lbl">Notifications</span>
+      </div>
+      <div class="ni" data-page="promos" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-promos"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-promos-f"/></svg>
+        <span class="lbl">Promo Codes</span>
+      </div>
+      <div class="ni" data-page="analytics" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-analytics"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-analytics-f"/></svg>
+        <span class="lbl">Analytics</span>
+      </div>
+      <!-- P5-01: without this the package price list can only be edited in the
+           Firebase console, which is the undocumented-console-edit habit this
+           project exists to end. -->
+      <div class="ni" data-page="settings" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-settings"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-settings"/></svg>
+        <span class="lbl">Settings</span>
+      </div>
+      <div class="ndiv"></div>
+      <div class="ni" id="logout-btn" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-logout"/></svg>
+        <span class="lbl">Logout</span>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="main" id="main">
+    <header class="topbar">
+      <div class="tb-l">
+        <button class="iconbtn" id="hamburger" title="Toggle sidebar" aria-label="Toggle sidebar">
+          <svg class="ic" aria-hidden="true"><use href="#i-menu"/></svg>
+        </button>
+        <!-- Breadcrumb only. The page name used to be repeated directly
+             underneath it as a second heading, and the page itself prints it a
+             third time in .pg-title — three copies of one word on every screen.
+             The crumb survives because it is the one that carries context
+             ("ShipEast Admin ▸ Orders"); it stays visible on phones too, where
+             it is the topbar's only label. -->
+        <div class="tb-bc" aria-label="Breadcrumb">
+          <span class="tb-bc-root">ShipEast Admin</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-caret-right"/></svg>
+          <em id="tb-pg">Dashboard</em>
+        </div>
+      </div>
+      <div class="tb-r">
+        <div class="tb-date" id="tb-date"></div>
+        <!-- Activity bell. Lights up when new orders, overseas enquiries,
+             customers or drivers arrive while the admin is on another page.
+             The count and the coloured dots mirror the sidebar badges. -->
+        <div class="bell-wrap">
+          <button class="iconbtn" id="bell-btn" title="Notifications" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+            <svg class="ic" aria-hidden="true"><use href="#i-notifications"/></svg>
+            <span class="bell-badge" id="bell-badge" hidden>0</span>
+          </button>
+          <div class="bell-menu" id="bell-menu" role="menu" aria-label="Recent activity">
+            <div class="bell-hd">Notifications
+              <button class="bell-clear" id="bell-clear" hidden>Mark all read</button>
+            </div>
+            <div class="bell-list" id="bell-list"></div>
+          </div>
+        </div>
+        <button class="iconbtn" id="theme-btn" title="Switch to dark theme" aria-label="Switch to dark theme">
+          <svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+        <!-- Name only, never the email. An admin console is often on screen in
+             a shared office or a screenshare, and info@shipeastja.com is half a
+             credential. The avatar is deliberately NOT brand red: the only red
+             dot in this corner should be the unread-notification badge. -->
+        <div class="ab">
+          <div class="av">A</div>
+          <div class="an">Admin</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="pw">
+
+      <!-- ── DASHBOARD ── -->
+      <section class="page active" id="page-dashboard">
+        <div class="pg-hdr"><h1 class="pg-title">Dashboard</h1></div>
+        <div class="sg stagger">
+          <div class="sc">
+            <div class="sc-top">
+              <div><div class="sc-lbl">Orders Today</div><div class="sc-val num" id="stat-orders">0</div></div>
+              <div class="sc-chip"><svg class="ic" aria-hidden="true"><use href="#i-orders"/></svg></div>
+            </div>
+            <div class="sc-sub">Placed today</div>
+            <div id="spark-orders"></div>
+          </div>
+          <div class="sc ac-gold">
+            <div class="sc-top">
+              <div><div class="sc-lbl">Revenue Today</div><div class="sc-val sm num" id="stat-revenue">J$0</div></div>
+              <div class="sc-chip c-gold"><svg class="ic" aria-hidden="true"><use href="#i-revenue"/></svg></div>
+            </div>
+            <div class="sc-sub">From Completed Orders</div>
+            <div id="spark-revenue"></div>
+          </div>
+          <div class="sc ac-ocean">
+            <div class="sc-top">
+              <div><div class="sc-lbl">Pending Orders</div><div class="sc-val num" id="stat-pending">0</div></div>
+              <div class="sc-chip c-ocean"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></div>
+            </div>
+            <div class="sc-sub">Awaiting a driver</div>
+          </div>
+          <!-- Checklist DB-3: three named states instead of one "Active Drivers"
+               figure. Available = online and not on a delivery. -->
+          <div class="sc ac-success">
+            <div class="sc-top">
+              <div>
+                <div class="sc-lbl">Drivers</div>
+                <div class="sc-triple">
+                  <span><b class="num" id="drv-online">0</b>Online</span>
+                  <span><b class="num" id="drv-ondel">0</b>On Delivery</span>
+                  <span><b class="num" id="drv-avail">0</b>Available</span>
+                </div>
+              </div>
+              <div class="sc-chip c-success"><svg class="ic" aria-hidden="true"><use href="#i-drivers"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <!-- Checklist DB-7: quick-action shortcuts to the flows that otherwise
+             live one or two clicks deep. "Create Order" is a net-new admin form
+             and is tracked separately. -->
+        <div class="qa-row">
+          <button class="btn btn-outline btn-sm" data-action="qa-add-merchant">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add Merchant
+          </button>
+          <button class="btn btn-outline btn-sm" data-action="qa-assign-driver">
+            <svg class="ic" aria-hidden="true"><use href="#i-drivers"/></svg>Assign Driver
+          </button>
+          <button class="btn btn-outline btn-sm" data-action="qa-send-notif">
+            <svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Send Notification
+          </button>
+        </div>
+        <!-- Checklist DB-9: a search box on the main screen. Matches across
+             every order (id, customer, merchant), not just the recent ten. -->
+        <div class="srch">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="dash-search" placeholder="Search all orders — ID, customer, merchant…" aria-label="Search orders from the dashboard"/>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Orders</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Destination</th><th>Driver</th><th class="right">Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="dash-tbody"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- ── ORDERS ── -->
+      <section class="page" id="page-orders">
+        <div class="pg-hdr"><h1 class="pg-title">Orders</h1></div>
+        <div class="tabs" id="orders-tabs" role="tablist"></div>
+        <div class="srch">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="orders-search" placeholder="Search order ID, customer, merchant…" aria-label="Search orders"/>
+        </div>
+        <!-- Checklist OR-3 / OR-4: filter + sort controls. Merchant, Driver and
+             Payment options are filled from live data in syncOrderFilterOptions. -->
+        <div class="fbar" id="orders-filters">
+          <select id="of-status" aria-label="Filter by status">
+            <option value="">Any status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="picked_up">Picked Up</option>
+            <option value="in_transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select id="of-date" aria-label="Filter by date">
+            <option value="">Any date</option>
+            <option value="today">Today</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+          </select>
+          <select id="of-merchant" aria-label="Filter by merchant"><option value="">Any merchant</option></select>
+          <select id="of-driver" aria-label="Filter by driver"><option value="">Any driver</option></select>
+          <select id="of-payment" aria-label="Filter by payment method"><option value="">Any payment</option></select>
+          <input id="of-area" class="fbar-txt" placeholder="Delivery area…" aria-label="Filter by delivery area"/>
+          <select id="of-type" aria-label="Filter by order type">
+            <option value="">Any type</option>
+            <option value="food">Food</option>
+            <option value="package">Package</option>
+          </select>
+          <select id="of-sort" aria-label="Sort orders">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="of-clear" type="button" hidden>Clear filters</button>
+        </div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Driver</th><th class="right">Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+          <tbody id="orders-tbody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ── DRIVERS ── -->
+      <section class="page" id="page-drivers">
+        <div class="pg-hdr">
+          <h1 class="pg-title">Drivers</h1>
+          <button class="btn btn-primary" id="add-driver-btn">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add Driver
+          </button>
+        </div>
+        <div class="sg" id="drivers-stats"></div>
+        <!-- Checklist DV-1 … DV-8: the roster is a grid of status cards, not a
+             9-column table — the point is to read a driver's state and stats
+             without opening anything. -->
+        <div class="fbar" id="drivers-filter">
+          <select id="drv-filter" aria-label="Filter drivers by status">
+            <option value="">All drivers</option>
+            <option value="online">Online</option>
+            <option value="ondelivery">On Delivery</option>
+            <option value="available">Available</option>
+            <option value="offline">Offline</option>
+            <option value="pending">Pending Approval</option>
+            <option value="paused">Paused</option>
+            <option value="suspended">Suspended</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <input id="drv-search" class="fbar-txt" placeholder="Search name, plate, phone…" aria-label="Search drivers"/>
+        </div>
+        <div class="dcard-grid" id="drivers-grid"></div>
+      </section>
+
+      <!-- ── MERCHANTS ── -->
+      <section class="page" id="page-merchants">
+        <div class="pg-hdr">
+          <h1 class="pg-title">Merchants</h1>
+          <button class="btn btn-primary" id="add-merchant-btn">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add Merchant
+          </button>
+        </div>
+        <p class="pg-note">Turn a merchant off to temporarily remove it from the app.</p>
+        <div class="sg g3" id="merchants-stats"></div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Merchant</th><th>Category</th><th>Phone</th><th>Address</th><th class="right">Orders Today</th><th>Rating</th><th>Status</th><th>Open</th><th>Actions</th></tr></thead>
+          <tbody id="merchants-tbody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ── CUSTOMERS (P5-05) ── -->
+      <section class="page" id="page-customers">
+        <div class="pg-hdr"><h1 class="pg-title">Customers</h1></div>
+        <div class="sg" id="customers-stats"></div>
+        <div class="srch">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="customers-search" placeholder="Search name, email, phone or user ID…" aria-label="Search customers"/>
+        </div>
+        <div id="customers-cap"></div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="right">Orders</th><th>Last order</th><th class="right">Lifetime Value</th><th>Tags</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="customers-tbody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ── SHOP & DELIVER REQUESTS ── -->
+      <section class="page" id="page-overseas">
+        <div class="pg-hdr"><h1 class="pg-title">Shop &amp; Deliver Requests</h1></div>
+        <div class="sg g3" id="overseas-stats"></div>
+        <div class="tabs" id="overseas-tabs" role="tablist"></div>
+        <div class="srch">
+          <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="overseas-search" placeholder="Search customer, recipient, parish, shopping list…" aria-label="Search shop-and-deliver requests"/>
+        </div>
+        <div class="card"><div class="tbl-wrap"><table>
+          <thead><tr><th>Ref</th><th>Customer</th><th>Deliver to</th><th>Parish</th><th>Shopping list</th><th class="right">Budget</th><th>Status</th><th>Received</th><th>Actions</th></tr></thead>
+          <tbody id="overseas-tbody"></tbody>
+        </table></div></div>
+      </section>
+
+      <!-- ── NOTIFICATIONS ── -->
+      <section class="page" id="page-notifications">
+        <div class="pg-hdr"><h1 class="pg-title">Notifications</h1></div>
+        <div class="nl">
+          <div>
+            <div class="card">
+              <div class="card-title">Compose Notification</div>
+              <div class="notice">
+                <svg class="ic" aria-hidden="true"><use href="#i-warning"/></svg>
+                <div>This sends a <b>real push notification</b> to every device in the selected audience. You will be asked to confirm before it goes out.</div>
+              </div>
+              <!-- Checklist NT-2: audience segments. Tag options are filled
+                   from CUSTOMER_TAGS; the derived ones are computed server-side
+                   from order history. -->
+              <div class="fr"><label for="n-target">Target Audience</label>
+                <select id="n-target">
+                  <optgroup label="Broadcast">
+                    <option value="all" selected>Everyone</option>
+                    <option value="customers">All Customers</option>
+                    <option value="drivers">All Drivers</option>
+                  </optgroup>
+                  <optgroup label="Customer segments" id="n-target-tags"></optgroup>
+                  <optgroup label="By order history">
+                    <option value="ordered">Customers who have ordered</option>
+                    <option value="never_ordered">Customers who never ordered</option>
+                    <option value="inactive">Inactive customers (60+ days)</option>
+                  </optgroup>
+                </select>
+              </div>
+              <!-- Checklist NT-4: where a tap on the notification lands. -->
+              <div class="fr"><label for="n-dest">On tap, open</label>
+                <select id="n-dest">
+                  <option value="">Nothing (open the app)</option>
+                  <option value="search">A search (e.g. groceries)</option>
+                  <option value="screen">A screen</option>
+                  <option value="url">A web link</option>
+                </select>
+              </div>
+              <div class="fr" id="n-dest-value-row" hidden>
+                <label for="n-dest-value" id="n-dest-value-label">Search term</label>
+                <input id="n-dest-value" placeholder="grocery"/>
+                <select id="n-dest-screen" hidden>
+                  <option value="/order-history">Order history</option>
+                  <option value="/overseas-order">Shop &amp; Deliver</option>
+                  <option value="/search">Search</option>
+                  <option value="/profile">Profile</option>
+                </select>
+              </div>
+              <!-- Checklist NT-3: schedule instead of sending now. -->
+              <div class="fr"><label for="n-schedule">Schedule for <small>(blank = send now)</small></label>
+                <input id="n-schedule" type="datetime-local"/>
+              </div>
+              <!-- Checklist NT-5: hard caps so nothing is cut off on the lock
+                   screen, plus a live counter that warns as it fills. 65 / 178
+                   are the practical limits before Android and iOS truncate. -->
+              <div class="fr">
+                <label for="n-title">Title <span class="char-count" id="n-title-count">0 / 65</span></label>
+                <input id="n-title" maxlength="65" placeholder="e.g. Flash Sale — 20% Off Deliveries!"/>
+              </div>
+              <div class="fr">
+                <label for="n-msg">Message <span class="char-count" id="n-msg-count">0 / 178</span></label>
+                <textarea id="n-msg" rows="4" maxlength="178" placeholder="Write your notification message here…"></textarea>
+              </div>
+              <!-- Was a full-width 15px btn-block: a single crimson slab most of
+                   the card wide, for an action that fires an irreversible push.
+                   Size is not how that gets its weight — the confirm dialog is.
+                   A normal right-aligned primary button reads as the end of the
+                   form instead of as a banner. It goes full-width on phones,
+                   where a right-aligned button next to nothing looks stranded. -->
+              <div class="form-actions">
+                <button class="btn btn-outline" id="notif-schedule-btn" data-action="schedule-notif" type="button" hidden>
+                  <svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>Schedule Notification
+                </button>
+                <button class="btn btn-primary" id="notif-send-btn" data-action="send-notif">
+                  <svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Send Notification
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Recent Notifications</div>
+              <div id="notif-hist"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">Live Preview</div>
+              <div class="phone-mock">
+                <div class="ph-notch"></div>
+                <div class="ph-screen">
+                  <div class="ph-bar"><span>9:41</span><span>ShipEast</span></div>
+                  <div class="ph-ni">
+                    <div class="ph-badge"><svg class="ic" aria-hidden="true"><use href="#i-notifications-f"/></svg></div>
+                    <div>
+                      <div class="ph-app">ShipEast</div>
+                      <div class="ph-title" id="pv-title">Notification Title</div>
+                      <div class="ph-msg" id="pv-msg">Your message will appear here.</div>
+                    </div>
+                  </div>
+                  <div class="ph-filler"><div style="width:82%"></div><div style="width:61%"></div></div>
+                  <div class="ph-filler"><div style="width:90%"></div><div style="width:68%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PROMO CODES ── -->
+      <section class="page" id="page-promos">
+        <div class="pg-hdr"><h1 class="pg-title">Promo Codes</h1></div>
+        <div class="pl">
+          <div>
+            <div class="card">
+              <div class="card-title">Create Promo Code</div>
+              <div class="mg">
+                <div class="fr"><label for="pc-code">Code</label><input id="pc-code" placeholder="SUMMER25" style="text-transform:uppercase"/></div>
+                <div class="fr"><label for="pc-type">Type</label>
+                  <select id="pc-type"><option value="percent">Percentage (%)</option><option value="fixed">Fixed Amount (J$)</option></select>
+                </div>
+                <div class="fr"><label for="pc-disc">Discount Amount</label><input id="pc-disc" type="number" min="0" placeholder="25"/></div>
+                <div class="fr"><label for="pc-max">Max Uses</label><input id="pc-max" type="number" min="1" placeholder="100"/></div>
+                <!-- P3-03: neither of these existed, so no code could carry a
+                     minimum and no percentage code could be capped. -->
+                <div class="fr"><label for="pc-min">Minimum Order (J$) <small>(0 for none)</small></label><input id="pc-min" type="number" min="0" step="1" placeholder="0"/></div>
+                <div class="fr"><label for="pc-maxdisc">Max Discount (J$) <small>(required for %)</small></label><input id="pc-maxdisc" type="number" min="0" step="1" placeholder="500"/></div>
+              </div>
+              <div class="fr"><label for="pc-start">Start date/time <small>(blank = starts now)</small></label><input id="pc-start" type="datetime-local"/></div>
+              <div class="fr"><label for="pc-valid">Valid until (End Date) <small>(blank = never expires)</small></label><input id="pc-valid" type="date"/></div>
+
+              <!-- PR-5: who can get the discount. Every control here is
+                   optional — leaving a picker empty imposes no restriction on
+                   that axis, same as leaving the code with no eligibility at
+                   all (SCHEMA.md `promoCodes.eligibility`). -->
+              <div class="fset">
+                <div class="fset-title">Who can use this? <small style="text-transform:none;letter-spacing:0;font-weight:500">(optional — leave blank for everyone)</small></div>
+                <div class="mg">
+                  <div class="fr"><label for="pc-elig-scope">Customers</label>
+                    <select id="pc-elig-scope">
+                      <option value="">All customers</option>
+                      <option value="new">New customers only</option>
+                      <option value="existing">Existing customers only</option>
+                      <option value="selected">Selected customers only</option>
+                    </select>
+                  </div>
+                  <div class="fr"><label for="pc-elig-base">Discount applies to</label>
+                    <select id="pc-elig-base">
+                      <option value="subtotal">Order subtotal</option>
+                      <option value="deliveryFee">Delivery fee only</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="fr" id="pc-elig-customers-wrap" hidden>
+                  <label for="pc-elig-customers">Selected customers <small>(ctrl/cmd-click for more than one)</small></label>
+                  <select id="pc-elig-customers" multiple size="5"></select>
+                </div>
+                <div class="mg">
+                  <div class="fr"><label for="pc-elig-merchants">Merchants <small>(blank = any)</small></label>
+                    <select id="pc-elig-merchants" multiple size="5"></select>
+                  </div>
+                  <div class="fr"><label for="pc-elig-categories">Categories <small>(blank = any)</small></label>
+                    <select id="pc-elig-categories" multiple size="5"></select>
+                  </div>
+                </div>
+                <div class="fr"><label for="pc-elig-areas">Delivery areas <small>(comma-separated, e.g. "St. Thomas, Portland"; blank = any)</small></label>
+                  <input id="pc-elig-areas" placeholder="St. Thomas, Kingston"/>
+                </div>
+                <div class="fr">
+                  <label>Applies to</label>
+                  <div class="tag-picker" style="flex-direction:row;flex-wrap:wrap;gap:8px">
+                    <label class="tag-opt" style="width:auto"><input type="checkbox" id="pc-elig-kind-food" checked/> Food orders</label>
+                    <label class="tag-opt" style="width:auto"><input type="checkbox" id="pc-elig-kind-package" checked/> Package orders</label>
+                    <label class="tag-opt" style="width:auto"><input type="checkbox" id="pc-elig-kind-shop" checked/> Shop &amp; Deliver</label>
+                  </div>
+                </div>
+                <div class="fr">
+                  <label class="tag-opt" style="width:auto;display:inline-flex"><input type="checkbox" id="pc-elig-first"/> First order only</label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-ghost" id="promo-cancel-btn" data-action="cancel-promo-edit" type="button" hidden>Cancel</button>
+                <button class="btn btn-primary" id="promo-create-btn" data-action="create-promo">
+                  <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Create Promo Code
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Active Promo Codes</div>
+              <div class="tbl-wrap"><table>
+                <thead><tr><th>Code</th><th>Discount</th><th class="right">Used</th><th class="right">Max</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="promos-tbody"></tbody>
+              </table></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-title">Live Preview</div>
+              <div class="pc-prev">
+                <div class="pc-brand">ShipEast</div>
+                <div class="pc-code" id="pcp-code">PROMO</div>
+                <div class="pc-disc" id="pcp-disc">—</div>
+                <div class="pc-max" id="pcp-max"></div>
+                <div class="pc-valid" id="pcp-valid">Valid until —</div>
+                <div class="pc-foot">COURIERS &amp; BEARER SERVICES LTD</div>
+              </div>
+              <div class="helper">
+                <b>How to apply</b>
+                Customers enter this code at checkout to receive the discount on their delivery order.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ANALYTICS ── -->
+      <section class="page" id="page-analytics">
+        <div class="pg-hdr">
+          <h1 class="pg-title">Analytics</h1>
+          <div class="pbs">
+            <button class="pb active" data-period="Today">Today</button>
+            <button class="pb" data-period="This Week">This Week</button>
+            <button class="pb" data-period="This Month">This Month</button>
+          </div>
+        </div>
+        <div class="sg" id="analytics-stats"></div>
+        <div class="ag">
+          <div class="card">
+            <div class="card-title" id="bar-title">Hourly Orders — Today</div>
+            <div class="chart" id="bar-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Deliveries by Zone
+              <span class="card-note">Derived from delivery addresses</span>
+            </div>
+            <div id="zone-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Top Merchants</div>
+            <table>
+              <thead><tr><th>Merchant</th><th class="right">Orders</th><th class="right">Revenue</th></tr></thead>
+              <tbody id="top-merch"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <!-- "Payment Split" read as a typo to the people using this page.
+                 It was not one, but a title nobody trusts is a broken title, and
+                 "Breakdown" says the same thing without the second reading. -->
+            <div class="card-title">Payment Breakdown</div>
+            <div id="pay-split"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS (pricing P5-01 + danger zone) ── -->
+      <section class="page" id="page-settings">
+        <div class="pg-hdr"><h1 class="pg-title">Settings</h1></div>
+        <div class="ag">
+          <div class="card">
+            <div class="card-title">Package Delivery
+              <span class="card-note">Weight bands, in J$</span>
+            </div>
+            <p class="empty-copy" style="max-width:none;margin-bottom:12px">
+              Until this table is saved, the Packages category in the customer app
+              declines to quote and takes no requests. That is deliberate — a price
+              nobody chose is worse than an unavailable feature.
+            </p>
+            <div class="fr">
+              <label for="pr-bands">Weight bands — one per line, <code>kg = price</code>.
+                Use <code>+</code> for “anything heavier”.</label>
+              <textarea id="pr-bands" rows="6" spellcheck="false"
+                placeholder="2 = 600&#10;5 = 900&#10;10 = 1400&#10;+ = 2200"></textarea>
+            </div>
+            <div id="pr-preview" class="empty-copy" style="max-width:none"></div>
+            <div class="mg">
+              <div class="fr">
+                <label for="pr-overage">Per extra kg above the last band</label>
+                <input id="pr-overage" type="number" min="0" step="1" placeholder="100"/>
+              </div>
+              <div class="fr">
+                <label for="pr-packing">Packing surcharge</label>
+                <input id="pr-packing" type="number" min="0" step="1" placeholder="350"/>
+              </div>
+            </div>
+            <div class="mg">
+              <div class="fr">
+                <label for="pr-maxweight">Heaviest parcel we carry (kg)</label>
+                <input id="pr-maxweight" type="number" min="1" step="1" placeholder="50"/>
+              </div>
+              <div class="fr">
+                <label for="pr-commission">Driver commission rate</label>
+                <input id="pr-commission" type="number" min="0" max="1" step="0.01" placeholder="0.10"/>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" data-action="save-pricing">
+                <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Save pricing
+              </button>
+            </div>
+          </div>
+
+          <!-- ── Danger Zone ── -->
+          <div class="card danger-zone">
+            <div class="card-title">
+              <span class="dz-label"><svg class="ic" aria-hidden="true"><use href="#i-warning"/></svg>Danger Zone</span>
+            </div>
+            <p class="empty-copy" style="max-width:none;margin-bottom:14px">
+              <b>Erase all data</b> permanently deletes every customer, driver, order,
+              saved address, notification and overseas enquiry — across all three apps.
+              Restaurants, menus, promo codes and pricing settings are kept.
+              This cannot be undone, and there is no backup. It asks for two separate
+              confirmations before anything is touched.
+            </p>
+            <button class="btn btn-danger" data-action="erase-open">
+              <svg class="ic" aria-hidden="true"><use href="#i-warning"/></svg>Erase all data…
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══ OVERLAYS ══ -->
+<div id="mob-overlay"></div>
+<div id="sp-overlay"></div>
+
+<!-- ══ SIDE PANEL ══ -->
+<aside class="spanel" id="spanel" aria-label="Details panel">
+  <div class="sp-hd">
+    <div>
+      <div class="sp-hd-sub" id="sp-sub">Details</div>
+      <div class="sp-hd-title" id="sp-title">—</div>
+    </div>
+    <button class="iconbtn" id="sp-close" title="Close" aria-label="Close panel">
+      <svg class="ic" aria-hidden="true"><use href="#i-close"/></svg>
+    </button>
+  </div>
+  <div id="sp-body"></div>
+</aside>
+
+<!-- ══ CONFIRM DIALOG (replaces window.confirm) ══ -->
+<div class="mbg" id="modal-confirm" role="alertdialog" aria-labelledby="cf-title">
+  <div class="mbox narrow">
+    <div class="m-ico danger" id="cf-ico"></div>
+    <div class="m-title" id="cf-title">Are you sure?</div>
+    <div class="m-body" id="cf-body"></div>
+    <div class="m-actions">
+      <button class="btn btn-outline" id="cf-cancel">Cancel</button>
+      <button class="btn btn-danger" id="cf-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ERASE ALL DATA — second confirmation (type-to-confirm) ══ -->
+<div class="mbg" id="modal-wipe" role="alertdialog" aria-labelledby="wipe-title">
+  <div class="mbox narrow">
+    <div class="m-ico danger"><svg class="ic ic-lg" aria-hidden="true"><use href="#i-warning"/></svg></div>
+    <div class="m-title" id="wipe-title">Final confirmation</div>
+    <div class="m-body">
+      This permanently deletes every customer, driver, order, saved address,
+      notification and overseas enquiry. Restaurants, menus, promo codes and
+      pricing settings are kept. <b>This cannot be undone.</b>
+      <div class="fr" style="margin-top:14px;text-align:left">
+        <label for="wipe-phrase">Type <code>ERASE ALL DATA</code> to enable the button.</label>
+        <input id="wipe-phrase" type="text" autocomplete="off" autocapitalize="characters"
+          spellcheck="false" placeholder="ERASE ALL DATA"/>
+      </div>
+      <div id="wipe-progress" class="empty-copy" style="max-width:none;margin-top:10px"></div>
+    </div>
+    <div class="m-actions">
+      <button class="btn btn-outline" id="wipe-cancel" data-close="modal-wipe">Cancel</button>
+      <button class="btn btn-danger" id="wipe-go" data-action="erase-all" disabled>Permanently erase</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DRIVER MODAL ══ -->
+<div class="mbg" id="modal-driver" role="dialog" aria-labelledby="drv-modal-title">
+  <div class="mbox wide">
+    <div class="m-title" id="drv-modal-title">Add New Driver</div>
+
+    <div class="fset">
+      <div class="fset-title">Driver details</div>
+      <div class="mg">
+        <div class="fr"><label for="d-name">Full Name *</label><input id="d-name" placeholder="Devon Campbell"/></div>
+        <div class="fr"><label for="d-phone">Phone Number</label><input id="d-phone" placeholder="1-876-000-0000"/></div>
+        <div class="fr"><label for="d-vtype">Vehicle Type</label>
+          <select id="d-vtype"><option>Car</option><option>Motorcycle</option><option>Van</option><option>Truck</option></select>
+        </div>
+        <div class="fr"><label for="d-vehicle">Vehicle Model</label><input id="d-vehicle" placeholder="Toyota Axio"/></div>
+        <div class="fr"><label for="d-plate">Licence Plate Number</label><input id="d-plate" placeholder="PB 2341"/></div>
+        <!-- P4-05: stored in drivers/{uid}/private/identity, never on the parent
+             document, which every signed-in user can read. -->
+        <div class="fr"><label for="d-dlicence">Driver's Licence Number <small>(private)</small></label><input id="d-dlicence" placeholder="JA-DL-00000"/></div>
+      </div>
+      <!-- The old options were "Active" and "Inactive", neither of which is a
+           status this system has. The roster, the badges and the driver app all
+           speak approved / pending / rejected, and the driver app gates sign-in
+           on exactly that value — so this dropdown now says the same words, and
+           choosing one here is honoured instead of silently ignored. -->
+      <div class="fr"><label for="d-status">Status</label>
+        <select id="d-status">
+          <option value="approved">Approved — can sign in and take orders</option>
+          <option value="pending">Pending approval — sign-in shows the waiting screen</option>
+          <option value="rejected">Rejected — blocked from working</option>
+        </select>
+        <div id="d-status-note" class="fr-hint"></div>
+      </div>
+    </div>
+
+    <!-- ── Driver app credentials ──────────────────────────────────────────
+         The admin sets the password directly. The alternative — emailing an
+         invite link — needs an outbound mail path this project does not have,
+         and the practical case is an operator sitting beside a new rider with
+         the rider's phone in hand. -->
+    <div class="fset">
+      <div class="fset-title">Driver app sign-in</div>
+      <div class="fr"><label for="d-email">Email Address *</label>
+        <input id="d-email" type="email" autocomplete="off" placeholder="driver@email.com"/>
+        <div id="d-email-note" class="fr-hint">This is the driver's username in the ShipEast Driver app. It cannot be changed later — it is the account key.</div>
+      </div>
+      <div class="fr" id="drv-pass-row">
+        <label for="d-pass">Password * <small>(at least 6 characters)</small></label>
+        <div class="inline-field">
+          <input id="d-pass" type="text" autocomplete="off" spellcheck="false" placeholder="Set the driver's password"/>
+          <button type="button" class="btn btn-outline btn-sm" data-action="gen-driver-pass" title="Generate a strong password">Generate</button>
+        </div>
+        <div class="fr-hint">Write this down or send it to the driver — it is not stored anywhere readable and cannot be shown again.</div>
+      </div>
+      <div class="fr" id="drv-reset-row" hidden>
+        <label>Password</label>
+        <div class="fr-hint" style="margin-top:0">
+          A password can only be changed by the person who owns it. Send a reset
+          link and the driver sets a new one from their own inbox.
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" data-action="reset-driver-pass" style="margin-top:10px">
+          <svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Send password reset link
+        </button>
+      </div>
+    </div>
+
+    <div class="m-actions">
+      <button class="btn btn-outline" id="drv-cancel-btn" data-close="modal-driver">Cancel</button>
+      <button class="btn btn-primary" id="drv-save-btn" data-action="save-driver">Add Driver</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MERCHANT MODAL ══ -->
+<div class="mbg" id="modal-merchant" role="dialog" aria-labelledby="mer-modal-title">
+  <div class="mbox wide">
+    <div class="m-title" id="mer-modal-title">Add New Merchant</div>
+
+    <div class="fset">
+      <div class="fset-title">Business details</div>
+      <div class="mg">
+        <div class="fr"><label for="m-name">Business Name *</label><input id="m-name" placeholder="Restaurant Name"/></div>
+        <div class="fr"><label for="m-cat">Category</label>
+          <select id="m-cat"><option>Food</option><option>Grocery</option><option>Pharmacy</option><option>Packages</option></select>
+        </div>
+        <div class="fr"><label for="m-owner">Owner Name</label><input id="m-owner" placeholder="Owner Full Name"/></div>
+        <div class="fr"><label for="m-phone">Phone Number</label><input id="m-phone" placeholder="1-876-000-0000"/></div>
+        <div class="fr"><label for="m-email">Email Address</label><input id="m-email" type="email" placeholder="business@email.com"/></div>
+        <div class="fr"><label for="m-fee">Delivery Fee (J$) <small>(0 shows as “Free delivery”)</small></label><input id="m-fee" type="number" min="0" step="1" inputmode="numeric" placeholder="200"/></div>
+        <div class="fr"><label for="m-hours">Opening Hours <small>(business hours)</small></label><input id="m-hours" placeholder="8:00 AM – 10:00 PM"/></div>
+        <!-- P3-01: there was no input for this at all, which is why every merchant
+             showed the customer app's hardcoded "25–35 min" fallback. -->
+        <div class="fr"><label for="m-etatime">Delivery Time <small>(ETA shown to customers)</small></label><input id="m-etatime" placeholder="25–35 min"/></div>
+        <div class="fr"><label for="m-status">Status</label>
+          <select id="m-status"><option value="Open">Open</option><option value="Closed">Closed</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="fset">
+      <div class="fset-title">Pickup location</div>
+      <div class="fr"><label for="m-address">Address</label><input id="m-address" placeholder="Street address, Parish"/></div>
+      <!-- P5-06: pickup coordinates. A food order copies these onto itself as
+           pickupLat/pickupLng, and the driver dashboard ranks offers nearest-first
+           from them. Without an input here, admin-created merchants produced orders
+           with null coords that sorted to the back of every driver's queue. -->
+      <div class="fr"><label for="m-location">Coordinates <small>(paste a Google Maps link or “lat, lng” — powers nearest-driver dispatch)</small></label>
+        <input id="m-location" placeholder="e.g. 18.0179, -76.8099 — or paste a Google Maps link"/>
+        <div id="m-location-hint" class="fr-hint" hidden></div>
+      </div>
+      <div class="mg">
+        <div class="fr"><label for="m-lat">Latitude</label><input id="m-lat" type="number" step="any" inputmode="decimal" placeholder="18.0179"/></div>
+        <div class="fr"><label for="m-lng">Longitude</label><input id="m-lng" type="number" step="any" inputmode="decimal" placeholder="-76.8099"/></div>
+      </div>
+    </div>
+
+    <div class="fset">
+      <div class="fset-title">Customer-facing appearance</div>
+      <!-- P4-02: `emoji` is customer-facing display data (home_screen.dart:672)
+           that the panel had no input for, so admin-created merchants fell back
+           to a generic plate while seeded ones had bespoke icons.
+
+           The grid of icons used to be permanently open, which pushed the photo
+           uploader below the fold on every merchant even though most merchants
+           keep whatever icon they already have. It is behind a button now. -->
+      <div class="fr"><label for="m-emoji">Display Icon <small>(shown on the customer home screen)</small></label>
+        <div class="inline-field">
+          <input id="m-emoji" class="emoji-field" maxlength="8" placeholder="🍔"/>
+          <button type="button" class="btn btn-outline btn-sm" id="m-emoji-toggle"
+            data-action="toggle-emoji" aria-expanded="false" aria-controls="m-emoji-picker">Choose icon</button>
+        </div>
+        <div id="m-emoji-picker" class="emoji-picker" role="group" aria-label="Common icons" hidden></div>
+      </div>
+
+      <!-- P4-01 / upload-only: the admin uploads the photo directly — no URL
+           paste. `#m-imageurl` is kept as a HIDDEN field so it stays the single
+           source of truth the uploader writes to and saveMerchant reads. -->
+      <div class="fr"><label for="m-image-file">Restaurant Photo <small>(optional)</small></label>
+        <div id="m-image-drop"></div>
+        <div id="m-image-locked" class="fr-hint" hidden>Save the merchant first — a photo needs somewhere to live.</div>
+      </div>
+    </div>
+
+    <input id="m-imageurl" type="hidden"/>
+    <div class="m-actions">
+      <button class="btn btn-outline" id="mer-cancel-btn" data-close="modal-merchant">Cancel</button>
+      <button class="btn btn-primary" id="mer-save-btn" data-action="save-merchant">Add Merchant</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

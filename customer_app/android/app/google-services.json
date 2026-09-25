@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "783428944628",
+    "project_id": "shipeast-1a1f6",
+    "storage_bucket": "shipeast-1a1f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:783428944628:android:937db7f519026f9a5bd4a1",
+        "android_client_info": {
+          "package_name": "com.shipeast.customerapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcETjuHcvmy7TKL7vHW6sYlUk9sxa-6CA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

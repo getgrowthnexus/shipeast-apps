@@ -1,0 +1,14 @@
+{
+  "name": "shipeast-admin-panel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ShipEast admin portal — static ES modules, no bundler. package.json exists only to pin the lint toolchain (P0-03).",
+  "scripts": {
+    "lint": "eslint app.js",
+    "check": "node --check app.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.13.0"
+  }
+}

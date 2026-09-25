@@ -1,0 +1,4 @@
+# Lint toolchain dependencies (P0-03). Installed by `npm ci` in CI and locally;
+# never committed. package-lock.json IS committed — `npm ci` requires it and it
+# is what pins the toolchain.
+node_modules/

@@ -1,0 +1,83 @@
+name: Deploy admin panel
+
+# Push-to-deploy for the admin portal (admin.shipeastja.com).
+#
+# The panel is unbundled ES modules with no build step, so "deploy" is just
+# publishing admin_panel/ to Firebase Hosting. This workflow makes that
+# automatic:
+#   - push to main touching admin_panel/  -> deploy live
+#   - pull request touching admin_panel/  -> deploy to a temporary preview
+#     channel and comment the URL on the PR (Vercel-style previews)
+#
+# The path filter means Flutter- or functions-only commits do NOT redeploy the
+# panel. A lint + syntax gate runs first because a syntax error in an unbundled
+# module blanks the page in production with no build step to catch it — the same
+# reasoning as the `admin` job in verify.yml.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin_panel/**'
+      - '.github/workflows/deploy-admin.yml'
+  pull_request:
+    paths:
+      - 'admin_panel/**'
+      - '.github/workflows/deploy-admin.yml'
+  # Hand-trigger from the Actions tab (available once this file is on the
+  # default branch) — useful for a re-deploy without a code change.
+  workflow_dispatch:
+
+# A newer push to the same ref makes an in-flight deploy obsolete.
+concurrency:
+  group: deploy-admin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Lint and deploy
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: write # so preview URLs can be commented on PRs
+    defaults:
+      run:
+        working-directory: admin_panel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: admin_panel/package-lock.json
+
+      - name: Install lint toolchain
+        run: npm ci
+
+      # Cheap pure-syntax check on every shipped module — a broken one would
+      # blank the page with no bundler to fail the build.
+      - name: Syntax check
+        run: |
+          for f in app.js config.js image-upload.js location-input.js \
+                   order-status.js overseas-status.js pricing-form.js; do
+            node --check "$f"
+          done
+
+      - name: Lint
+        run: npx eslint app.js image-upload.js pricing-form.js
+
+      # Live on push to main; a preview channel (auto-expiring, URL commented on
+      # the PR) otherwise. The service-account secret is created by
+      # `firebase init hosting:github` — see the repo setup notes.
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SHIPEAST_1A1F6 }}
+          projectId: shipeast-1a1f6
+          entryPoint: ./admin_panel
+          channelId: ${{ github.event_name == 'push' && 'live' || '' }}

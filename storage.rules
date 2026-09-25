@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// ShipEast Cloud Storage rules (P2-02).
+//
+// Every path below is one the apps already write to. Without these rules
+// Storage is in the same state Firestore was: either world-writable, or
+// governed by undocumented console edits.
+//
+// The size and content-type caps matter more here than in Firestore. Merchant
+// photos come from phone cameras at 4-8 MB, and an uncapped bucket is both a
+// cost problem and a denial-of-wallet vector. The 5 MB limit is enforced here
+// as well as client-side (P4-01) because client-side validation is a courtesy,
+// not a control.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    // Uploads must be images, and small enough to serve on Jamaican mobile data.
+    function isImageUnder(mb) {
+      return request.resource.contentType.matches('image/(jpeg|png|webp)')
+             && request.resource.size < mb * 1024 * 1024;
+    }
+
+    // ── Customer avatars ────────────────────────────────────────────────
+    // uploadAvatar → users/{uid}/avatar.jpg
+    match /users/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if signedIn()
+                   && request.auth.uid == userId
+                   && isImageUnder(5);
+    }
+
+    // ── Driver credential documents (DV-5) ──────────────────────────────
+    // uploadDriverDocument → drivers/{uid}/documents/{key}.jpg
+    // A licence photo is NOT public. Read is the driver themselves or an admin;
+    // the admin's document-review flow shows it while approving.
+    match /drivers/{driverId}/documents/{fileName} {
+      allow read: if isAdmin()
+                  || (signedIn() && request.auth.uid == driverId);
+      allow write: if signedIn()
+                   && request.auth.uid == driverId
+                   && isImageUnder(5);
+    }
+
+    // ── Driver avatars ──────────────────────────────────────────────────
+    // uploadProfilePhoto → drivers/{uid}/avatar.jpg
+    match /drivers/{driverId}/{fileName} {
+      // Public read: the customer's tracking card shows the driver's photo.
+      allow read: if true;
+      allow write: if signedIn()
+                   && request.auth.uid == driverId
+                   && isImageUnder(5);
+    }
+
+    // ── Proof of delivery ───────────────────────────────────────────────
+    // uploadDeliveryPhoto → orders/{orderId}/delivery_photo.jpg
+    //
+    // Read is restricted to signed-in users: a delivery photo shows the
+    // customer's doorstep and is not public data. Rules cannot check the
+    // order's driverId from a Storage path, so write is any signed-in user;
+    // the photo is only meaningful alongside the order document, which IS
+    // access-controlled.
+    match /orders/{orderId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if signedIn() && isImageUnder(5);
+    }
+
+    // ── Merchant and menu imagery ───────────────────────────────────────
+    // Admin-only write (P4-01/P4-02), public read — these render on the
+    // customer home screen before sign-in.
+    match /merchants/{merchantId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageUnder(5);
+    }
+
+    // ── Default deny ────────────────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

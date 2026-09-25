@@ -1,0 +1,464 @@
+rules_version = '2';
+
+// ShipEast Firestore security rules.
+// Source of truth for shapes and vocabulary: SCHEMA.md
+// Implements execution-all-three-plan.md P2-01 (audit §7.1).
+//
+// Before this file existed the database was either world-readable and
+// world-writable, or governed by undocumented console edits. Anyone who
+// extracted the (public, and necessarily public) API key from the shipped APK
+// could read every customer's name, phone and home address, read every
+// driver's licence number, and rewrite any order's status or total.
+//
+// Two invariants this file exists to enforce, above all others:
+//   1. A driver cannot approve themselves. Nothing previously stopped a driver
+//      writing status:'approved' to their own document, bypassing the admin
+//      entirely.
+//   2. A client cannot change what an order costs after it is created.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Admin is a custom claim set by the setAdminClaim function (P2-04), NOT an
+    // email allowlist in client code, which is trivially bypassed.
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Fields the write leaves different from what is already stored.
+    function changed() {
+      return incoming().diff(existing()).affectedKeys();
+    }
+
+    // True when the write touches none of [fields].
+    function untouched(fields) {
+      return !changed().hasAny(fields.toSet());
+    }
+
+    // ── Order lifecycle ──────────────────────────────────────────────────
+    // Mirrors OrderStatus.transitions in all three apps. Kept in sync by
+    // tools/check-status-parity.mjs for the apps; this copy is covered by the
+    // rules test suite.
+
+    function legalTransition(from, to) {
+      return (from == 'pending'    && to in ['confirmed', 'cancelled'])
+          || (from == 'confirmed'  && to in ['picked_up', 'cancelled'])
+          || (from == 'picked_up'  && to in ['in_transit', 'cancelled'])
+          || (from == 'in_transit' && to in ['delivered', 'cancelled']);
+      // 'delivered' and 'cancelled' are terminal: no clause, so nothing passes.
+    }
+
+    function statusUnchangedOrLegal() {
+      return !changed().hasAny(['status'])
+          || legalTransition(existing().status, incoming().status);
+    }
+
+    // ── users ────────────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Admin read supports the Customers page (P5-05). Admin cannot write a
+      // customer's profile — only disable the account.
+      allow read: if uid() == userId || isAdmin();
+
+      allow create: if uid() == userId
+                    && incoming().keys().hasAll(['name', 'email'])
+                    && !incoming().keys().hasAny(['disabled', 'fcmToken2']);
+
+      /* A customer may not disable or re-enable their own account, nor set
+         their own segment tags.
+
+         The disabled clause is a backstop, NOT the path the panel uses. On its
+         own that flag is decoration: Firestore rules never consult it, so a
+         customer marked `disabled` keeps their session and keeps ordering.
+         Only disabling the Auth account stops them, and that is privileged —
+         so the panel calls `setUserDisabled` (P5-05), which changes the
+         account and the flag together. Writing the flag from a client leaves
+         it lying about an account that still works.
+
+         `tags` (client checklist CU-4) is operator-assigned segmentation —
+         Diaspora, VIP, Business… — used by the Customers page and by
+         notification audience targeting. Admin-writable directly; a customer
+         cannot tag themselves. */
+      allow update: if (uid() == userId
+                        && untouched(['disabled', 'tags', 'tagsUpdatedAt', 'tagsUpdatedBy']))
+                    || (isAdmin()
+                        && changed().hasOnly(['disabled', 'tags', 'tagsUpdatedAt', 'tagsUpdatedBy']));
+
+      // The owner may delete their own account. Admin delete exists solely for
+      // the Settings → Danger Zone "Erase all data" wipe (a deliberate,
+      // double-confirmed operator action); the panel never deletes a single
+      // customer otherwise — it disables the account instead.
+      allow delete: if uid() == userId || isAdmin();
+
+      match /addresses/{addressId} {
+        allow read, write: if uid() == userId;
+        allow read: if isAdmin();
+        // Admin delete for the data wipe. A saved address is a subcollection
+        // doc, so it does not vanish with the parent user and must be swept
+        // explicitly (see eraseAllData in app.js).
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ── merchants ────────────────────────────────────────────────────────
+    // Public read so the customer app can browse before sign-in.
+    // Admin-only write: the customer app previously seeded 15 demo merchants
+    // into production from the client (audit §13). That seeder is gone, and
+    // this rule is what guarantees it cannot come back.
+
+    match /merchants/{merchantId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /menuItems/{itemId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    // ── drivers ──────────────────────────────────────────────────────────
+
+    match /drivers/{driverId} {
+      // Any signed-in user can read the driver profile, because the customer
+      // tracking screen shows the name, rating and vehicle of the driver
+      // bringing their order (watchDriver, firestore_service.dart). Rules
+      // cannot express "the customer of an order this driver currently holds"
+      // — that would require querying orders from inside a driver-doc read.
+      //
+      // Personally identifying data therefore must NOT live on this document.
+      // licenceNumber belongs in the private subcollection below. See
+      // SCHEMA.md §drivers for the migration.
+      allow read: if signedIn();
+
+      // A driver creates their own document at registration, always pending.
+      // Self-approval is the hole this closes.
+      allow create: if uid() == driverId
+                    && incoming().status == 'pending'
+                    && incoming().totalTrips == 0;
+
+      // A driver may edit their own profile but NOT their approval status or
+      // any earned/aggregate stat. Those are admin- or server-owned.
+      allow update: if (uid() == driverId
+                        && untouched([
+                             'status', 'totalTrips', 'totalRatings',
+                             'ratingCount', 'averageRating', 'ratingCounts',
+                             'todayEarnings'
+                           ]))
+                    || isAdmin();
+
+      allow delete: if isAdmin();
+
+      // PII and anything else customers must never see.
+      match /private/{docId} {
+        allow read, write: if uid() == driverId || isAdmin();
+      }
+    }
+
+    // ── orders ───────────────────────────────────────────────────────────
+
+    match /orders/{orderId} {
+
+      allow read: if isAdmin()
+                  || (signedIn() && existing().customerId == uid())
+                  || (signedIn() && existing().driverId == uid());
+
+      // Created only by the customer placing it, always unclaimed and pending.
+      // The arithmetic invariant is enforced here so a modified client cannot
+      // submit a total that does not follow from its own line items
+      // (SCHEMA.md §orders: subtotal + deliveryFee + serviceFee - discount).
+      allow create: if signedIn()
+                    && incoming().customerId == uid()
+                    && incoming().status == 'pending'
+                    && incoming().driverId == null
+                    // P5-01. `type` distinguishes a courier job from a food
+                    // delivery. Defaulted rather than required, because every
+                    // order written before P5-01 legitimately has no type and
+                    // the migration backfills 'food'. 'overseas' is refused
+                    // here on purpose: overseas shipping is an enquiry an
+                    // admin prices by hand (see /overseasInquiries), never an
+                    // order, so an order of that type could only come from a
+                    // client that invented it.
+                    && incoming().get('type', 'food') in ['food', 'package']
+                    && incoming().subtotal is int
+                    && incoming().deliveryFee is int
+                    && incoming().serviceFee is int
+                    && incoming().total is int
+                    && incoming().subtotal >= 0
+                    && incoming().deliveryFee >= 0
+                    && incoming().serviceFee >= 0
+                    && incoming().total >= 0
+                    && incoming().total == incoming().subtotal
+                                         + incoming().deliveryFee
+                                         + incoming().serviceFee
+                                         - (incoming().get('discount', 0));
+
+      // ── Customer updates ──
+      // Two things only: cancel a pending order, or rate a delivered one.
+      // Never the money, never the driver, never the items.
+      function customerCancelling() {
+        return existing().customerId == uid()
+               && existing().status == 'pending'
+               && incoming().status == 'cancelled'
+               && changed().hasOnly([
+                    'status', 'cancelledAt', 'cancelledBy', 'cancellationReason'
+                  ]);
+      }
+
+      /* Rating is NOT a client write (P3-05). It moved into the `submitRating`
+         callable, which rolls the stars up into the driver and merchant
+         aggregates in one transaction — fields a client must never touch.
+         Leaving the client path open would let a customer set `rated: true`
+         without the roll-up, permanently losing the rating, or re-rate the
+         same order and double-count it. The function runs with admin
+         credentials and so is unaffected by this. */
+
+      // ── Driver updates ──
+      // Claiming: only an unclaimed pending order, and only for themselves.
+      function driverClaiming() {
+        return existing().driverId == null
+               && existing().status == 'pending'
+               && incoming().driverId == uid()
+               && incoming().status == 'confirmed'
+               && changed().hasOnly([
+                    'driverId', 'driverName', 'driverPhone', 'status', 'acceptedAt'
+                  ]);
+      }
+
+      /* Advancing: only the holder, only forward, never the money — and never
+         all the way to `delivered`.
+
+         Delivery is the moment money is decided, so it goes through the
+         `confirmDelivery` callable (P3-04), which recomputes the commission
+         from the order's own stored total. A driver who can write `delivered`
+         directly can complete an order with no commission recorded, and the
+         earnings screens then derive a figure from data that was never
+         written.
+
+         This same clause is what lets the holding driver stream their live
+         `driverLoc` onto the order (DriverLocationService): it is not a protected
+         field and the write leaves `status` unchanged, so it passes here. Keeping
+         the position on the order — readable only by this order's customer —
+         rather than on the world-readable driver document is deliberate. */
+      function driverAdvancing() {
+        return existing().driverId == uid()
+               && incoming().status != 'delivered'
+               && statusUnchangedOrLegal()
+               && untouched([
+                    'total', 'subtotal', 'deliveryFee', 'serviceFee', 'discount',
+                    'promoCode', 'items', 'customerId', 'customerName',
+                    'merchantId', 'driverId'
+                  ]);
+      }
+
+      /* Delivering: the holding driver finalises their own in_transit order.
+         This is the one forward step driverAdvancing() deliberately refuses,
+         because delivery is the moment money is decided.
+
+         It used to run in the `confirmDelivery` callable, which recomputed the
+         commission from the order's own stored total so a modified client could
+         not pay itself an arbitrary amount (P3-04). That function requires the
+         Blaze plan and is not deployed, which left every delivery failing. The
+         SAME guarantee is enforced here instead: the driver may write
+         `delivered`, but only with a `driverCommission` that cannot exceed the
+         order's immutable `total` times the commission rate. The total is not
+         in the touchable set below, so it cannot be inflated first; the rate
+         ceiling is fixed here and mirrors DriverPay.commissionRate in the
+         driver app and DEFAULT_COMMISSION_RATE in functions/delivery.ts. The
+         `+ 1` absorbs the integer rounding of a percentage — one Jamaican
+         dollar of slack, not a payout hole. Earnings screens derive from this
+         `driverCommission`, so a correct figure here is a correct figure there.
+
+         `deliveredAt` must be the server's clock (request.time), which is what
+         a serverTimestamp sentinel resolves to, so the completion time cannot
+         be forged. `driverLoc` is cleared in the same write (the customer's
+         live-tracking coordinate has no meaning once delivered). */
+      function driverDelivering() {
+        return existing().driverId == uid()
+               && existing().status == 'in_transit'
+               && incoming().status == 'delivered'
+               && changed().hasOnly([
+                    'status', 'deliveredAt', 'driverCommission', 'commissionRate',
+                    'driverLoc', 'deliveryPhotoUrl', 'deliveryNote'
+                  ])
+               && incoming().deliveredAt == request.time
+               && incoming().driverCommission is int
+               && incoming().driverCommission >= 0
+               && incoming().driverCommission <= existing().total * 0.10 + 1;
+      }
+
+      // Unassignment is an administrative REVERSAL, not a lifecycle
+      // transition, and it is deliberately absent from legalTransition above:
+      // that table describes the forward path a driver walks, and widening it
+      // would also let a driver push an order backwards.
+      //
+      // Returning a held order to the pool is a legitimate admin action (the
+      // panel's '— Unassigned —' option, P1-07) and needs its own narrow
+      // clause. It is only permitted when the driver is genuinely being
+      // cleared, and only back to pending. See SCHEMA.md §orders.status.
+      function adminUnassigning() {
+        return existing().driverId != null
+               && incoming().driverId == null
+               && incoming().status == 'pending'
+               && existing().status in ['confirmed', 'picked_up', 'in_transit'];
+      }
+
+      allow update: if (isAdmin() && (statusUnchangedOrLegal() || adminUnassigning()))
+                    || (signedIn() && (customerCancelling()
+                                       || driverClaiming()
+                                       || driverAdvancing()
+                                       || driverDelivering()));
+
+      // Cancel, never delete — with one exception. An order is a financial
+      // record, so no lifecycle path deletes one. The sole deleter is an admin
+      // running the Settings → Danger Zone "Erase all data" wipe, a deliberate
+      // and double-confirmed operator action that resets the whole system.
+      allow delete: if isAdmin();
+    }
+
+    // ── promoCodes ───────────────────────────────────────────────────────
+    // Authenticated read so checkout can validate instantly. usedCount is
+    // server-only, which is what turns the usage cap from advisory into real
+    // (P3-03) — client validation stays for UI feedback but is not trusted.
+
+    match /promoCodes/{code} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── notifications ────────────────────────────────────────────────────
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── overseasInquiries ────────────────────────────────────────────────
+    // Shop-and-deliver requests: a customer abroad asks us to buy from a local
+    // Jamaican store and deliver to their family. Not shipping — no carrier, no
+    // customs. The collection name is kept for continuity; "overseas" is the
+    // customer, not the goods. It was a WebView pointed at two placeholder form
+    // URLs; when both failed the customer saw "Connection Error" and their
+    // request went nowhere.
+    //
+    // A request is not an order: no money, no driver, no lifecycle. What it
+    // does carry is a household's name, phone number and street address in
+    // Jamaica, plus a shopping list for them — which is why the read rule is
+    // the author or an admin, and nobody else.
+    //
+    // The division of labour is the whole point of these rules: the customer
+    // owns the request, the admin owns the handling. Neither can write the
+    // other's half.
+
+    // Client checklist SD-4: the nine-stage pipeline plus three outcomes.
+    // Mirrors PIPELINE + OUTCOMES in admin_panel/overseas-status.js and the
+    // Dart OverseasStatus. A migration rewrites the pre-SD-4 slugs
+    // (contacted/quoted/closed) — an admin write of one is refused here.
+    function overseasStatus() {
+      return ['new', 'reviewing', 'quote_sent', 'awaiting_customer', 'approved',
+              'shopping', 'ready_for_delivery', 'out_for_delivery', 'completed',
+              'declined', 'cancelled', 'expired'];
+    }
+
+    match /overseasInquiries/{inquiryId} {
+
+      allow read: if isAdmin()
+                  || (signedIn() && existing().customerId == uid());
+
+      // Filed by the customer, always as 'new'. The handling fields are
+      // refused outright rather than ignored: a client that could create an
+      // enquiry already marked 'closed', or already carrying an internal note,
+      // could hide a request from the queue it exists to enter.
+      allow create: if signedIn()
+                    && incoming().customerId == uid()
+                    && incoming().status == 'new'
+                    && !incoming().keys().hasAny(
+                         ['adminNote', 'handledBy', 'handledAt'])
+                    && incoming().contactEmail is string
+                    && incoming().contactEmail.size() <= 320
+                    && incoming().contactPhone is string
+                    && incoming().contactPhone.size() <= 120
+                    && incoming().recipientName is string
+                    && incoming().recipientName.size() <= 120
+                    && incoming().recipientPhone is string
+                    && incoming().recipientPhone.size() <= 120
+                    && incoming().recipientAddress is string
+                    && incoming().recipientAddress.size() <= 400
+                    && incoming().itemDescription is string
+                    && incoming().itemDescription.size() <= 1000
+                    && incoming().get('notes', '').size() <= 1000
+                    // SD-5: an optional free-text store preference.
+                    && incoming().get('requestedStore', '').size() <= 120;
+
+      // Handling is admin-only, and confined to the handling fields. The
+      // customer's own shopping list is what we buy against, so nobody edits it
+      // after the fact — not even an admin. A wrong list is a new request.
+      //
+      // SD-7 adds the quote sub-fields: an estimate of the item cost, the
+      // service and delivery fees, the total, an expiry, and the payment
+      // status. Still admin-only, still additive — the customer's request body
+      // remains untouchable.
+      allow update: if isAdmin()
+                    && changed().hasOnly(
+                         ['status', 'adminNote', 'handledBy', 'handledAt',
+                          'updatedAt',
+                          'quoteItemsCost', 'quoteServiceFee', 'quoteDeliveryFee',
+                          'quoteTotal', 'quoteExpiresAt', 'quotePaymentStatus',
+                          'quotedAt', 'quotedBy'])
+                    && incoming().status in overseasStatus();
+
+      // Kept, never deleted in normal operation — an enquiry is the only
+      // account of a request that may have been declined for a reason worth
+      // pointing at later. The lone exception is an admin running the
+      // Settings → Danger Zone "Erase all data" wipe.
+      allow delete: if isAdmin();
+    }
+
+    // ── pushLog ──────────────────────────────────────────────────────────
+    // Server-only bookkeeping (P4-04). Firestore triggers are at-least-once,
+    // so each fan-out claims an event key here before sending; a retry finds
+    // the document already present and stays quiet. Admin SDK writes bypass
+    // rules, so denying everything is exactly right: no client has any reason
+    // to read or forge one, and a forged key would silently suppress a real
+    // notification.
+
+    match /pushLog/{eventKey} {
+      allow read, write: if false;
+    }
+
+    // ── settings ─────────────────────────────────────────────────────────
+    // Pricing and commission rate. Public read (the client shows the service
+    // fee); admin write. The server reads this for authoritative commission,
+    // so a client write here would be a payout exploit.
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Default deny ─────────────────────────────────────────────────────
+    // Anything not matched above is denied. Explicit so that adding a
+    // collection without rules fails closed rather than inheriting access.
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

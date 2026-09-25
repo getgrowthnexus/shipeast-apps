@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "783428944628",
+    "project_id": "shipeast-1a1f6",
+    "storage_bucket": "shipeast-1a1f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:783428944628:android:937db7f519026f9a5bd4a1",
+        "android_client_info": {
+          "package_name": "com.shipeast.customerapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "783428944628-ailqdk4hqiee9n4c890c6ghmnkmpm8mt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcETjuHcvmy7TKL7vHW6sYlUk9sxa-6CA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "783428944628-ailqdk4hqiee9n4c890c6ghmnkmpm8mt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:783428944628:android:5961a34e4f30c25a5bd4a1",
+        "android_client_info": {
+          "package_name": "com.shipeast.shipeast_driver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "783428944628-ailqdk4hqiee9n4c890c6ghmnkmpm8mt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcETjuHcvmy7TKL7vHW6sYlUk9sxa-6CA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "783428944628-ailqdk4hqiee9n4c890c6ghmnkmpm8mt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

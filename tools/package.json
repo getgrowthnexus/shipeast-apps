@@ -1,0 +1,13 @@
+{
+  "name": "shipeast-tools",
+  "private": true,
+  "type": "module",
+  "description": "Dev-only scripts. Follows the same pattern as test/rules: its own package.json so a tool's dependencies never leak into an app or a deployed bundle.",
+  "scripts": {
+    "seed": "node seed_emulator.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "http-server": "^14.1.1"
+  }
+}

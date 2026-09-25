@@ -1,0 +1,246 @@
+name: Verify
+
+# The verification gate (execution-all-three-plan.md P0-03).
+#
+# Before this existed, the two APK workflows built and *published* release
+# artifacts on every push to main without ever running `flutter analyze` or
+# `flutter test`. Nothing prevented a broken commit from becoming a published
+# release that users sideload.
+#
+# This workflow is both:
+#   - a standalone check on pull requests and pushes to main, and
+#   - a reusable workflow (`workflow_call`) that the APK builds declare as a
+#     dependency, so no artifact can be published from code that does not pass.
+#
+# `needs:` only works between jobs in a single workflow file, which is why this
+# is a reusable workflow rather than a separate one the APK builds try to
+# reference.
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  workflow_call:
+  workflow_dispatch:
+
+# A newer push to the same branch makes an in-flight run obsolete.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The canonical order lifecycle is duplicated into all three apps until
+  # P6-04 extracts a shared package. This job is what keeps the copies honest
+  # (P1-02). It runs first and is cheap — no toolchain needed.
+  status-parity:
+    name: Order status parity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check status constants are in sync across all three apps
+        run: node tools/check-status-parity.mjs
+
+      # The Dart copies have flutter_test; this is the JS equivalent, covering
+      # the transition and assignment logic the admin panel delegates to.
+      - name: Test the admin lifecycle module
+        run: node tools/test-order-status.mjs
+
+      # The migration logic is pure functions with no firebase-admin dependency
+      # precisely so it can be tested here, with no credentials and no
+      # database. "Migration corrupts production data" is rated Medium/SEVERE
+      # in the plan's risk register, and an untested migration is how that
+      # happens. The suite runs every migration twice to prove idempotence,
+      # which is what makes an interrupted production run safe to resume.
+      - name: Test the data migrations
+        run: node --test tools/migrate/migrations.test.mjs
+
+      # The panel's image pipeline (P4-01/P4-02). `image-upload.js` is
+      # deliberately import-free so it loads in plain Node: what we refuse to
+      # upload, what we resize to, and whether a stored image is ours before we
+      # delete it are all decidable here rather than in a browser.
+      - name: Test the admin image pipeline
+        run: node --test tools/test-image-upload.mjs
+
+      # The package price list (P5-01). The customer app refuses to quote a
+      # package price unless this table parses, so a table that parses WRONGLY
+      # is worse than one that fails — every case pinned here is a way the
+      # admin's intent and the saved table could quietly disagree.
+      - name: Test the package pricing editor
+        run: node --test tools/test-pricing-form.mjs
+
+      # The overseas enquiry queue. An enquiry is a person waiting to hear back
+      # about sending something to their family, so the failure that matters is
+      # not a crash — it is an enquiry that quietly never appears in the queue
+      # an operator works from. Filtering, sorting and search live in an
+      # import-free module precisely so those cases can be pinned here.
+      - name: Test the overseas enquiry queue
+        run: node --test tools/test-overseas-status.mjs
+
+  flutter:
+    name: Flutter (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false          # report both apps in one run, not just the first to break
+      matrix:
+        app: [ customer_app, driver_app ]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read pinned Flutter version
+        id: toolchain
+        working-directory: .
+        # .tool-versions is the single source of truth for the toolchain, so CI
+        # and local builds cannot drift. Tracking `channel: stable` instead would
+        # let an upstream Flutter release silently change the build.
+        run: |
+          version="$(awk '/^flutter /{print $2}' .tool-versions | sed 's/-stable$//')"
+          if [ -z "$version" ]; then
+            echo "::error file=.tool-versions::No 'flutter <version>' line found"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Pinned Flutter: $version"
+
+      - name: Set up Flutter ${{ steps.toolchain.outputs.version }}
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ steps.toolchain.outputs.version }}
+          channel: stable
+          cache: true
+
+      - name: Flutter / Dart versions
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Errors block. Warnings and infos are reported but do not fail the job:
+      # the pre-existing baseline has not been cleared yet, and P6-02 is the
+      # work item that clears it and flips this to --fatal-infos. Gating on the
+      # baseline today would just block every PR on unrelated findings.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test
+
+  # The rules suite is the highest-value gate in this workflow. The plan's own
+  # risk register ranks "rules deploy blocks a legitimate flow" as the most
+  # likely launch failure, so these test both directions: what must be denied,
+  # and what must keep working.
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: test/rules/package-lock.json
+
+      # The Firestore emulator is a Java process.
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        working-directory: test/rules
+        run: npm ci
+
+      - name: Run rules tests against the emulator
+        working-directory: test/rules
+        run: npx firebase emulators:exec --only firestore --project shipeast-rules-test 'node --test'
+
+  functions:
+    name: Cloud Functions
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `firebase deploy` runs this as a predeploy step, so a type error here
+      # would otherwise surface only at deploy time.
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      # The pure logic — promo evaluation (P3-03) and the commission arithmetic
+      # (P3-04) — is deliberately free of firebase-admin so it can be pinned
+      # here with no credentials and no emulator. Both decide what money
+      # changes hands.
+      #
+      # The count guard is not decoration. The first version of this step used
+      # `lib/**/*.test.js`, which expands only when bash has `globstar` set —
+      # it does locally and does not here. A later variant found no files and
+      # exited 0, so the job would have reported PASS while running nothing.
+      # A suite that silently runs zero tests is worse than no suite at all.
+      - name: Test
+        run: |
+          count=$(ls lib/*.test.js 2>/dev/null | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No compiled test files in functions/lib — the suite would have passed by running nothing."
+            exit 1
+          fi
+          echo "Running $count test file(s)"
+          npm test
+
+  admin:
+    name: Admin panel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin_panel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: admin_panel/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The panel ships unbundled ES modules straight to the browser, so a
+      # syntax error blanks the page in production with no build step to catch
+      # it. These two steps are that missing build step.
+      - name: Syntax check
+        run: node --check app.js && node --check image-upload.js && node --check pricing-form.js
+
+      - name: Lint
+        run: npx eslint app.js image-upload.js pricing-form.js

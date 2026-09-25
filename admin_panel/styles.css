@@ -1,0 +1,1723 @@
+/* ═══════════════════════════════════════════════════════════════
+   ShipEast Design System (SEDS) — Admin Panel
+   Token-driven. Every value in this file comes from PLAN.md §1.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────── FONTS (self-hosted, variable) ─────────────── */
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url('assets/fonts/jakarta-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Plus Jakarta Sans';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url('assets/fonts/jakarta-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url('assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Inter';font-style:normal;font-weight:100 900;font-display:swap;
+  src:url('assets/fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+
+/* ─────────────── TOKENS ─────────────── */
+:root{
+  /* red ramp */
+  --red-50:#FFF1F3;  --red-100:#FFE0E5; --red-200:#F7B9C2; --red-300:#EE8492;
+  --red-400:#E1495F; --red-500:#C8102E; --red-600:#A80D26; --red-700:#86091E;
+  --red-800:#5F0615; --red-900:#3D0410;
+
+  /* signature gradients */
+  --grad-ember:linear-gradient(135deg,#E11D34 0%,#C8102E 52%,#9A0B22 100%);
+  --grad-sunset:linear-gradient(135deg,#FF6A3D 0%,#E11D34 55%,#C8102E 100%);
+  --grad-scrim:linear-gradient(180deg,rgba(20,18,15,0) 0%,rgba(20,18,15,.72) 100%);
+
+  /* supporting hues */
+  --gold-500:#F5A524; --gold-tint:#FEF3E2;
+  --ocean-500:#0E9488; --ocean-tint:#E5F6F4;
+
+  /* semantic */
+  --success:#16A34A; --success-tint:#E6F6EC;
+  --warning:#F59E0B; --warning-tint:#FEF3E2;
+  --danger:#D92D20;  --danger-tint:#FDECEA;
+  --info:#0E9488;    --info-tint:#E5F6F4;
+
+  /* warm neutrals */
+  --ink-900:#1C1A17; --ink-700:#3A362F; --ink-500:#6B6459; --ink-400:#938C7F;
+  --ink-300:#C7C0B4; --ink-200:#E4E0D9; --ink-100:#ECEAE6;
+
+  /* themed roles (light) */
+  --bg:#FAF9F7;
+  --card:#FFFFFF;
+  --card-raised:#FFFFFF;
+  /* Sunken/tinted surfaces. The page background and the card background are
+     both near-white, so a segmented control or a table header tinted with
+     either had no visible edge — that is the "no contrast" complaint. These
+     three give one, and are overridden per theme below rather than hardcoded
+     at each use site. */
+  --track:#EDEAE3;          /* segmented-control / filter-bar track */
+  --track-pill:#FFFFFF;     /* the selected segment sitting on that track */
+  --band:#F4F1EB;           /* table header + card title bands */
+  --text-hi:#1C1A17;
+  --text-lo:#6B6459;
+  --text-mute:#938C7F;
+  --border:#E4E0D9;
+  --border-strong:#ECEAE6;
+  --brand:#C8102E;
+  --brand-text:#86091E;   /* red on light tint — AA safe */
+  --field:#FFFFFF;
+  --hover:#FAF9F7;
+  --sidebar-bg:#1C1A17;
+  --scrim:rgba(28,26,23,.48);
+
+  /* spacing — 4pt grid */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px;
+  --s8:32px; --s10:40px; --s12:48px; --s16:64px;
+  --gutter:20px;
+
+  /* radius */
+  --r-xs:5px; --r-sm:7px; --r-md:9px; --r-lg:12px; --r-xl:16px; --r-full:999px;
+
+  /* elevation — layered, warm-tinted */
+  --e1:0 1px 2px rgba(28,26,23,.04), 0 2px 6px rgba(28,26,23,.06);
+  --e2:0 4px 12px rgba(28,26,23,.08), 0 2px 4px rgba(28,26,23,.05);
+  --e3:0 10px 28px rgba(28,26,23,.12);
+  --e4:0 20px 48px rgba(28,26,23,.18);
+  /* Signature red halo — softened (was 8px/22px/.30). The stacked glow was the
+     #1 "AI-coded" tell; this reads as a lift, not a neon flare. Cascades to
+     every primary button, avatar, and the online/settings toggles at once. */
+  --glow:0 6px 16px rgba(200,16,46,.20);
+
+  /* motion */
+  --d-instant:100ms; --d-fast:180ms; --d-base:240ms; --d-slow:360ms; --d-deliberate:520ms;
+  --ease:cubic-bezier(.2,0,0,1);
+  --ease-in:cubic-bezier(0,0,0,1);
+  --ease-out:cubic-bezier(.4,0,1,1);
+
+  /* layout */
+  --sw:248px; --swc:72px;
+}
+
+[data-theme="dark"]{
+  --bg:#141310;
+  --card:#201E1A;
+  --card-raised:#2A2823;
+  --text-hi:#F5F2EC;
+  --text-lo:#A49E92;
+  --text-mute:#7C766B;
+  --border:#33302A;
+  --border-strong:#3D3A33;
+  --brand:#F04A5E;
+  --brand-text:#F04A5E;
+  --field:#2A2823;
+  --hover:#2A2823;
+  --track:#1B1916;
+  --track-pill:#35312B;
+  --band:#26241F;
+  --sidebar-bg:#100F0D;
+  --scrim:rgba(0,0,0,.62);
+  --red-50:#2A1116;
+  --red-100:#38151C;
+  --success-tint:#122A1B;
+  --warning-tint:#2E2314;
+  --danger-tint:#2E1613;
+  --info-tint:#0F2422;
+  --gold-tint:#2E2314;
+  --ocean-tint:#0F2422;
+  --e1:0 1px 2px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.28);
+  --e2:0 4px 12px rgba(0,0,0,.4), 0 2px 4px rgba(0,0,0,.3);
+  --e3:0 10px 28px rgba(0,0,0,.5);
+  --e4:0 20px 48px rgba(0,0,0,.6);
+  --glow:0 6px 16px rgba(240,74,94,.20);
+}
+
+/* ─────────────── BASE ─────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* The `hidden` attribute only hides an element because the UA stylesheet says
+   `[hidden]{display:none}` — and that is a *type* selector, so ANY class rule
+   with its own `display` silently beats it. That is not a theoretical hazard
+   here: `.bell-badge{display:inline-flex}` and `.up-preview{display:flex}` both
+   won, which is why the notification bell showed a red "0" that JS had already
+   set `hidden` on, and why a merchant form opened showing the previously-viewed
+   restaurant's photo. Every element the panel hides is hidden through this
+   attribute, so one authoritative rule fixes the whole class of bug. */
+[hidden]{display:none!important;}
+
+html{-webkit-text-size-adjust:100%;}
+/* Hard guard against page-level horizontal scroll: nothing in-flow may push the
+   document sideways. `clip` (not `hidden`) avoids creating a scroll container,
+   so the sticky topbar and position:fixed sidebar/modals are unaffected. */
+html,body{overflow-x:clip;max-width:100%;}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);color:var(--text-hi);
+  font-size:15px;line-height:1.47;min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  transition:background var(--d-base) var(--ease),color var(--d-base) var(--ease);
+}
+h1,h2,h3,.font-display{font-family:'Plus Jakarta Sans','Inter',sans-serif;text-wrap:balance;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:var(--r-xs);}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
+
+/* type scale */
+.t-display{font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;line-height:38px;font-weight:800;letter-spacing:-.6px;}
+.t-h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;line-height:32px;font-weight:800;letter-spacing:-.5px;}
+.t-h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;line-height:28px;font-weight:800;letter-spacing:-.4px;}
+.t-h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;line-height:24px;font-weight:700;letter-spacing:-.2px;}
+.t-section{font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;line-height:24px;font-weight:800;letter-spacing:-.35px;}
+.t-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:22px;font-weight:700;letter-spacing:-.1px;}
+.t-body{font-size:15px;line-height:22px;font-weight:400;}
+.t-bodys{font-size:13px;line-height:18px;font-weight:400;}
+.t-label{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.4px;}
+.t-eyebrow{font-size:11px;line-height:14px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
+
+/* icons */
+.ic{width:24px;height:24px;flex-shrink:0;fill:currentColor;display:block;}
+.ic-sm{width:20px;height:20px;}
+.ic-xs{width:16px;height:16px;}
+.ic-lg{width:28px;height:28px;}
+
+/* ─────────────── LOGIN ─────────────── */
+/* Pre-auth brand chrome, authored once for both themes — like the sidebar, and
+   for the same reason. The card carries the real lockup, which is single-colour
+   #FF0043 artwork drawn for white stock; on the dark theme's --card (#201E1A)
+   its hairlines (scooter spokes, the "Ship East" swash, the compass ring) drop
+   to ~4.9:1 and read muddy. The theme toggle also lives in the topbar, so it is
+   not even reachable from this screen — nobody can be looking at a dark login
+   card on purpose. Rather than hardcode a hex at every use site, the themed
+   role tokens are pinned to their light values on the scope, so `.btn-primary`,
+   `#l-err` and the fields all keep working through the same variables they use
+   everywhere else. */
+#login-page{
+  --card:#FFFFFF; --field:#FFFFFF; --bg:#FAF9F7; --hover:#FAF9F7;
+  --text-hi:#1C1A17; --text-lo:#3A362F; --text-mute:#938C7F;
+  --border:#E4E0D9; --brand:#C8102E; --red-50:#FFF1F3;
+  --danger:#D92D20; --danger-tint:#FDECEA;
+
+  min-height:100vh;min-height:100svh;
+  display:flex;align-items:center;justify-content:center;
+  padding:var(--s6) var(--s5);position:relative;isolation:isolate;
+  /* A composed canvas, not a gradient wash: flat warm ink, one ember bloom
+     sitting behind the card, and a 44px hairline grid for material. The grid is
+     what stops the flat fill reading as an empty <body>. */
+  background-color:#131110;
+  background-image:
+    linear-gradient(rgba(245,242,236,.038) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(245,242,236,.038) 1px,transparent 1px);
+  background-size:44px 44px,44px 44px;
+}
+/* Bloom + vignette. On its own layer so the grid above stays crisp and the
+   bloom does not tint the card's shadow. The ember pool is wider than the card
+   on purpose — it has to read around the card, not only behind it, or the
+   canvas goes back to looking like an unstyled black <body>. */
+#login-page::before{
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 660px at 50% 30%,rgba(225,29,52,.42) 0%,rgba(200,16,46,.17) 40%,rgba(154,11,34,.05) 62%,rgba(200,16,46,0) 78%),
+    radial-gradient(760px 460px at 6% 104%,rgba(255,106,61,.12) 0%,rgba(255,106,61,0) 62%),
+    radial-gradient(1400px 820px at 50% 118%,rgba(0,0,0,.62) 0%,rgba(0,0,0,0) 66%);
+}
+
+.lc{
+  position:relative;
+  background:var(--card);
+  /* --r-lg is the card radius in the tightened SEDS scale; --r-xl (16px) is
+     reserved for heroes and sheet tops, which is why this read rounder than
+     every other surface in the three apps. */
+  border-radius:var(--r-lg);
+  padding:var(--s8) var(--s8) var(--s6);
+  width:min(444px,100%);
+  box-shadow:var(--e4),0 0 0 1px rgba(28,26,23,.06);
+  animation:rise var(--d-slow) var(--ease-in) both;
+}
+/* Ember hairline along the top edge — ties the white card to the brand without
+   putting red behind the artwork. */
+.lc::before{
+  content:'';position:absolute;inset:0 0 auto 0;height:3px;
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+  background:var(--grad-sunset);
+}
+
+.lc-mark{
+  display:block;width:min(224px,72%);height:auto;margin:var(--s2) auto var(--s5);
+}
+
+/* Ruled eyebrow — says which of the three apps this is. Rules are drawn with
+   flex siblings rather than a border on the text so they always meet the label
+   symmetrically, whatever its length. */
+.lc-eyebrow{
+  display:flex;align-items:center;gap:var(--s3);
+  color:var(--text-mute);
+  font-size:11px;line-height:14px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+}
+.lc-eyebrow::before,.lc-eyebrow::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.lc-title{
+  font-family:'Plus Jakarta Sans','Inter',sans-serif;
+  font-size:26px;line-height:32px;font-weight:800;letter-spacing:-.5px;
+  color:var(--text-hi);text-align:center;margin-top:var(--s5);
+}
+.lc-lede{
+  font-size:15px;line-height:22px;color:var(--ink-500);
+  text-align:center;margin:6px 0 var(--s6);
+}
+
+/* ── Login fields ──────────────────────────────────────────────────────
+   Deliberately not `.fg`: this matches SeTextField in the customer and driver
+   apps — uppercase 12px label, leading glyph that lights up on focus, 1.5px
+   resting border going 2px + a 3px ring on focus, and the reveal toggle. */
+.lf{margin-bottom:var(--s4);}
+.lf label{
+  display:block;margin-bottom:7px;color:var(--ink-700);
+  font-size:12px;line-height:16px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;
+}
+.lf-box{
+  display:flex;align-items:center;background:var(--field);
+  border:1.5px solid var(--border);border-radius:var(--r-sm);
+  transition:border-color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.lf-box:focus-within{border-color:var(--brand);border-width:2px;box-shadow:0 0 0 3px var(--red-50);}
+/* The border going 1.5px → 2px on focus would shift the input 0.5px; take it
+   out of the padding instead so nothing inside moves. */
+.lf-box:focus-within .lf-ic{margin-left:12.5px;color:var(--brand);}
+.lf-box:focus-within input{padding-top:12.5px;padding-bottom:12.5px;}
+.lf-ic{
+  width:20px;height:20px;margin:0 10px 0 14px;color:var(--text-mute);flex-shrink:0;
+  transition:color var(--d-fast) var(--ease),margin var(--d-fast) var(--ease);
+}
+.lf-box input{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;
+  padding:13px 14px 13px 0;font-size:15px;line-height:22px;color:var(--text-hi);
+}
+.lf-box input::placeholder{color:var(--ink-400);}
+/* Chrome's autofill repaints the field a flat blue-white and overrides `color`;
+   the inset shadow is the only way to hold the surface, and -webkit-text-fill
+   the only way to hold the text. Without these an autofilled login card lost
+   both its white field and its warm ink. */
+.lf-box input:-webkit-autofill{
+  -webkit-text-fill-color:var(--text-hi);
+  -webkit-box-shadow:0 0 0 40px var(--field) inset;
+  caret-color:var(--text-hi);
+}
+.lf-eye{
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:34px;height:34px;margin-right:6px;border:none;border-radius:var(--r-xs);
+  background:transparent;color:var(--text-mute);cursor:pointer;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease);
+}
+.lf-eye .ic{width:18px;height:18px;}
+.lf-eye:hover{background:var(--bg);color:var(--text-hi);}
+.lf-eye[aria-pressed="true"]{color:var(--brand);}
+
+/* Matches SeButton's `large` size across the two Flutter apps: 50px tall,
+   --r-md corners, Jakarta 700 at 16px. Written as `.btn.lc-cta` because the
+   BUTTONS block further down this file would otherwise win on source order and
+   drag the padding and radius back to the default. */
+.btn.lc-cta{
+  width:100%;height:50px;margin-top:var(--s5);padding:0 var(--s5);
+  border-radius:var(--r-md);
+  font-family:'Plus Jakarta Sans','Inter',sans-serif;
+  font-size:16px;font-weight:700;letter-spacing:-.1px;gap:var(--s2);
+}
+.btn.lc-cta .ic{width:20px;height:20px;transition:transform var(--d-fast) var(--ease);}
+.btn.lc-cta:hover:not(:disabled) .ic{transform:translateX(3px);}
+
+.l-foot{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--border);
+  font-size:12px;line-height:16px;color:var(--text-mute);text-align:center;
+}
+.l-foot .ic{opacity:.7;}
+
+#l-err{
+  display:none;align-items:center;gap:var(--s2);margin-top:var(--s3);
+  background:var(--danger-tint);color:var(--danger);border-radius:var(--r-sm);
+  padding:10px 14px;font-size:13px;line-height:18px;font-weight:600;
+  box-shadow:inset 3px 0 0 var(--danger);
+}
+#l-err.show{display:flex;animation:shake var(--d-slow) var(--ease);}
+#l-err .ic{flex-shrink:0;}
+
+@media (max-width:420px){
+  .lc{padding:var(--s6) var(--s5) var(--s5);}
+  .lc-title{font-size:22px;line-height:28px;letter-spacing:-.4px;}
+  /* The registered company line is 48 characters; at 12px it wraps mid-name on
+     a 360px phone. 11px keeps it on one line down to 320px. */
+  .l-foot{font-size:11px;}
+}
+
+/* ─────────────── SHELL ─────────────── */
+#app{display:none;min-height:100vh;overflow-x:clip;}
+.sidebar{
+  width:var(--sw);background:var(--sidebar-bg);position:fixed;inset:0 auto 0 0;
+  height:100vh;display:flex;flex-direction:column;z-index:100;
+  transition:width var(--d-base) var(--ease),transform var(--d-base) var(--ease);
+}
+/* Desktop hamburger fully hides the sidebar (slides it off-canvas) and lets the
+   content take the full width — a partial 72px icon rail read as a "half sidebar"
+   and looked broken. The rail-specific rules below now apply only to an
+   off-screen element, so they are harmless. */
+.sidebar.collapsed{transform:translateX(-100%);}
+.sb-logo{padding:var(--s6) var(--s5) var(--s5);border-bottom:1px solid rgba(255,255,255,.07);
+  overflow:hidden;white-space:nowrap;display:flex;align-items:center;gap:var(--s3);min-height:70px;}
+.sb-mark{display:none;flex-shrink:0;width:40px;height:40px;border-radius:var(--r-sm);
+  background:var(--grad-ember);color:#fff;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.5px;
+  box-shadow:var(--glow);}
+.sb-word{min-width:0;}
+.sb-logo .slt{font-family:'Plus Jakarta Sans',sans-serif;font-size:21px;font-weight:800;
+  letter-spacing:-.6px;color:#F5F2EC;}
+.sb-logo .slt span{color:#F04A5E;}
+.sb-logo .sls{font-size:10px;color:rgba(245,242,236,.36);letter-spacing:.8px;
+  text-transform:uppercase;font-weight:700;margin-top:3px;}
+/* Collapsed rail: swap the clip-prone wordmark for a compact SE mark. */
+.sidebar.collapsed .sb-logo{justify-content:center;padding:var(--s5) 0;gap:0;}
+.sidebar.collapsed .sb-word{display:none;}
+.sidebar.collapsed .sb-mark{display:flex;}
+.sb-nav{flex:1;padding:var(--s3) 0;overflow-y:auto;overflow-x:hidden;}
+.sb-sec{padding:var(--s4) var(--s5) var(--s2);font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:rgba(245,242,236,.28);white-space:nowrap;}
+.sidebar.collapsed .sb-sec{opacity:0;height:var(--s6);padding:var(--s2) 0;}
+.ni{
+  position:relative;display:flex;align-items:center;gap:var(--s3);
+  padding:12px var(--s5);cursor:pointer;color:rgba(245,242,236,.56);
+  font-size:14px;font-weight:500;white-space:nowrap;user-select:none;
+  transition:color var(--d-fast) var(--ease),background var(--d-fast) var(--ease);
+}
+.ni::before{ /* gradient left rail */
+  content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;
+  background:var(--grad-ember);transform:scaleY(0);transform-origin:center;
+  transition:transform var(--d-base) var(--ease);
+}
+.ni:hover{background:rgba(255,255,255,.05);color:#F5F2EC;}
+.ni.active{background:rgba(240,74,94,.13);color:#F5F2EC;}
+.ni.active::before{transform:scaleY(1);}
+.ni .ic{color:inherit;}
+.ni .ni-fill{display:none;}
+.ni.active .ni-fill{display:block;}
+.ni.active .ni-line{display:none;}
+.ni.active .ic{color:#F04A5E;}
+.ni .lbl{transition:opacity var(--d-fast) var(--ease);}
+.sidebar.collapsed .lbl,.sidebar.collapsed .sls{opacity:0;pointer-events:none;}
+.sidebar.collapsed .ni{justify-content:center;padding:12px 0;}
+.ndiv{height:1px;background:rgba(255,255,255,.07);margin:var(--s2) var(--s5);}
+.sidebar.collapsed .ndiv{margin:var(--s2) var(--s3);}
+/* Unseen-count badge on a nav item. Sits at the far right of the row; on the
+   collapsed rail it shrinks to a corner dot since the label is hidden. */
+.ni-badge{
+  margin-left:auto;min-width:19px;height:19px;padding:0 6px;border-radius:6px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;line-height:1;color:#fff;background:var(--brand);
+  font-variant-numeric:tabular-nums;box-shadow:0 0 0 3px rgba(240,74,94,.18);
+}
+.ni-badge[data-tone="gold"]{background:var(--gold-500);color:#3A2600;box-shadow:0 0 0 3px rgba(245,165,36,.18);}
+.ni-badge[data-tone="ocean"]{background:var(--ocean-500);box-shadow:0 0 0 3px rgba(14,148,136,.2);}
+.ni-badge[data-tone="success"]{background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,.2);}
+.sidebar.collapsed .ni-badge{
+  position:absolute;top:6px;right:9px;margin:0;min-width:9px;width:9px;height:9px;
+  padding:0;border-radius:50%;font-size:0;box-shadow:0 0 0 2px var(--sidebar-bg);
+}
+.main{margin-left:var(--sw);display:flex;flex-direction:column;min-height:100vh;min-width:0;
+  overflow-x:clip;transition:margin-left var(--d-base) var(--ease);}
+.main.expanded{margin-left:0;}
+
+/* ─────────────── TOPBAR ─────────────── */
+.topbar{
+  background:var(--card);min-height:68px;padding:0 var(--s6);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s4);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;
+}
+.tb-l{display:flex;align-items:center;gap:var(--s4);min-width:0;}
+.iconbtn{
+  width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;background:transparent;border:none;border-radius:var(--r-sm);
+  color:var(--text-lo);flex-shrink:0;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),transform var(--d-instant) var(--ease);
+}
+.iconbtn:hover{background:var(--hover);color:var(--text-hi);}
+.iconbtn:active{transform:scale(.94);}
+/* Now the topbar's only page label, so it is sized to be read rather than
+   skimmed past — and it must not wrap, or a two-line crumb pushes the 68px bar
+   out of shape on "Shop & Deliver Requests". */
+.tb-bc{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-mute);
+  display:flex;align-items:center;gap:5px;min-width:0;}
+.tb-bc em{color:var(--brand);font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-bc-root{white-space:nowrap;flex-shrink:0;}
+.tb-bc .ic{width:12px;height:12px;flex-shrink:0;}
+.tb-r{display:flex;align-items:center;gap:var(--s3);flex-shrink:0;}
+.tb-date{font-size:12px;color:var(--text-mute);font-weight:500;}
+.ab{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);
+  padding:5px 14px 5px 5px;border-radius:var(--r-full);}
+/* Teal, not ember. See the comment on .ab in index.html. */
+.av{width:32px;height:32px;background:linear-gradient(135deg,#17B3A4 0%,#0E9488 100%);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13px;flex-shrink:0;
+  box-shadow:0 4px 12px rgba(14,148,136,.24);}
+.an{font-size:13.5px;font-weight:600;color:var(--text-hi);line-height:1.2;white-space:nowrap;}
+
+/* ─────────────── ACTIVITY BELL ─────────────── */
+.bell-wrap{position:relative;}
+#bell-btn{position:relative;overflow:visible;}
+/* A true circle at one digit, growing into a pill only when the count needs two
+   — the old 5px-radius rounded square read as a misaligned block. It carries
+   `hidden` whenever the unread total is 0 (renderActivity), which now actually
+   hides it; see the [hidden] rule at the top of this file. */
+.bell-badge{
+  position:absolute;top:0;right:0;
+  min-width:18px;height:18px;padding:0 5px;
+  border-radius:var(--r-full);background:var(--brand);color:#fff;
+  font-size:10.5px;font-weight:800;line-height:1;letter-spacing:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;box-shadow:0 0 0 2px var(--card);
+  font-variant-numeric:tabular-nums;pointer-events:none;
+}
+.bell-menu{
+  position:absolute;top:calc(100% + 8px);right:0;width:308px;max-width:calc(100vw - 32px);
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+  box-shadow:var(--e3);z-index:60;overflow:hidden;
+  opacity:0;visibility:hidden;transform:translateY(-6px);
+  transition:opacity var(--d-fast) var(--ease),transform var(--d-fast) var(--ease),visibility var(--d-fast) var(--ease);
+}
+.bell-menu.open{opacity:1;visibility:visible;transform:none;}
+.bell-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;color:var(--text-hi);}
+.bell-clear{background:none;border:none;cursor:pointer;color:var(--brand);
+  font-size:12px;font-weight:600;padding:2px 4px;border-radius:var(--r-xs);}
+.bell-clear:hover{text-decoration:underline;}
+.bell-list{max-height:340px;overflow-y:auto;}
+.bell-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:12px 14px;background:none;border:none;border-bottom:1px solid var(--border);
+  cursor:pointer;color:var(--text-hi);transition:background var(--d-fast) var(--ease);}
+.bell-item:last-child{border-bottom:none;}
+.bell-item:hover{background:var(--hover);}
+.bell-dot{width:9px;height:9px;border-radius:50%;background:var(--brand);flex-shrink:0;}
+.bell-dot[data-tone="gold"]{background:var(--gold-500);}
+.bell-dot[data-tone="ocean"]{background:var(--ocean-500);}
+.bell-dot[data-tone="success"]{background:var(--success);}
+.bell-txt{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;}
+.bell-txt b{font-size:13px;font-weight:600;}
+.bell-sub{font-size:11px;color:var(--text-mute);}
+.bell-item>.ic{color:var(--text-mute);width:16px;height:16px;flex-shrink:0;}
+.bell-empty{display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:30px 14px;color:var(--text-mute);font-size:13px;text-align:center;}
+.bell-empty .ic{width:30px;height:30px;color:var(--success);}
+
+/* ─────────────── PAGES ─────────────── */
+.pw{padding:var(--s6) var(--gutter);flex:1;max-width:1560px;width:100%;min-width:0;}
+.page{display:none;}
+.page.active{display:block;animation:fadeThrough var(--d-base) var(--ease-in);}
+.pg-hdr{display:flex;justify-content:space-between;align-items:center;gap:var(--s4);
+  flex-wrap:wrap;margin-bottom:var(--s5);}
+/* Given a surface of its own rather than left as bare text on the page
+   background. Two things come out of that: the heading anchors the top of the
+   page instead of floating, and it can carry the brand rail that the stat cards
+   and the sidebar's active item already use — so the eye reads "you are here"
+   from the same cue in three places.
+
+   The size is fluid, not stepped. A fixed 26px turned "Shop & Deliver Requests"
+   into three cramped lines on a phone; clamp() lets the longest title in the
+   panel settle without a per-page override. */
+.pg-title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(18px,1.15rem + 1.1vw,26px);
+  line-height:1.25;font-weight:800;letter-spacing:-.4px;color:var(--text-hi);
+  display:inline-flex;align-items:center;min-width:0;
+  padding:9px 18px 9px 15px;
+  background:var(--band);
+  border:1px solid var(--border);
+  border-left:3px solid var(--brand);
+  border-radius:var(--r-sm);
+  text-wrap:balance;
+}
+
+/* ─────────────── CARDS ─────────────── */
+/* --card-pad is declared here rather than used inline so .card-title can pull
+   itself back out to the card's edges with a single value that the responsive
+   block can change in one place. */
+.card{
+  --card-pad:var(--s5);
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--card-pad);box-shadow:var(--e1);margin-bottom:var(--s5);min-width:0;
+  transition:box-shadow var(--d-base) var(--ease),border-color var(--d-base) var(--ease);
+}
+/* A titled band across the top of the card, not a line of bold text floating in
+   its padding. "Top Merchants", "Payment Breakdown", "Package Delivery",
+   "Compose Notification" and the rest now each sit in a header that visibly
+   belongs to the card below it, which is what was missing: the title and its
+   contents were the same surface, so there was nothing to say where one ended.
+   Negative margins take it to the card's own border, and the top corners are
+   rounded to match. */
+.card-title{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;
+  letter-spacing:-.1px;color:var(--text-hi);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--s3);
+  flex-wrap:wrap;
+  margin:calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) var(--card-pad);
+  padding:12px var(--card-pad);
+  background:var(--band);
+  border-bottom:1px solid var(--border);
+  border-radius:calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0 0;
+}
+.card-note{font-size:11px;font-weight:600;color:var(--text-mute);
+  display:inline-flex;align-items:center;gap:5px;}
+/* Explanatory line under a page heading (e.g. Merchants). Sits between the
+   .pg-hdr and the first content block; pulled up so it reads as part of the
+   header group rather than floating above the stats. */
+.pg-note{font-size:13px;line-height:1.45;color:var(--text-mute);
+  margin:calc(var(--s4) * -1) 0 var(--s5);max-width:60ch;}
+/* NT-5 notification character counter. Sits inline in the field label. */
+.char-count{float:right;font-size:11px;font-weight:600;color:var(--text-mute);
+  font-variant-numeric:tabular-nums;}
+.char-count-warn{color:var(--warning);}
+.char-count-full{color:var(--danger);}
+/* Danger Zone keeps the banded header but tints it red, so the one card in the
+   panel that can destroy data does not share a neutral header with the pricing
+   form beside it. */
+.card.danger-zone{border-color:var(--red-200);background:var(--danger-tint);}
+.card.danger-zone .card-title{
+  background:var(--red-100);border-bottom-color:var(--red-200);color:var(--danger);
+}
+[data-theme="dark"] .card.danger-zone .card-title{color:#F87171;}
+.card.danger-zone .dz-label{display:inline-flex;align-items:center;gap:8px;color:inherit;}
+
+/* ─────────────── STAT CARDS ─────────────── */
+.sg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s4);margin-bottom:var(--s5);}
+.sg.g3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.sc{
+  position:relative;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:var(--s5) var(--s5) var(--s5) var(--s6);
+  box-shadow:var(--e1);overflow:hidden;
+  transition:box-shadow var(--d-base) var(--ease),transform var(--d-base) var(--ease);
+}
+.sc::before{ /* left accent rail (replaces the 3px top border) */
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-ember);
+}
+.sc.ac-gold::before{background:linear-gradient(180deg,#F7BE5B,#F5A524);}
+.sc.ac-ocean::before{background:linear-gradient(180deg,#17B3A4,#0E9488);}
+.sc.ac-success::before{background:linear-gradient(180deg,#22C55E,#16A34A);}
+.sc:hover{box-shadow:var(--e2);transform:translateY(-2px);}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s3);}
+.sc-chip{
+  width:40px;height:40px;border-radius:var(--r-sm);display:flex;align-items:center;
+  justify-content:center;background:var(--red-50);color:var(--brand-text);flex-shrink:0;
+}
+.sc-chip.c-gold{background:var(--gold-tint);color:#9A6410;}
+.sc-chip.c-ocean{background:var(--ocean-tint);color:#0A6B62;}
+.sc-chip.c-success{background:var(--success-tint);color:#0F7A37;}
+[data-theme="dark"] .sc-chip{color:var(--brand);}
+[data-theme="dark"] .sc-chip.c-gold{color:var(--gold-500);}
+[data-theme="dark"] .sc-chip.c-ocean{color:#2ED3C2;}
+[data-theme="dark"] .sc-chip.c-success{color:#4ADE80;}
+.sc-lbl{font-size:11px;font-weight:700;color:var(--text-mute);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:6px;}
+.sc-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;line-height:1.05;
+  font-weight:800;letter-spacing:-.6px;color:var(--text-hi);
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+.sc-val.sm{font-size:23px;}
+.sc-sub{font-size:12px;color:var(--text-mute);margin-top:6px;}
+/* DB-7: dashboard quick-action shortcut row. */
+.qa-row{display:flex;flex-wrap:wrap;gap:var(--s2);margin-bottom:var(--s4);}
+
+/* DB-3: a stat card that carries three named counts rather than one number. */
+.sc-triple{display:flex;flex-direction:column;gap:3px;margin-top:2px;}
+.sc-triple span{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--text-mute);}
+.sc-triple b{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:800;
+  letter-spacing:-.3px;color:var(--text-hi);min-width:1.4ch;}
+.spark{display:block;width:100%;height:26px;margin-top:var(--s3);overflow:visible;}
+
+/* ─────────────── TABLES ─────────────── */
+/* The wrapper is the scrollport in both axes — that is what lets the header
+   stick reliably (a sticky <th> can only stick within its own scroll container). */
+/* Pulled out to the card's own edges (hence max-width:none — with max-width:100%
+   the negative margins would shift the box left and leave the right edge short).
+   The point is the header band below: a tinted strip that stops halfway across a
+   card looks like a rendering fault, whereas one that runs the full width reads
+   as the table's header. The cells get their inset back through first/last-column
+   padding. */
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:min(64vh,640px);
+  max-width:none;-webkit-overflow-scrolling:touch;
+  margin:0 calc(var(--card-pad) * -1) calc(var(--card-pad) * -1);
+  padding-bottom:var(--s1);}
+table{width:100%;border-collapse:collapse;}
+/* The column-name strip was --card on --card: white text-labels on a white card,
+   which is the "no contrast, no professional layout" complaint on Drivers and on
+   every other table. It is now a proper banded header, and the labels moved from
+   --text-mute up to --text-lo so they are legible ON that band rather than
+   whispering against it. Sticky, so it must stay fully opaque. */
+thead th{
+  position:sticky;top:0;z-index:2;background:var(--band);
+  text-align:left;padding:8px var(--s3);font-size:11px;font-weight:800;
+  color:var(--text-lo);text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+thead th:first-child{border-radius:calc(var(--r-md) - 1px) 0 0 0;}
+thead th:last-child{border-radius:0 calc(var(--r-md) - 1px) 0 0;}
+/* A card that opens straight onto a table has no .card-title above it, so the
+   band is the card's top edge and keeps the card's corner radius. One that has a
+   title already carries a rounded band, and a second set of rounded corners
+   20px below it reads as two stacked headers — so square them off. */
+.card-title ~ .tbl-wrap thead th:first-child,
+.card-title ~ * .tbl-wrap thead th:first-child,
+.card-title ~ .tbl-wrap thead th:last-child,
+.card-title ~ * .tbl-wrap thead th:last-child{border-radius:0;}
+/* …and pull the strip up against the title. Both are --band, so a --card gap
+   between them read as a stray white sliver sandwiched by two grey bars
+   ("Recent Orders" on the Dashboard). Flush, they are one header block. */
+.card-title + .tbl-wrap{margin-top:calc(var(--card-pad) * -1);}
+thead th:first-child,tbody td:first-child{padding-left:var(--card-pad);}
+thead th:last-child,tbody td:last-child{padding-right:var(--card-pad);}
+/* Client checklist OR-2 / DB-8: tighter rows so long order and request lists
+   scroll in fewer screens. Was 13px; 8px keeps text clear of the divider
+   without the list feeling cramped. */
+td{padding:8px var(--s3);font-size:13px;color:var(--text-hi);
+  border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr{transition:background var(--d-fast) var(--ease);scroll-margin-top:56px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--hover);}
+td.right,th.right{text-align:right;font-variant-numeric:tabular-nums;}
+.cell-id{font-weight:700;color:var(--brand);font-variant-numeric:tabular-nums;}
+.cell-mute{color:var(--text-lo);}
+.cell-strong{font-weight:600;font-variant-numeric:tabular-nums;}
+/* DB-5: a destination address can be long; clip it to one line with the full
+   value on hover (title attribute). */
+.cell-clip{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cell-actions{display:flex;gap:6px;flex-wrap:nowrap;}
+/* A disabled customer's row (P5-05). Dimmed rather than hidden — an admin
+   looking for the account they just disabled must still be able to find it.
+   Opacity alone would be an accessibility failure, so the row keeps its
+   explicit "Disabled" badge and this is only reinforcement. */
+tr.row-muted td{opacity:.55;}
+tr.row-muted:hover td{opacity:1;}
+.cell-media{display:flex;align-items:center;gap:10px;min-width:0;}
+
+/* ─────────────── BADGES ─────────────── */
+.bdg{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);
+  font-size:11px;font-weight:700;letter-spacing:.2px;white-space:nowrap;line-height:1.5;
+}
+.bdg::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.bdg.plain::before{display:none;}
+.bg-success{background:var(--success-tint);color:#0F7A37;}
+.bg-warning{background:var(--warning-tint);color:#9A6410;}
+.bg-danger{background:var(--danger-tint);color:#A81F15;}
+.bg-info{background:var(--info-tint);color:#0A6B62;}
+.bg-brand{background:var(--red-50);color:var(--brand-text);}
+.bg-neutral{background:var(--bg);color:var(--text-lo);border:1px solid var(--border);}
+[data-theme="dark"] .bg-success{color:#4ADE80;}
+[data-theme="dark"] .bg-warning{color:#FBBF24;}
+[data-theme="dark"] .bg-danger{color:#F87171;}
+[data-theme="dark"] .bg-info{color:#2ED3C2;}
+
+/* ─────────────── BUTTONS ─────────────── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
+  padding:10px var(--s5);border-radius:var(--r-sm);font-size:14px;font-weight:600;
+  cursor:pointer;border:1px solid transparent;white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease),border-color var(--d-fast) var(--ease);
+}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.btn .ic{width:18px;height:18px;}
+.btn-primary{background:var(--grad-ember);color:#fff;box-shadow:var(--glow);}
+.btn-primary:hover:not(:disabled){box-shadow:0 8px 20px rgba(200,16,46,.26);}
+.btn-primary:active:not(:disabled){box-shadow:0 2px 8px rgba(200,16,46,.20);}
+.btn-outline{background:transparent;border-color:var(--border);color:var(--text-hi);}
+.btn-outline:hover:not(:disabled){border-color:var(--brand);color:var(--brand);background:var(--red-50);}
+.btn-ghost{background:transparent;color:var(--text-lo);}
+.btn-ghost:hover:not(:disabled){background:var(--hover);color:var(--text-hi);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover:not(:disabled){background:#B8241A;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover:not(:disabled){background:#12833B;}
+.btn-block{width:100%;padding:13px var(--s5);font-size:15px;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:var(--r-xs);}
+.btn-sm .ic{width:15px;height:15px;}
+/* Trailing action row for a form inside a card. Separated by a rule so the
+   button belongs to the form above it rather than floating after the last
+   field. Full-width on phones — see the responsive block. */
+.form-actions{
+  display:flex;justify-content:flex-end;gap:var(--s2);flex-wrap:wrap;
+  margin-top:var(--s5);padding-top:var(--s4);border-top:1px solid var(--border);
+}
+
+.aicon{
+  width:32px;height:32px;border-radius:var(--r-xs);display:inline-flex;align-items:center;
+  justify-content:center;cursor:pointer;border:1px solid transparent;background:var(--bg);
+  color:var(--text-lo);flex-shrink:0;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),transform var(--d-instant) var(--ease);
+}
+.aicon .ic{width:17px;height:17px;}
+.aicon:hover{background:var(--hover);color:var(--text-hi);}
+.aicon:active{transform:scale(.92);}
+.ai-v:hover{background:var(--info-tint);color:var(--info);}
+.ai-e:hover{background:var(--success-tint);color:var(--success);}
+.ai-d:hover{background:var(--danger-tint);color:var(--danger);}
+
+/* ─────────────── FORMS ─────────────── */
+.fg{margin-bottom:var(--s5);}
+.fg label{display:block;font-size:13px;font-weight:600;color:var(--text-hi);margin-bottom:var(--s2);}
+.fr{margin-bottom:var(--s4);min-width:0;}
+.fr label{display:block;font-size:11px;font-weight:700;color:var(--text-mute);margin-bottom:6px;
+  text-transform:uppercase;letter-spacing:.6px;}
+.fr label small{font-weight:500;text-transform:none;letter-spacing:0;color:var(--text-mute);}
+.fg input,.fr input,.fr select,.fr textarea{
+  width:100%;padding:12px 14px;background:var(--field);color:var(--text-hi);
+  border:1px solid var(--border);border-radius:var(--r-sm);font-size:14px;outline:none;
+  transition:border-color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.fg input::placeholder,.fr input::placeholder,.fr textarea::placeholder{color:var(--text-mute);}
+.fg input:focus,.fr input:focus,.fr select:focus,.fr textarea:focus{
+  border-color:var(--brand);box-shadow:0 0 0 3px var(--red-50);
+}
+.fr textarea{resize:vertical;min-height:88px;line-height:1.5;}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3) var(--s4);}
+
+/* ── Selects ──────────────────────────────────────────────────────────
+   The native control was the one un-designed thing left in every form: a
+   platform chevron, platform metrics, and a different look on each OS. These
+   drop the native arrow and draw our own, so a Vehicle Type / Status / Promo
+   Type / Enquiry Status dropdown matches the inputs beside it everywhere.
+   The chevron is a background image, and a background image cannot inherit
+   currentColor, so the stroke is themed rather than dynamic. */
+.fr select,.fg select,select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  padding-right:42px;cursor:pointer;font-weight:600;
+  background-color:var(--field);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B6459' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 13px center;
+  background-size:17px 17px;
+  text-overflow:ellipsis;
+}
+.fr select:hover,.fg select:hover{border-color:var(--ink-300);}
+[data-theme="dark"] .fr select,[data-theme="dark"] .fg select,[data-theme="dark"] select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A49E92' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+}
+/* The dropdown list itself is drawn by the OS; these are the only two
+   properties it honours, and without them a dark-theme list renders as black
+   text on white while the closed control is light-on-dark. */
+select option{background:var(--field);color:var(--text-hi);}
+select:disabled{cursor:not-allowed;opacity:.6;background-color:var(--hover);}
+
+/* ── Date input ───────────────────────────────────────────────────────
+   Chrome renders a bare, low-contrast calendar glyph flush against the border.
+   Give it the same hit area and hover feedback as an .iconbtn so it reads as a
+   control rather than an artefact. */
+.fr input[type="date"]{cursor:pointer;font-weight:600;}
+.fr input[type="date"]::-webkit-calendar-picker-indicator{
+  cursor:pointer;opacity:.5;padding:5px;margin-right:-4px;border-radius:var(--r-xs);
+  transition:opacity var(--d-fast) var(--ease),background var(--d-fast) var(--ease);
+}
+.fr input[type="date"]:hover::-webkit-calendar-picker-indicator,
+.fr input[type="date"]:focus::-webkit-calendar-picker-indicator{opacity:1;background:var(--track);}
+[data-theme="dark"] .fr input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.55;}
+.fr input[type="date"]::-webkit-datetime-edit{padding:0;}
+
+/* Radius matched to .tabs — the two sit stacked on Orders, Customers and
+   Shop & Deliver, and two different corner radii one above the other was the
+   most visible seam on those pages. */
+.srch{
+  display:flex;align-items:center;gap:var(--s2);background:var(--card);color:var(--text-mute);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;
+  margin-bottom:var(--s4);width:min(420px,100%);box-shadow:var(--e1);
+  transition:border-color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.srch:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px var(--red-50);}
+.srch input{border:none;outline:none;font-size:14px;width:100%;background:transparent;color:var(--text-hi);}
+
+/* ── Filter bar (Orders OR-3 / OR-4) ──────────────────────────────────
+   A wrapping row of compact dropdowns above a table. Each control is small
+   enough that 3–4 sit per row on a laptop and the whole set stays visible
+   without a horizontal scroll. */
+.fbar{
+  display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center;margin-bottom:var(--s4);
+}
+.fbar select,.fbar .fbar-txt{
+  padding:7px 12px;font-size:12.5px;font-weight:600;
+  background:var(--field);color:var(--text-hi);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  outline:none;max-width:190px;
+  transition:border-color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.fbar select{padding-right:34px;background-position:right 10px center;background-size:15px 15px;}
+.fbar .fbar-txt{font-weight:500;width:150px;}
+.fbar select:focus,.fbar .fbar-txt:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--red-50);}
+.fbar select:hover,.fbar .fbar-txt:hover{border-color:var(--ink-300);}
+/* An active (non-default) filter reads at a glance so nobody wonders why the
+   table is short. */
+.fbar select.on,.fbar .fbar-txt.on{border-color:var(--brand);color:var(--brand);background:var(--red-50);}
+.fbar .btn-sm{margin-left:auto;}
+
+/* DB-5: a table row that opens a detail panel on click. The icon button in the
+   last cell stays as the keyboard-accessible affordance. */
+tr.row-click{cursor:pointer;}
+tr.row-click:hover td{background:var(--hover);}
+
+/* PR-10: the promo row's action set — small text buttons that wrap. */
+.promo-acts{display:flex;flex-wrap:wrap;gap:4px;}
+.pa-btn{
+  display:inline-block;padding:4px 9px;font-size:11.5px;font-weight:600;line-height:1.3;
+  background:var(--field);color:var(--text-lo);text-decoration:none;
+  border:1px solid var(--border);border-radius:var(--r-xs);cursor:pointer;
+  transition:border-color var(--d-fast) var(--ease),color var(--d-fast) var(--ease),background var(--d-fast) var(--ease);
+}
+.pa-btn:hover{border-color:var(--brand);color:var(--brand);background:var(--red-50);}
+.pa-btn.pa-del{color:var(--danger);}
+.pa-btn.pa-del:hover{border-color:var(--danger);background:var(--danger-tint);color:var(--danger);}
+.pa-btn.pa-ok{color:var(--success);}
+.pa-btn.pa-ok:hover{border-color:var(--success);background:var(--success-tint);color:var(--success);}
+
+/* CU-4 tag picker (in the confirm modal) */
+.tag-picker{display:flex;flex-direction:column;gap:8px;margin-top:8px;text-align:left;}
+.tag-opt{display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 8px;
+  border:1px solid var(--border);border-radius:var(--r-xs);background:var(--field);}
+.tag-opt:hover{border-color:var(--ink-300);}
+.tag-opt input{width:16px;height:16px;accent-color:var(--brand);flex-shrink:0;}
+.bdg.sm{font-size:10.5px;padding:1px 6px;}
+.pa-btn .ic{width:13px;height:13px;vertical-align:-2px;margin-right:3px;}
+
+/* ── Driver roster cards (DV-1 … DV-8) ────────────────────────────────
+   A grid of status cards. Each one answers "what state is this driver in,
+   and what are their numbers" without a click. */
+.dcard-grid{display:grid;gap:var(--s4);grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
+.dcard-empty{grid-column:1/-1;}
+.dcard{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--s4) var(--s5);box-shadow:var(--e1);
+  display:flex;flex-direction:column;gap:7px;min-width:0;
+}
+.dc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dc-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;
+  letter-spacing:-.2px;color:var(--text-hi);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dc-badges{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.dc-line{font-size:13px;color:var(--text-lo);min-width:0;}
+.dc-stats{display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;}
+.dc-star{width:15px;height:15px;color:var(--gold-500,#F5A524);}
+.dc-avail{font-weight:600;color:var(--success);}
+.dc-avail.muted{color:var(--text-mute);font-weight:500;}
+.dc-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+/* the online toggle sitting next to the status badge on a card */
+.dc-badges .tgl{transform:scale(.85);transform-origin:right center;}
+/* status dot variants */
+.dot.busy{background:var(--warning);}
+.dot.warn{background:var(--gold-500,#F5A524);}
+.dot.off{background:var(--text-mute);}
+
+/* DV-5 document review — image thumbnails in the side panel */
+.doc-view{margin-top:10px;}
+.doc-view-lbl{font-size:12px;font-weight:600;color:var(--text-mute);margin-bottom:4px;}
+.doc-view img{width:100%;max-height:220px;object-fit:contain;border:1px solid var(--border);
+  border-radius:var(--r-sm);background:var(--band);}
+
+/* ─────────────── TABS / SEGMENTED (filter bars) ───────────────
+   The track used to be painted with --bg, the *same* colour as the page behind
+   it, so the whole control read as a stray outline with no substance. It is now
+   a genuinely sunken surface (--track, a shade darker than both the page and a
+   card) with the selected segment raised out of it in --track-pill. That is what
+   makes a segmented control legible: the selection is lifted, not tinted.
+
+   On phones this used to be a horizontally scrolling strip, which hid whole
+   filters off the right edge behind a scrollbar nobody notices. Below 720px it
+   becomes a wrapping grid instead — every filter visible at once, two per row.
+   See the responsive block. */
+.tabs{
+  display:flex;gap:3px;background:var(--track);
+  border:1px solid var(--border);border-radius:var(--r-md);
+  padding:4px;margin-bottom:var(--s4);width:fit-content;max-width:100%;
+  box-shadow:inset 0 1px 2px rgba(28,26,23,.04);
+}
+[data-theme="dark"] .tabs{box-shadow:inset 0 1px 2px rgba(0,0,0,.35);}
+.tab{
+  display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--r-sm);
+  font-size:13px;font-weight:600;cursor:pointer;color:var(--text-lo);user-select:none;
+  white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.tab:hover{color:var(--text-hi);background:rgba(28,26,23,.045);}
+[data-theme="dark"] .tab:hover{background:rgba(255,255,255,.05);}
+.tab.active{
+  background:var(--track-pill);color:var(--brand);font-weight:700;
+  box-shadow:0 1px 2px rgba(28,26,23,.07),0 2px 5px rgba(28,26,23,.06);
+}
+[data-theme="dark"] .tab.active{box-shadow:0 2px 6px rgba(0,0,0,.4);}
+.tab.active:hover{background:var(--track-pill);}
+/* The count sits on the pill, so it needs a surface that reads against BOTH the
+   sunken track (inactive) and the raised pill (active). */
+.tab b{font-variant-numeric:tabular-nums;font-weight:700;
+  background:rgba(28,26,23,.07);color:var(--text-lo);
+  border-radius:var(--r-full);padding:1px 7px;font-size:11px;min-width:20px;text-align:center;}
+[data-theme="dark"] .tab b{background:rgba(255,255,255,.09);}
+.tab.active b{background:var(--red-50);color:var(--brand-text);}
+[data-theme="dark"] .tab.active b{color:var(--brand);}
+
+/* Period selector — same track, but the selection is a flat brand fill rather
+   than a raised white pill, because this control chooses what the numbers below
+   it MEAN rather than which subset of a list is shown. No gradient and no glow:
+   the old ember-plus-red-halo active state flashed on every switch. */
+.pbs{display:flex;gap:3px;background:var(--track);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:4px;width:fit-content;max-width:100%;
+  box-shadow:inset 0 1px 2px rgba(28,26,23,.04);}
+[data-theme="dark"] .pbs{box-shadow:inset 0 1px 2px rgba(0,0,0,.35);}
+.pb{padding:8px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;
+  border:1px solid transparent;background:transparent;color:var(--text-lo);white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease);}
+.pb:hover{color:var(--text-hi);background:rgba(28,26,23,.045);}
+[data-theme="dark"] .pb:hover{background:rgba(255,255,255,.05);}
+.pb.active{background:var(--brand);color:#fff;border-color:transparent;font-weight:700;}
+.pb.active:hover{background:var(--brand);color:#fff;}
+
+/* ─────────────── TOGGLE ─────────────── */
+.tgl{position:relative;width:44px;height:25px;cursor:pointer;display:inline-block;flex-shrink:0;}
+.tgl input{opacity:0;width:0;height:0;position:absolute;}
+.ts{position:absolute;inset:0;background:var(--ink-300);border-radius:var(--r-full);
+  transition:background var(--d-base) var(--ease);}
+.ts::before{content:'';position:absolute;width:19px;height:19px;left:3px;top:3px;background:#fff;
+  border-radius:50%;box-shadow:0 1px 3px rgba(28,26,23,.28);
+  transition:transform var(--d-base) var(--ease);}
+.tgl input:checked+.ts{background:var(--grad-ember);box-shadow:var(--glow);}
+.tgl input:checked+.ts::before{transform:translateX(19px);}
+.tgl input:focus-visible+.ts{outline:2px solid var(--brand);outline-offset:2px;}
+
+/* ─────────────── MODAL ─────────────── */
+.mbg{position:fixed;inset:0;background:var(--scrim);z-index:600;display:none;
+  align-items:center;justify-content:center;padding:var(--s4);backdrop-filter:blur(2px);}
+.mbg.open{display:flex;animation:fade var(--d-fast) var(--ease-in);}
+.mbox{background:var(--card);border-radius:var(--r-lg);padding:var(--s6);width:520px;
+  max-width:100%;max-height:92vh;overflow-y:auto;box-shadow:var(--e4);
+  animation:rise var(--d-base) var(--ease-in);}
+.mbox.wide{width:620px;}
+.mbox.narrow{width:420px;}
+.m-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;
+  letter-spacing:-.3px;color:var(--text-hi);margin-bottom:var(--s5);}
+.m-body{font-size:14px;color:var(--text-lo);line-height:1.55;margin-bottom:var(--s5);}
+.m-actions{display:flex;gap:var(--s2);justify-content:flex-end;margin-top:var(--s5);
+  padding-top:var(--s4);border-top:1px solid var(--border);}
+.m-ico{width:52px;height:52px;border-radius:var(--r-md);display:flex;align-items:center;
+  justify-content:center;margin-bottom:var(--s4);}
+.m-ico.danger{background:var(--danger-tint);color:var(--danger);}
+.m-ico.warning{background:var(--warning-tint);color:#9A6410;}
+
+/* ─────────────── SIDE PANEL ─────────────── */
+#sp-overlay{position:fixed;inset:0;background:var(--scrim);z-index:200;opacity:0;
+  pointer-events:none;transition:opacity var(--d-base) var(--ease);}
+#sp-overlay.open{opacity:1;pointer-events:auto;}
+.spanel{position:fixed;right:0;top:0;height:100vh;width:min(440px,100%);background:var(--card);
+  box-shadow:var(--e4);z-index:201;transform:translateX(100%);
+  transition:transform var(--d-slow) var(--ease);display:flex;flex-direction:column;}
+.spanel.open{transform:translateX(0);}
+.sp-hd{padding:var(--s5);border-bottom:1px solid var(--border);display:flex;
+  justify-content:space-between;align-items:center;gap:var(--s3);flex-shrink:0;}
+.sp-hd-sub{font-size:11px;color:var(--text-mute);font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:3px;}
+.sp-hd-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;font-weight:800;
+  letter-spacing:-.35px;color:var(--text-hi);}
+#sp-body{padding:var(--s5);overflow-y:auto;flex:1;}
+.sp-sec{margin-bottom:var(--s6);}
+.sp-sec-title{font-size:11px;font-weight:700;color:var(--text-mute);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:var(--s3);padding-bottom:6px;border-bottom:1px solid var(--border);}
+.sp-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);
+  padding:9px 0;border-bottom:1px solid var(--border);}
+.sp-row:last-child{border-bottom:none;}
+/* Proof of delivery (P5-06). The driver has photographed every handover since
+   Phase 1; the URL was written to the order and rendered nowhere. Links out to
+   the full-size image, because a thumbnail settles no dispute. */
+.sp-proof{display:block;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);}
+.sp-proof img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;background:var(--bg);}
+.sp-proof:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+.sp-lbl{font-size:13px;color:var(--text-lo);flex-shrink:0;}
+.sp-val{font-size:13px;font-weight:600;color:var(--text-hi);text-align:right;
+  max-width:240px;overflow-wrap:anywhere;}
+.sp-val.sm{font-size:12px;font-weight:500;}
+.sp-val.money{font-family:'Plus Jakarta Sans',sans-serif;font-size:19px;font-weight:800;
+  color:var(--brand);font-variant-numeric:tabular-nums;}
+.sp-hero{display:flex;align-items:center;gap:var(--s4);margin-bottom:var(--s5);}
+.sp-avatar{width:60px;height:60px;border-radius:50%;background:var(--grad-ember);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:22px;font-weight:800;flex-shrink:0;box-shadow:var(--glow);}
+.sp-hero-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.2px;color:var(--text-hi);}
+
+/* ─────────────── STATUS FLOW STEPPER ─────────────── */
+.sf{display:flex;align-items:flex-start;margin-bottom:var(--s4);}
+.sf-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+.sf-dot{width:14px;height:14px;border-radius:50%;background:var(--border);
+  border:2px solid var(--card);box-shadow:0 0 0 1px var(--border);
+  transition:background var(--d-base) var(--ease),box-shadow var(--d-base) var(--ease);}
+.sf-dot.done{background:var(--ocean-500);box-shadow:0 0 0 1px var(--ocean-500);}
+.sf-dot.current{background:var(--ocean-500);box-shadow:0 0 0 1px var(--ocean-500);
+  animation:pulse 1.8s var(--ease) infinite;}
+.sf-line{flex:1;height:2px;background:var(--border);margin-top:6px;position:relative;overflow:hidden;}
+.sf-line::after{content:'';position:absolute;inset:0;background:var(--ocean-500);
+  transform:scaleX(0);transform-origin:left;transition:transform var(--d-deliberate) var(--ease);}
+.sf-line.done::after{transform:scaleX(1);}
+.sf-lbl{font-size:9px;font-weight:600;color:var(--text-mute);white-space:nowrap;}
+.sf-dot.done+.sf-lbl,.sf-wrap:has(.done) .sf-lbl{color:var(--text-lo);}
+
+/* ─────────────── TOASTS ─────────────── */
+/* Sits just below the 68px topbar so a toast never covers the page title. */
+#toast-host{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:900;
+  display:flex;flex-direction:column;gap:var(--s2);pointer-events:none;width:min(420px,calc(100% - 32px));}
+.toast{
+  display:flex;align-items:flex-start;gap:var(--s3);background:var(--card);
+  border:1px solid var(--border);border-radius:var(--r-sm);padding:13px 15px 13px 0;
+  box-shadow:var(--e3);pointer-events:auto;overflow:hidden;position:relative;
+  animation:toastIn var(--d-base) var(--ease-in);
+}
+.toast.out{animation:toastOut var(--d-fast) var(--ease-out) forwards;}
+.toast::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--text-lo);}
+.toast.t-success::before{background:var(--success);}
+.toast.t-error::before{background:var(--danger);}
+.toast.t-warning::before{background:var(--warning);}
+.toast.t-info::before{background:var(--info);}
+.toast .ic{margin-left:15px;width:20px;height:20px;}
+.toast.t-success .ic{color:var(--success);}
+.toast.t-error .ic{color:var(--danger);}
+.toast.t-warning .ic{color:var(--warning);}
+.toast.t-info .ic{color:var(--info);}
+.toast-msg{font-size:13.5px;font-weight:500;color:var(--text-hi);line-height:1.45;flex:1;min-width:0;}
+.toast-msg b{font-weight:700;display:block;margin-bottom:2px;}
+
+/* ─────────────── SKELETONS ─────────────── */
+.sk{
+  position:relative;overflow:hidden;border-radius:var(--r-xs);
+  background:linear-gradient(90deg,var(--border) 0%,var(--border) 100%);
+}
+.sk::after{
+  content:'';position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent 0%,rgba(255,241,243,.85) 50%,transparent 100%);
+  animation:shimmer 1200ms infinite;
+}
+[data-theme="dark"] .sk::after{background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.07) 50%,transparent 100%);}
+.sk-line{height:11px;}
+.sk-pill{height:20px;border-radius:var(--r-full);}
+.sk-sq{border-radius:var(--r-xs);}
+.sk-row td{padding:15px var(--s3);}
+
+/* ─────────────── EMPTY STATES ─────────────── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:var(--s10) var(--s5);gap:var(--s3);}
+.empty svg{width:150px;height:150px;margin-bottom:var(--s1);}
+.empty-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:-.1px;color:var(--text-hi);}
+.empty-copy{font-size:13.5px;color:var(--text-lo);max-width:320px;line-height:1.5;}
+/* The weight-band verdict ("Not saveable yet — add at least one band"). It sits
+   between the textarea and the next field row, so without a gap its last line
+   touched the "PER EXTRA KG" label and read as part of it. */
+#pr-preview:not(:empty){margin-bottom:var(--s5);}
+td .empty{padding:var(--s6) var(--s5);}
+
+/* ─────────────── STARS / RATING ─────────────── */
+.stars{display:inline-flex;align-items:center;gap:1px;color:var(--gold-500);vertical-align:middle;}
+.stars .ic{width:14px;height:14px;}
+.stars .off{color:var(--ink-300);}
+.rating-val{font-size:12px;color:var(--text-lo);margin-left:5px;font-variant-numeric:tabular-nums;}
+.rbar-row{display:flex;align-items:center;gap:var(--s2);margin-bottom:7px;}
+.rbar-lbl{font-size:12px;width:14px;text-align:right;color:var(--text-lo);
+  font-variant-numeric:tabular-nums;}
+.rbar-t{flex:1;height:8px;background:var(--border);border-radius:var(--r-full);overflow:hidden;}
+.rbar-f{height:100%;border-radius:var(--r-full);background:linear-gradient(90deg,#F7BE5B,#F5A524);
+  width:0;transition:width var(--d-deliberate) var(--ease);}
+.rbar-pct{font-size:11px;color:var(--text-mute);width:34px;text-align:right;
+  font-variant-numeric:tabular-nums;}
+
+/* ─────────────── CATEGORY / MEDIA CHIPS ─────────────── */
+.cat-ico{width:38px;height:38px;border-radius:var(--r-sm);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;}
+.cat-ico .ic{width:20px;height:20px;}
+.cat-ico.lg{width:56px;height:56px;border-radius:var(--r-md);}
+.cat-ico.lg .ic{width:28px;height:28px;}
+.c-food{background:var(--red-50);color:var(--brand-text);}
+.c-grocery{background:var(--success-tint);color:#0F7A37;}
+.c-pharmacy{background:var(--ocean-tint);color:#0A6B62;}
+.c-packages{background:var(--gold-tint);color:#9A6410;}
+.c-other{background:var(--bg);color:var(--text-lo);}
+[data-theme="dark"] .c-food{color:var(--brand);}
+[data-theme="dark"] .c-grocery{color:#4ADE80;}
+[data-theme="dark"] .c-pharmacy{color:#2ED3C2;}
+[data-theme="dark"] .c-packages{color:var(--gold-500);}
+.thumb{width:38px;height:38px;border-radius:var(--r-sm);object-fit:cover;flex-shrink:0;
+  border:1px solid var(--border);background:var(--bg);}
+.thumb.lg{width:56px;height:56px;border-radius:var(--r-md);}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-300);flex-shrink:0;display:inline-block;}
+.dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-tint);}
+
+/* ─────────────── NOTIFICATIONS PAGE ─────────────── */
+.nl,.pl{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:var(--s5);align-items:start;}
+.phone-mock{background:#141310;border-radius:38px;padding:12px;box-shadow:var(--e4);}
+.ph-notch{width:72px;height:5px;background:rgba(255,255,255,.22);border-radius:3px;margin:0 auto 10px;}
+.ph-screen{background:#FAF9F7;border-radius:26px;overflow:hidden;min-height:400px;}
+.ph-bar{background:#100F0D;height:28px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;}
+.ph-bar span{color:#F5F2EC;font-size:10px;font-weight:600;}
+.ph-ni{padding:13px 14px;background:#fff;border-bottom:1px solid #ECEAE6;
+  display:flex;gap:10px;align-items:flex-start;}
+.ph-badge{width:28px;height:28px;border-radius:var(--r-xs);background:var(--grad-ember);
+  color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ph-badge .ic{width:16px;height:16px;}
+.ph-app{font-size:10px;font-weight:700;color:#86091E;text-transform:uppercase;letter-spacing:.6px;}
+.ph-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#1C1A17;margin-top:2px;}
+.ph-msg{font-size:11px;color:#6B6459;margin-top:2px;line-height:1.4;}
+.ph-filler{padding:12px;border-bottom:1px solid #ECEAE6;}
+.ph-filler div{height:9px;background:#ECEAE6;border-radius:4px;margin-bottom:7px;}
+.ph-filler div:last-child{margin-bottom:0;}
+.nh-item{display:flex;gap:var(--s3);padding:var(--s3) 0;border-bottom:1px solid var(--border);}
+.nh-item:last-child{border-bottom:none;}
+.nh-ico{width:38px;height:38px;border-radius:var(--r-sm);background:var(--red-50);
+  color:var(--brand-text);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+[data-theme="dark"] .nh-ico{color:var(--brand);}
+.nh-title{font-size:13.5px;font-weight:600;color:var(--text-hi);}
+.nh-meta{font-size:12px;color:var(--text-lo);margin-top:2px;}
+.notice{
+  display:flex;gap:10px;align-items:flex-start;background:var(--warning-tint);
+  border-radius:var(--r-sm);padding:12px 14px;font-size:12.5px;line-height:1.5;
+  color:#7A5008;margin-bottom:var(--s4);
+}
+.notice .ic{width:18px;height:18px;flex-shrink:0;color:var(--warning);margin-top:1px;}
+[data-theme="dark"] .notice{color:#FBBF24;}
+
+/* ─────────────── PROMO PREVIEW ─────────────── */
+.pc-prev{background:var(--grad-sunset);border-radius:var(--r-lg);padding:var(--s6);
+  color:#fff;margin-bottom:var(--s4);box-shadow:var(--e3);position:relative;overflow:hidden;}
+.pc-prev::after{content:'';position:absolute;right:-40px;top:-40px;width:150px;height:150px;
+  border-radius:50%;background:rgba(255,255,255,.10);}
+.pc-brand{font-size:11px;font-weight:700;letter-spacing:1.4px;opacity:.8;text-transform:uppercase;}
+.pc-code{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;
+  letter-spacing:4px;margin:10px 0 6px;overflow-wrap:anywhere;}
+.pc-disc{font-size:15px;font-weight:600;opacity:.95;}
+.pc-max{font-size:12px;opacity:.9;margin-top:2px;font-variant-numeric:tabular-nums;}
+.pc-max:empty{display:none;}
+.pc-valid{font-size:11px;opacity:.72;margin-top:var(--s3);font-variant-numeric:tabular-nums;}
+.pc-foot{margin-top:var(--s4);font-size:10px;opacity:.5;letter-spacing:1.4px;}
+.helper{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:13px 14px;font-size:12.5px;color:var(--text-lo);line-height:1.5;}
+.helper b{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-mute);}
+
+/* ─────────────── CHARTS ─────────────── */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4);}
+.ag .card{margin-bottom:0;}
+.chart{position:relative;height:190px;}
+.chart svg{width:100%;height:100%;overflow:visible;display:block;}
+.chart .grid-line{stroke:var(--border);stroke-width:1;}
+.chart .bar{fill:url(#barGrad);rx:5;transition:opacity var(--d-fast) var(--ease);}
+.chart .bar.max{fill:url(#barGradMax);}
+.chart .bar.zero{fill:var(--border);}
+.chart .bar.zero+.bar-val{fill:var(--text-mute);font-weight:500;}
+.chart .bar-hit{fill:transparent;cursor:pointer;}
+.chart .bar-lbl{font-size:11px;fill:var(--text-mute);text-anchor:middle;}
+.chart .bar-val{font-size:11px;font-weight:700;fill:var(--text-hi);text-anchor:middle;
+  font-variant-numeric:tabular-nums;}
+.chart:hover .bar{opacity:.45;}
+.chart .bar-g:hover .bar{opacity:1;}
+.chart-tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-118%);
+  background:var(--ink-900);color:#F5F2EC;font-size:11.5px;font-weight:600;padding:6px 10px;
+  border-radius:var(--r-xs);white-space:nowrap;box-shadow:var(--e3);
+  transition:opacity var(--d-fast) var(--ease);font-variant-numeric:tabular-nums;}
+.chart-tip.show{opacity:1;}
+[data-theme="dark"] .chart-tip{background:#3D3A33;}
+.zr{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3);}
+.zn{font-size:13px;width:112px;font-weight:500;flex-shrink:0;color:var(--text-hi);}
+.zt{flex:1;height:10px;background:var(--border);border-radius:var(--r-full);overflow:hidden;}
+.zf{height:100%;border-radius:var(--r-full);background:var(--grad-ember);width:0;
+  transition:width var(--d-deliberate) var(--ease);}
+.zv{font-size:13px;font-weight:700;width:38px;text-align:right;flex-shrink:0;
+  font-variant-numeric:tabular-nums;color:var(--text-hi);}
+.prow{display:flex;align-items:center;margin-bottom:var(--s3);}
+.prow-lbl{font-size:13px;font-weight:600;width:132px;flex-shrink:0;color:var(--text-hi);}
+.ptrack{flex:1;height:12px;background:var(--border);border-radius:var(--r-full);
+  overflow:hidden;margin:0 var(--s3);}
+.pfill{height:100%;border-radius:var(--r-full);width:0;transition:width var(--d-deliberate) var(--ease);}
+.pfill.brand{background:var(--grad-ember);}
+.pfill.gold{background:linear-gradient(90deg,#F7BE5B,#F5A524);}
+.prow-pct{font-size:13px;font-weight:700;width:40px;text-align:right;
+  font-variant-numeric:tabular-nums;color:var(--text-hi);}
+
+/* ─────────────── MENU ITEM CARDS (side panel) ─────────────── */
+/* Banded header, matching .card-title and .fset-title — the menu form sits in
+   the side panel beside a Details tab that now has banded sections, and a bare
+   bold line was the odd one out. */
+.mi-form{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:var(--s4);margin-bottom:var(--s4);}
+.mi-form-title{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.8px;color:var(--text-mute);
+  margin:calc(var(--s4) * -1) calc(var(--s4) * -1) var(--s4);
+  padding:10px var(--s4);
+  background:var(--band);border-bottom:1px solid var(--border);
+  border-radius:calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0 0;
+}
+.mi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:11px 13px;margin-bottom:var(--s2);box-shadow:var(--e1);
+  display:flex;align-items:center;gap:10px;
+  transition:box-shadow var(--d-fast) var(--ease);}
+.mi-card:hover{box-shadow:var(--e2);}
+.mi-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;color:var(--text-hi);}
+.mi-desc{font-size:11.5px;color:var(--text-lo);margin:2px 0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.mi-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;
+  color:var(--brand);font-variant-numeric:tabular-nums;}
+
+/* ─────────────── MOBILE OVERLAY ─────────────── */
+#mob-overlay{position:fixed;inset:0;background:var(--scrim);z-index:99;opacity:0;
+  pointer-events:none;transition:opacity var(--d-base) var(--ease);}
+#mob-overlay.open{opacity:1;pointer-events:auto;}
+
+/* ─────────────── ANIMATIONS ─────────────── */
+@keyframes shimmer{100%{transform:translateX(100%);}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+@keyframes fadeThrough{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:none;}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
+@keyframes shake{10%,90%{transform:translateX(-2px);}30%,70%{transform:translateX(3px);}50%{transform:translateX(-3px);}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 1px var(--ocean-500),0 0 0 0 rgba(14,148,136,.42);}
+  50%{box-shadow:0 0 0 1px var(--ocean-500),0 0 0 7px rgba(14,148,136,0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+.stagger>*{animation:fadeThrough var(--d-base) var(--ease-in) both;}
+.stagger>*:nth-child(1){animation-delay:0ms;}
+.stagger>*:nth-child(2){animation-delay:40ms;}
+.stagger>*:nth-child(3){animation-delay:80ms;}
+.stagger>*:nth-child(4){animation-delay:120ms;}
+
+/* ─────────────── RESPONSIVE ─────────────── */
+@media(max-width:1100px){
+  .ag{grid-template-columns:1fr;}
+  .nl,.pl{grid-template-columns:1fr;}
+}
+@media(max-width:900px){
+  /* Sidebar becomes an off-canvas drawer; the desktop icon-collapse is disabled
+     here so the hamburger only ever slides the full sidebar in/out. */
+  .sidebar{z-index:500;transform:translateX(-100%);box-shadow:none;}
+  .sidebar.mob-open{transform:translateX(0);box-shadow:0 24px 60px rgba(0,0,0,.4);}
+  .sidebar.collapsed{width:var(--sw);}
+  .sidebar.collapsed .lbl,.sidebar.collapsed .sls,.sidebar.collapsed .sb-sec{opacity:1;}
+  .sidebar.collapsed .ni{justify-content:flex-start;padding:12px var(--s5);}
+  .sidebar.collapsed .sb-logo{justify-content:flex-start;padding:var(--s6) var(--s5) var(--s5);gap:var(--s3);}
+  .sidebar.collapsed .sb-word{display:block;}
+  .sidebar.collapsed .sb-mark{display:none;}
+  .main{margin-left:0!important;}
+  .sg,.sg.g3{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .tbl-wrap{-webkit-overflow-scrolling:touch;}
+  .tb-date{display:none;}
+}
+@media(max-width:600px){
+  :root{--gutter:16px;}
+  .mbg{align-items:flex-end;padding:0;}
+  .mbox,.mbox.wide,.mbox.narrow{width:100%;border-radius:var(--r-xl) var(--r-xl) 0 0;max-height:88vh;}
+  .mg{grid-template-columns:1fr;}
+  .card{--card-pad:var(--s4);}
+  /* The crumb STAYS on phones — it is the topbar's only page label. Only its
+     "ShipEast Admin" root is dropped, since the app it belongs to is not in
+     question when you are looking at it. The account name goes; the avatar
+     alone still shows who is signed in. */
+  .an{display:none;}
+  .tb-bc-root,.tb-bc .ic{display:none;}
+  .tb-bc{font-size:12.5px;}
+  .tb-l{gap:var(--s2);}
+  .topbar{min-height:60px;padding:0 var(--s4);}
+  .ab{padding:3px;border-color:transparent;background:transparent;}
+  .pg-hdr{margin-bottom:var(--s4);}
+  td{padding:12px var(--s3);}
+}
+
+/* ─────────────── PHONES ───────────────
+   Everything below 720px. One block rather than three overlapping ones, because
+   the previous set disagreed with itself: ≤600px put the stat cards two-up and
+   ≤400px put them back to one-up, so on an actual phone (390pt) four cards
+   stacked into four full-width rows and pushed the table two screens down. */
+@media(max-width:720px){
+  /* ── Stat cards: always two per row ──
+     Two-up at every phone width, including the ≤400px range that used to break
+     out to a single column. Four cards read as a 2×2 block that fits above the
+     fold; three (Shop & Deliver, Merchants, Customers) fill the first row and
+     leave the third on its own, which is the intended shape. */
+  .sg,.sg.g3{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s2);}
+  .sc{padding:var(--s3) var(--s3) var(--s3) var(--s4);}
+  .sc-top{margin-bottom:var(--s1);gap:var(--s2);}
+  .sc-lbl{font-size:9.5px;letter-spacing:.5px;margin-bottom:3px;}
+  .sc-val{font-size:22px;}
+  .sc-val.sm{font-size:18px;}
+  .sc-chip{width:30px;height:30px;border-radius:var(--r-xs);}
+  .sc-chip .ic{width:17px;height:17px;}
+  .sc-sub{font-size:10.5px;margin-top:3px;}
+  .sc::before{width:3px;}
+  .spark{height:20px;}
+
+  /* ── Filter bars: wrap, never scroll ──
+     These were horizontally scrolling strips, so "Cancelled" on Orders and
+     three of the seven Shop & Deliver filters sat off the right edge behind a
+     scrollbar nobody looks for — the filter you needed was the one you could
+     not see. They lay out as a wrapping grid instead: auto-fill at a 124px
+     minimum lands on two columns at phone widths and three on a large phone or
+     small tablet, with no width fixed by hand. */
+  .tabs{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));
+    gap:5px;width:100%;overflow:visible;
+  }
+  .tab{justify-content:space-between;padding:9px 12px;font-size:12.5px;}
+  .tab b{font-size:10.5px;}
+  /* Three fixed periods, so they get a fixed three-up row rather than auto-fill. */
+  .pbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%;}
+  .pb{padding:9px 6px;font-size:12.5px;text-align:center;}
+  /* The period selector is the second half of .pg-hdr on Analytics; let it take
+     the full row under the title instead of being squeezed beside it. */
+  .pg-hdr{flex-direction:column;align-items:stretch;}
+  .pg-hdr>.pbs,.pg-hdr>.btn{width:100%;}
+  .pg-hdr>.pg-title{align-self:flex-start;max-width:100%;}
+  .srch{width:100%;}
+
+  /* A form's trailing action goes full width — a right-aligned button with
+     nothing beside it reads as stranded on a narrow screen. */
+  .form-actions{margin-top:var(--s4);}
+  .form-actions .btn{width:100%;}
+  .m-actions .btn{flex:1;}
+
+  .pg-title{padding:8px 14px 8px 12px;}
+  .card-title{font-size:14px;}
+  .phone-mock{max-width:320px;margin:0 auto;}
+  /* On a desktop the 400px screen sits beside the compose form. On a phone it
+     sits BELOW it, so the empty half of the mock became ~200px of dead scroll
+     under the last skeleton line. Show just enough to read as a phone. */
+  .ph-screen{min-height:0;}
+}
+
+/* ─────────────── MOBILE TABLES → COLLAPSIBLE CARDS ───────────────
+   Phones never scroll a table sideways. Each row folds into a card of
+   "COLUMN LABEL → value" blocks INSIDE the existing card (no card-in-card, no
+   horizontal scroll, nothing clipped). The column name comes from each <td>'s
+   data-label, stamped in app.js (setupTableLabels).
+
+   Rows are also COLLAPSED by default. Printing all nine columns of a driver
+   made one row about a screen tall, so a roster of six drivers was six screens
+   of scrolling and no way to compare them. Only the columns listed in
+   MOBILE_PRIMARY (app.js) show; the rest carry .mc-hide and appear when the
+   row's chevron is pressed. Placed last so it wins over the desktop table
+   rules on small screens. */
+@media(max-width:720px){
+  /* The wrapper stops being a scrollport — the page scrolls naturally instead
+     and the inner max-height/overflow that created a nested scroll is removed. */
+  .tbl-wrap{
+    overflow:visible;max-height:none;margin:0;padding:0;max-width:100%;
+    -webkit-overflow-scrolling:auto;
+  }
+  .tbl-wrap table,
+  .tbl-wrap thead,
+  .tbl-wrap tbody,
+  .tbl-wrap tr,
+  .tbl-wrap td{display:block;width:100%;}
+  /* The header row is folded into each cell's label — hide it visually but keep
+     it in the DOM (a11y / the data-label source). */
+  .tbl-wrap thead{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+  /* Each row is its own bordered card, so a collapsed row is visibly one
+     record rather than a run of labels sharing a divider. position:relative is
+     what the chevron is positioned against. */
+  .tbl-wrap tbody tr{
+    position:relative;
+    padding:12px 42px 12px 13px;
+    margin-bottom:var(--s2);
+    border:1px solid var(--border);border-radius:var(--r-sm);
+    background:var(--card);
+  }
+  .tbl-wrap tbody tr:last-child{margin-bottom:0;}
+  .tbl-wrap tbody tr:hover td{background:none;}
+  /* Cell = column label on its own line, value beneath. Block flow means any
+     cell contents (plain text, spans, a badge next to an id, a flex .cell-media
+     or .cell-actions) lay out correctly — nothing overlaps or mis-aligns. */
+  .tbl-wrap td{
+    padding:4px 0;border:none;
+    text-align:left!important;font-size:14px;color:var(--text-hi);
+    white-space:normal;word-break:break-word;
+  }
+  /* Undo the desktop first/last-column insets — those exist to align cells with
+     the card padding in table layout, which no longer applies. */
+  .tbl-wrap thead th:first-child,.tbl-wrap tbody td:first-child{padding-left:0;}
+  .tbl-wrap thead th:last-child,.tbl-wrap tbody td:last-child{padding-right:0;}
+  .tbl-wrap td::before{
+    content:attr(data-label);display:block;margin-bottom:2px;
+    font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--text-mute);
+  }
+  /* Skeleton / empty-state rows use a single colspan cell — no label, no card
+     chrome, no chevron. */
+  .tbl-wrap td[colspan]{padding:6px 0;}
+  .tbl-wrap td[colspan]::before{display:none;}
+  .tbl-wrap tbody tr:has(td[colspan]){
+    border:none;background:none;padding:0;margin:0;
+  }
+  .cell-actions{justify-content:flex-start;}
+  .cell-media{display:inline-flex;}
+
+  /* ── The collapsed/expanded halves ── */
+  .tbl-wrap tbody tr .mc-hide{display:none;}
+  .tbl-wrap tbody tr.mc-open .mc-hide{display:block;}
+  /* A divider above the first revealed cell, so an expanded card reads as
+     "summary, then detail" rather than one long list. */
+  .tbl-wrap tbody tr.mc-open .mc-hide.mc-first{
+    margin-top:var(--s3);padding-top:var(--s3);border-top:1px dashed var(--border-strong);
+  }
+  .mc-exp{
+    position:absolute;top:8px;right:6px;
+    width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);border-radius:var(--r-xs);
+    background:var(--bg);color:var(--text-lo);cursor:pointer;
+    transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),
+               transform var(--d-instant) var(--ease);
+  }
+  .mc-exp .ic{width:16px;height:16px;transform:rotate(90deg);
+    transition:transform var(--d-fast) var(--ease);}
+  .mc-exp:active{transform:scale(.92);}
+  tr.mc-open .mc-exp{background:var(--red-50);color:var(--brand);border-color:var(--red-200);}
+  tr.mc-open .mc-exp .ic{transform:rotate(-90deg);}
+}
+/* Desktop shows every column, so there is nothing to expand. This MUST stay
+   inside a min-width query: a media query adds no specificity, so a bare
+   `.mc-exp{display:none}` sitting after the max-width:720px block above would
+   out-order the phone rule and hide the chevron on phones as well. */
+@media(min-width:721px){
+  .mc-exp{display:none;}
+}
+
+/* ─────────────── PHONES: FORM-HEAVY PAGES ───────────────
+   Notifications, Promo Codes and Settings are the three pages that are almost
+   entirely form, and they were laid out for a 1560px canvas: desktop label
+   widths, a 30px promo code with 4px of letter-spacing, and a phone mock at
+   full width. Nothing here changes structure — only the metrics that assumed
+   width it does not have. */
+@media(max-width:720px){
+  .nl,.pl{gap:var(--s4);}
+  .m-title{font-size:18px;margin-bottom:var(--s4);}
+  .fset{padding:var(--s3);}
+  .notice{font-size:12px;padding:11px 12px;line-height:1.45;}
+
+  /* Promo preview card. 30px at 4px tracking overflowed its own card on a
+     narrow phone; overflow-wrap saved it from clipping but broke the code
+     mid-word, which is unreadable for something meant to be typed in. */
+  .pc-prev{padding:var(--s5);}
+  .pc-code{font-size:23px;letter-spacing:2px;}
+  .pc-disc{font-size:14px;}
+
+  /* Settings: the weight-band table is typed by hand, so it keeps a comfortable
+     size rather than shrinking with everything else. */
+  #pr-bands{font-size:13.5px;line-height:1.6;}
+  .fr textarea{min-height:78px;}
+
+  /* Analytics charts: the row labels reserved desktop widths, leaving the bars
+     too short to compare at a glance. */
+  .chart{height:168px;}
+  .zn{width:84px;font-size:12px;}
+  .zv{width:30px;font-size:12px;}
+  .prow-lbl{width:100px;font-size:12px;}
+  .ptrack{margin:0 var(--s2);height:10px;}
+  .prow-pct{width:34px;font-size:12px;}
+
+  /* Side panel becomes the full screen — a 440px drawer on a 390px phone was
+     already full width, but with a stray 1px sliver and a shadow off-canvas. */
+  .spanel{width:100%;}
+}
+
+/* ─────────────── MOBILE TABLES → STACKED CARDS ───────────────
+   Phones never scroll a table sideways. Each row folds into a
+   "COLUMN LABEL → value" block INSIDE the existing card (no card-in-card,
+   no horizontal scroll, nothing clipped). The column name comes from each
+   <td>'s data-label, stamped in app.js (setupTableLabels). Placed last so it
+   wins over the desktop table rules on small screens. */
+@media(max-width:720px){
+  /* The wrapper stops being a scrollport — the page scrolls naturally instead
+     and the inner max-height/overflow that created a nested scroll is removed. */
+  .tbl-wrap{
+    overflow:visible;max-height:none;margin:0;padding:0;
+    -webkit-overflow-scrolling:auto;
+  }
+  .tbl-wrap table,
+  .tbl-wrap thead,
+  .tbl-wrap tbody,
+  .tbl-wrap tr,
+  .tbl-wrap td{display:block;width:100%;}
+  /* The header row is folded into each cell's label — hide it visually but keep
+     it in the DOM (a11y / the data-label source). */
+  .tbl-wrap thead{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+  /* Each row is a divided list block within the card. */
+  .tbl-wrap tbody tr{
+    padding:14px 0;border-bottom:1px solid var(--border-strong);
+  }
+  .tbl-wrap tbody tr:first-child{padding-top:2px;}
+  .tbl-wrap tbody tr:last-child{border-bottom:none;padding-bottom:2px;}
+  .tbl-wrap tbody tr:hover td{background:none;}
+  /* Cell = column label on its own line, value beneath. Block flow means any
+     cell contents (plain text, spans, a badge next to an id, a flex .cell-media
+     or .cell-actions) lay out correctly — nothing overlaps or mis-aligns. */
+  .tbl-wrap td{
+    padding:5px 0;border:none;
+    text-align:left!important;font-size:14px;color:var(--text-hi);
+    white-space:normal;word-break:break-word;
+  }
+  .tbl-wrap td::before{
+    content:attr(data-label);display:block;margin-bottom:2px;
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--text-mute);
+  }
+  /* Skeleton / empty-state rows use a single colspan cell — no label, block flow. */
+  .tbl-wrap td[colspan]{padding:6px 0;}
+  .tbl-wrap td[colspan]::before{display:none;}
+  .cell-actions{justify-content:flex-start;}
+  .cell-media{display:inline-flex;}
+}
+
+/* ─────────────── REDUCED MOTION ─────────────── */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important;scroll-behavior:auto!important;
+  }
+  .sk::after{display:none;}
+  .btn:active,.aicon:active,.iconbtn:active{transform:none;}
+}
+
+/* ── Promo usage bar (P3-03) ──
+   `usedCount` is server-incremented at redemption, so this finally reflects
+   reality; before, every code read 0 uses forever. */
+.usage-track{
+  display:inline-block; width:52px; height:5px; margin-left:8px;
+  vertical-align:middle; border-radius:999px; overflow:hidden;
+  background:var(--ink-100);
+}
+.usage-fill{ display:block; height:100%; border-radius:999px; }
+.usage-fill.u-ok{ background:var(--success); }
+.usage-fill.u-warning{ background:var(--warning); }
+.usage-fill.u-danger{ background:var(--danger); }
+
+/* ── Image uploader (P4-01 / P4-02) ──
+   The click target is a real <input type=file> inside its <label>, not a div
+   with a click handler, so it is keyboard-reachable and announced without
+   any ARIA faking it. The input is visually hidden, never display:none —
+   display:none removes it from the focus order entirely. */
+.up{ display:flex; flex-direction:column; gap:var(--s2); }
+.up-input{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+.up-zone{ position:relative; }
+/* `label.up-drop`, not `.up-drop`: the uploader lives inside a `.fr`, and
+   `.fr label` is a more specific selector, so a bare class here lost `display`
+   (the two lines collapsed into one run of text: "…PHOTO HEREor click to
+   browse") and inherited the field-label uppercase + 11px sizing. */
+label.up-drop{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:var(--s1); min-height:104px; padding:var(--s4); margin-bottom:0;
+  border:1.5px dashed var(--border); border-radius:var(--r-sm);
+  background:var(--hover); cursor:pointer; text-align:center;
+  text-transform:none; letter-spacing:normal;
+  transition:border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease);
+}
+.up-drop:hover{ border-color:var(--brand); background:var(--red-50); }
+.up-zone.up-over .up-drop{ border-color:var(--brand); background:var(--red-50); }
+.up-input:focus-visible + .up-drop,
+.up-zone:focus-within .up-drop{ outline:2px solid var(--brand); outline-offset:2px; }
+.up-drop .up-drop-title{ font-size:13.5px; font-weight:700; color:var(--text-hi); }
+.up-drop .up-drop-hint{ font-size:11.5px; font-weight:500; color:var(--text-mute); }
+
+.up-preview{
+  display:flex; align-items:center; gap:var(--s3); padding:var(--s3);
+  border:1px solid var(--border); border-radius:var(--r-sm); background:var(--card);
+}
+.up-thumb{
+  width:72px; height:44px; object-fit:cover; border-radius:var(--r-xs);
+  background:var(--ink-100); flex-shrink:0;
+}
+.up-meta{ flex:1; min-width:0; }
+.up-name{
+  font-size:12px; font-weight:600; color:var(--text-hi);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.up-sub{ font-size:11px; color:var(--text-mute); font-variant-numeric:tabular-nums; }
+.up-actions{ display:flex; gap:var(--s1); flex-shrink:0; }
+.up-danger:hover:not(:disabled){ border-color:var(--danger); color:var(--danger); background:var(--danger-tint); }
+
+.up-progress{ padding-top:var(--s1); }
+.up-bar{ height:5px; border-radius:999px; background:var(--ink-100); overflow:hidden; }
+.up-bar-fill{
+  display:block; height:100%; width:0; border-radius:999px;
+  background:var(--brand); transition:width var(--d-fast) linear;
+}
+.up-status{ font-size:11px; color:var(--text-mute); min-height:14px; }
+.up-disabled{ opacity:.55; pointer-events:none; }
+.up-locked{ font-size:11px; color:var(--text-mute); margin-top:var(--s1); }
+
+/* ── Emoji picker (P4-02) ──
+   A collapsible panel now, not a permanently-open grid. See the comment beside
+   #m-emoji-toggle in index.html. */
+.emoji-field{
+  width:76px; flex:0 0 76px!important; text-align:center; font-size:19px;
+  line-height:1.2;
+}
+.emoji-picker{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(38px,1fr));
+  gap:var(--s1); margin-top:var(--s2); padding:var(--s3);
+  background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm);
+  box-shadow:var(--e1);
+}
+.emoji-opt{
+  aspect-ratio:1; width:100%; font-size:18px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--border); border-radius:var(--r-xs); background:var(--field);
+  transition:border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease);
+}
+.emoji-opt:hover{ border-color:var(--brand); background:var(--red-50); transform:translateY(-1px); }
+.emoji-opt:active{ transform:scale(.92); }
+.emoji-opt.sel{ border-color:var(--brand); background:var(--red-50); box-shadow:inset 0 0 0 1px var(--brand); }
+.emoji-opt:focus-visible{ outline:2px solid var(--brand); outline-offset:2px; }
+
+/* ── Grouped form sections ────────────────────────────────────────────
+   The driver form ran eight fields together with no indication that the last
+   two were the thing that decides whether the person can log in at all. These
+   split it into named groups so "Driver app sign-in" is visibly a different
+   kind of information from "Vehicle Model". */
+.fset{
+  border:1px solid var(--border); border-radius:var(--r-md);
+  padding:var(--s4); margin-bottom:var(--s4); background:var(--bg);
+}
+.fset>.fr:last-child,.fset>.mg:last-child>.fr{margin-bottom:0;}
+.fset-title{
+  font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.8px; color:var(--text-mute);
+  margin-bottom:var(--s3); padding-bottom:var(--s2);
+  border-bottom:1px solid var(--border);
+}
+/* Explanatory text under a field. Same role as .up-locked, which it supersedes
+   for form hints; .up-locked stays for the uploader's own locked state. */
+.fr-hint{font-size:11.5px; line-height:1.45; color:var(--text-mute); margin-top:6px;}
+/* An input with a button welded to its right — "Generate" beside the password.
+   The button must not shrink; the input takes whatever is left. */
+.inline-field{display:flex; gap:var(--s2); align-items:stretch;}
+.inline-field input{flex:1; min-width:0;}
+.inline-field .btn{flex-shrink:0;}
+
+/* Credentials handover — shown once, never retrievable. Monospaced because the
+   admin is about to read a password out loud or copy it by eye. */
+.cred-box{
+  margin-top:var(--s3); border:1px solid var(--border); border-radius:var(--r-sm);
+  background:var(--field); overflow:hidden;
+}
+.cred-row{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--s4);
+  padding:10px 13px; border-bottom:1px solid var(--border);
+}
+.cred-row:last-child{border-bottom:none;}
+.cred-row span{
+  font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.7px;
+  color:var(--text-mute); flex-shrink:0;
+}
+.cred-row b{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13px;
+  font-weight:600; color:var(--text-hi); text-align:right;
+  overflow-wrap:anywhere; user-select:all;
+}

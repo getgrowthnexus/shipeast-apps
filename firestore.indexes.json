@@ -1,0 +1,78 @@
+{
+  "_comment": [
+    "Composite indexes (P2-02, audit §7.2).",
+    "These were previously created — if at all — by clicking the link in a console error,",
+    "which means they exist in production and nowhere else. A fresh staging project fails",
+    "both driver queries, and the driver app's onError surfaces that as a generic",
+    "'Could not load your active order' toast, making a missing index look like a network",
+    "problem.",
+    "The last two support pagination in P6-03; the history streams currently fetch every",
+    "order a user has ever placed and sort client-side."
+  ],
+  "indexes": [
+    {
+      "_comment": "pendingOrdersStream — the driver's available-order pool.",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "driverId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "_comment": "activeOrderStream — driverId == uid AND status in driverHeld.",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "driverId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "_comment": "orderHistoryStream — replaces the client-side sort in firestore_service.dart.",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "customerId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "_comment": "driverOrderHistoryStream — same treatment for the driver's history.",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "driverId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "_comment": "Admin dashboard: recent orders by status.",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "_comment": "Customer home: merchants by category, open first.",
+      "collectionGroup": "merchants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "isOpen", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "_comment": "Notification fan-out (P4-04): online, approved drivers.",
+      "collectionGroup": "drivers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "isOnline", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
