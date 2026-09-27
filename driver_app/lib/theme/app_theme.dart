@@ -13,16 +13,16 @@ class AppTheme {
   AppTheme._();
 
   // ── Backward-compatible aliases (point into the SEDS ramp) ───────────────
-  static const Color primary = SeColors.red500;
-  static const Color primaryLight = SeColors.red50;
+  static const Color primary = SeColors.brandAction; // action red — carries white text
+  static const Color primaryLight = SeColors.brandSoft;
   static const Color dark = SeColors.ink900;
   static const Color gray = SeColors.ink500;
   static const Color lightGray = SeColors.surface50;
-  static const Color inputBg = SeColors.surface50;
+  static const Color inputBg = SeColors.field;
   static const Color inputBorder = SeColors.ink200;
 
   static TextTheme _textTheme(Color hi, Color lo) {
-    final base = GoogleFonts.interTextTheme();
+    final base = GoogleFonts.figtreeTextTheme();
     return base.copyWith(
       displayLarge: SeType.display.copyWith(color: hi),
       displayMedium: SeType.h1.copyWith(color: hi),
@@ -46,8 +46,8 @@ class AppTheme {
         textHi: SeColors.ink900,
         textLo: SeColors.ink500,
         border: SeColors.ink200,
-        brand: SeColors.red500,
-        fieldFill: SeColors.surface0,
+        brand: SeColors.brandAction, // action red — white text clears AA
+        fieldFill: SeColors.field,
       );
 
   static ThemeData get darkTheme => _build(
@@ -57,7 +57,7 @@ class AppTheme {
         textHi: SeColors.darkTextHi,
         textLo: SeColors.darkTextLo,
         border: SeColors.darkBorder,
-        brand: SeColors.brandOnDark,
+        brand: SeColors.brandAction,
         fieldFill: SeColors.darkCardRaised,
       );
 
@@ -80,8 +80,8 @@ class AppTheme {
       surface: card,
       onSurface: textHi,
       error: SeColors.danger,
-      secondary: SeColors.ocean500,
-      tertiary: SeColors.gold500,
+      secondary: SeColors.info,
+      tertiary: SeColors.warning,
     );
 
     return ThemeData(
@@ -129,7 +129,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: SeRadius.inputRadius,
-          borderSide: const BorderSide(color: SeColors.red500, width: 2),
+          borderSide: const BorderSide(color: SeColors.brandAction, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: SeRadius.inputRadius,
@@ -147,7 +147,40 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: SeRadius.all(SeRadius.sm)),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: SeColors.red500,
+        color: SeColors.brandAction,
+      ),
+      // Buttons are PILLS now (see SeRadius). These theme any raw Material
+      // buttons; the app's primary CTA is the custom SeButton.
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: SeColors.brandAction,
+          foregroundColor: Colors.white,
+          shape: const StadiumBorder(),
+          textStyle: SeType.title,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: SeColors.brandAction,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: const StadiumBorder(),
+          textStyle: SeType.title,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: brand,
+          side: BorderSide(color: border, width: 1.5),
+          shape: const StadiumBorder(),
+          textStyle: SeType.title,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: brand,
+          textStyle: SeType.title,
+        ),
       ),
     );
   }

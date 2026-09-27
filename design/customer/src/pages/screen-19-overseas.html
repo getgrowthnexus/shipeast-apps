@@ -1,0 +1,80 @@
+<!-- card: Shop & deliver | group: Screens · Account | desc: Buy locally in Jamaica and deliver to family — not shipping -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Shop &amp; deliver</h1>
+    <p>Route <code>/overseas-order</code>. <b>This is not shipping.</b> Someone
+      abroad tells us what to buy; we shop at a Jamaican supermarket or hardware
+      store and deliver it to their family here. The copy has to keep saying so,
+      because the route name does not.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">Send to family in Jamaica</div><div class="cap-sub">We shop locally and deliver to them</div></div></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="panel" style="background:var(--info-soft);border-color:transparent;padding:16px">
+            <div class="hstack g8">
+              <svg class="i" style="width:18px;height:18px;color:var(--info)"><use href="#i-info"/></svg>
+              <div style="font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--info-ink)">How this works</div>
+            </div>
+            <div class="mt8" style="font-size:13px;line-height:1.5;color:var(--info-ink)">
+              Living abroad? Tell us what to buy and who to deliver it to in
+              Jamaica. We shop at a local supermarket or hardware store and drop
+              it to your family. The total depends on the store and the day's
+              prices, so a member of the team will confirm it with you first —
+              nothing is charged until you agree.
+            </div>
+          </div>
+
+          <div class="section-title mt20"><h2>Where we reach you</h2></div>
+          <div class="panel mt10">
+            <span class="field-label">Your email</span>
+            <div class="field"><svg class="i"><use href="#i-envelope"/></svg><span class="ph">you@example.com</span></div>
+            <span class="field-label mt14" style="display:block">Your phone</span>
+            <div class="field"><svg class="i"><use href="#i-phone"/></svg><span class="ph">+1 555 123 4567</span></div>
+            <span class="field-label mt14" style="display:block">Where you're based</span>
+            <div class="field"><svg class="i"><use href="#i-location"/></svg><span class="ph">City and country, e.g. Brooklyn, USA</span></div>
+          </div>
+
+          <div class="section-title mt22"><h2>Who receives it in Jamaica</h2></div>
+          <div class="panel mt10">
+            <span class="field-label">Recipient name</span>
+            <div class="field"><svg class="i"><use href="#i-user"/></svg><span class="ph">Full name</span></div>
+            <span class="field-label mt14" style="display:block">Delivery address</span>
+            <div class="field field--multi"><svg class="i"><use href="#i-location"/></svg><span class="ph">Street, town, any landmark</span></div>
+            <span class="field-label mt14" style="display:block">Parish</span>
+            <div class="field"><svg class="i"><use href="#i-locationLine"/></svg><span class="val">St. Thomas</span><svg class="i"><use href="#i-caretDown"/></svg></div>
+          </div>
+
+          <div class="notice mt14">
+            <svg class="i"><use href="#i-info"/></svg>
+            <p>We shop for everyday supermarket and hardware goods. Alcohol,
+              tobacco and prescription medicine are the exceptions.</p>
+          </div>
+        </div>
+        <div class="bottom-bar"><button class="btn btn--primary"><svg class="i"><use href="#i-send"/></svg>Send request</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Not shipping</td><td>Nothing crosses a border. The framing is "we shop here and deliver here", and the
+        weight field that used to exist was replaced by a <b>budget</b> — you are buying goods, not posting a parcel</td></tr>
+      <tr><td>It is an enquiry</td><td>The action is <b>Send request</b>, not "Place order", and the glyph is a send
+        arrow rather than a cart. Prices move with the store and the day, so the team confirms before anything
+        is charged</td></tr>
+      <tr><td>Two blocks</td><td>"Where we reach you" (the buyer, abroad) and "Who receives it in Jamaica" (the
+        recipient). Two people, two panels — collapsing them into one form is how the wrong person gets called</td></tr>
+      <tr><td>Info panel</td><td>An <code>infoSoft</code> panel rather than a <code>SeNotice</code>: it is a paragraph
+        of explanation, not a one-line advisory</td></tr>
+      <tr><td>Exclusions</td><td>Stated up front, in a notice, before the form is filled in — not after submitting</td></tr>
+    </table>
+  </div>
+</div>

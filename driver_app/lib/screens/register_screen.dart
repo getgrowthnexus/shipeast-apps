@@ -10,7 +10,7 @@ import '../theme/se_icons.dart';
 import '../theme/se_motion.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_app_bar.dart';
+import '../widgets/se_auth_scaffold.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_button.dart';
 import '../widgets/se_photo_tile.dart';
@@ -48,8 +48,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   static const List<Map<String, dynamic>> _vehicleTypes = [
     {'label': 'Motorcycle', 'icon': SeIcons.bike},
     {'label': 'Car', 'icon': SeIcons.car},
-    {'label': 'Van', 'icon': Icons.airport_shuttle_rounded},
-    {'label': 'Truck', 'icon': Icons.local_shipping_rounded},
+    {'label': 'Van', 'icon': SeIcons.van},
+    {'label': 'Truck', 'icon': SeIcons.truck},
   ];
 
   @override
@@ -259,261 +259,214 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      appBar: const SeTopBar(title: 'Create Account'),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-            SeSpacing.gutter, SeSpacing.x2, SeSpacing.gutter, SeSpacing.x8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Ember intro banner ──────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(SeSpacing.x5),
-              margin: const EdgeInsets.only(bottom: SeSpacing.x6),
-              decoration: BoxDecoration(
-                gradient: SeColors.emberGradient,
-                borderRadius: SeRadius.all(SeRadius.lg),
-                boxShadow: SeElevation.glow,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.20),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(SeIcons.bike,
-                        color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: SeSpacing.x4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Earn while driving with Shipeast',
-                            style: SeType.h3.copyWith(color: Colors.white)),
-                        const SizedBox(height: SeSpacing.x1),
-                        Text(
-                          'Complete deliveries across St. Thomas and Kingston using your own motorcycle or car.',
-                          style: SeType.bodyS.copyWith(
-                              color: Colors.white.withValues(alpha: 0.82)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            _sectionLabel('Your details'),
-            SeTextField(
-              controller: _nameController,
-              label: 'Full Name',
-              hint: 'e.g. Andre Campbell',
-              icon: SeIcons.userCircle,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['name'],
-              onChanged: (_) => _clearError('name'),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _phoneController,
-              label: 'Phone Number',
-              hint: '1-876-000-0000',
-              icon: SeIcons.phone,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _emailController,
-              label: 'Email',
-              hint: 'you@example.com',
-              icon: SeIcons.envelope,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['email'],
-              onChanged: (_) => _clearError('email'),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _passwordController,
-              label: 'Password',
-              hint: 'At least 6 characters',
-              icon: SeIcons.lock,
-              obscure: true,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['password'],
-              onChanged: (_) => _clearError('password'),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _confirmPasswordController,
-              label: 'Confirm Password',
-              hint: 'Re-enter your password',
-              icon: SeIcons.lock,
-              obscure: true,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['confirm'],
-              onChanged: (_) => _clearError('confirm'),
-            ),
-
-            const SizedBox(height: SeSpacing.x6),
-            _sectionLabel('Vehicle information'),
-
-            // ── Vehicle type selector ───────────────────────────────────────
-            Row(
-              children: List.generate(_vehicleTypes.length, (i) {
-                final vehicle = _vehicleTypes[i];
-                final selected = _selectedVehicle == vehicle['label'];
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(
-                        () => _selectedVehicle = vehicle['label'] as String),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: SeMotion.fast,
-                      curve: SeMotion.emphasized,
-                      margin: EdgeInsets.only(
-                          right: i < _vehicleTypes.length - 1 ? SeSpacing.x2 : 0),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: SeSpacing.x3, horizontal: SeSpacing.x1),
-                      decoration: BoxDecoration(
-                        color: selected ? SeColors.red50 : SeColors.surface0,
-                        borderRadius: SeRadius.all(SeRadius.sm),
-                        border: Border.all(
-                          color:
-                              selected ? SeColors.red500 : SeColors.ink200,
-                          width: selected ? 2 : 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            vehicle['icon'] as IconData,
-                            color:
-                                selected ? SeColors.red700 : SeColors.ink400,
-                            size: 22,
-                          ),
-                          const SizedBox(height: SeSpacing.x1),
-                          Text(
-                            vehicle['label'] as String,
-                            textAlign: TextAlign.center,
-                            style: SeType.eyebrow.copyWith(
-                              color: selected
-                                  ? SeColors.red700
-                                  : SeColors.ink500,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _vehicleModelController,
-              label: 'Vehicle Make & Model',
-              hint: 'Toyota Corolla',
-              icon: SeIcons.car,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['vehicleModel'],
-              onChanged: (_) => _clearError('vehicleModel'),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _licencePlateController,
-              label: 'Licence Plate',
-              hint: 'ABC 1234',
-              icon: SeIcons.creditCard,
-              textInputAction: TextInputAction.next,
-              errorText: _errors['licencePlate'],
-              onChanged: (_) => _clearError('licencePlate'),
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SeTextField(
-              controller: _licenceNumberController,
-              label: 'Licence Number',
-              hint: 'DL-XXXXXXXX',
-              icon: SeIcons.badge,
-              textInputAction: TextInputAction.done,
-            ),
-
-            // ── DV-5: credential photos the ShipEast team reviews ──────────
-            const SizedBox(height: SeSpacing.x6),
-            Text('Documents', style: SeType.label.copyWith(color: SeColors.ink700)),
-            const SizedBox(height: SeSpacing.x1),
-            Text(
-              'Our team checks these before approving your account.',
-              style: SeType.bodyS.copyWith(color: SeColors.ink500),
-            ),
-            const SizedBox(height: SeSpacing.x3),
-            SePhotoTile(
-              photo: _licenceDoc,
-              onCapture: () => _pickDoc('licence'),
-              emptyLabel: 'Driver\'s licence',
-              emptyHint: _errors['licenceDoc'] ?? 'A clear photo of the front',
-              height: 150,
-              errored: _errors['licenceDoc'] != null,
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            SePhotoTile(
-              photo: _vehicleDoc,
-              onCapture: () => _pickDoc('vehicle'),
-              emptyLabel: 'Vehicle & plate',
-              emptyHint: _errors['vehicleDoc'] ??
-                  'Show the whole vehicle with the plate readable',
-              height: 150,
-              errored: _errors['vehicleDoc'] != null,
-            ),
-
-            const SizedBox(height: SeSpacing.x6),
-            SeButton(
-              label: 'Create Account',
-              loading: _isLoading,
-              onPressed: _isLoading ? null : _createAccount,
-            ),
-            const SizedBox(height: SeSpacing.x4),
-            Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(SeSpacing.x2),
-                  child: RichText(
-                    text: TextSpan(
-                      style: SeType.bodyS.copyWith(color: SeColors.ink500),
-                      children: [
-                        const TextSpan(text: 'Already have an account? '),
-                        TextSpan(
-                          text: 'Sign In',
-                          style: SeType.bodyS.copyWith(
-                            color: SeColors.red700,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+    // No banner under the cap. The cap is already the brand surface, and the
+    // old ember block sat directly beneath it — two reds, one on top of the
+    // other, telling the applicant the same thing twice.
+    return SeAuthScaffold(
+      // Header copy per the client review round.
+      title: 'Earn while driving with Shipeast',
+      subtitle: 'Complete deliveries across St. Thomas and Kingston using your '
+          'own motorcycle or car.',
+      children: [
+        _sectionLabel('Your details'),
+        SeTextField(
+          controller: _nameController,
+          label: 'Full Name',
+          hint: 'e.g. Andre Campbell',
+          icon: SeIcons.userCircle,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['name'],
+          onChanged: (_) => _clearError('name'),
         ),
-      ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _phoneController,
+          label: 'Phone Number',
+          hint: '1-876-000-0000',
+          icon: SeIcons.phone,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _emailController,
+          label: 'Email',
+          hint: 'you@example.com',
+          icon: SeIcons.envelope,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['email'],
+          onChanged: (_) => _clearError('email'),
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _passwordController,
+          label: 'Password',
+          hint: 'At least 6 characters',
+          icon: SeIcons.lock,
+          obscure: true,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['password'],
+          onChanged: (_) => _clearError('password'),
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _confirmPasswordController,
+          label: 'Confirm Password',
+          hint: 'Re-enter your password',
+          icon: SeIcons.lock,
+          obscure: true,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['confirm'],
+          onChanged: (_) => _clearError('confirm'),
+        ),
+        const SizedBox(height: SeSpacing.x8),
+        _sectionLabel('Vehicle information'),
+        _VehiclePicker(
+          types: _vehicleTypes,
+          selected: _selectedVehicle,
+          onSelect: (label) => setState(() => _selectedVehicle = label),
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _vehicleModelController,
+          label: 'Vehicle Make & Model',
+          hint: 'Toyota Corolla',
+          icon: SeIcons.car,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['vehicleModel'],
+          onChanged: (_) => _clearError('vehicleModel'),
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _licencePlateController,
+          label: 'Licence Plate',
+          hint: 'ABC 1234',
+          icon: SeIcons.creditCard,
+          textInputAction: TextInputAction.next,
+          errorText: _errors['licencePlate'],
+          onChanged: (_) => _clearError('licencePlate'),
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SeTextField(
+          controller: _licenceNumberController,
+          label: 'Licence Number',
+          hint: 'DL-XXXXXXXX',
+          icon: SeIcons.badge,
+          textInputAction: TextInputAction.done,
+        ),
+        // ── DV-5: credential photos the ShipEast team reviews ──────────
+        const SizedBox(height: SeSpacing.x8),
+        _sectionLabel('Documents'),
+        Text(
+          'Our team checks these before approving your account.',
+          style: SeType.bodyS.copyWith(color: SeColors.ink500),
+        ),
+        const SizedBox(height: SeSpacing.x3),
+        SePhotoTile(
+          photo: _licenceDoc,
+          onCapture: () => _pickDoc('licence'),
+          emptyLabel: 'Driver\'s licence',
+          emptyHint: _errors['licenceDoc'] ?? 'A clear photo of the front',
+          height: 150,
+          errored: _errors['licenceDoc'] != null,
+        ),
+        const SizedBox(height: SeSpacing.x4),
+        SePhotoTile(
+          photo: _vehicleDoc,
+          onCapture: () => _pickDoc('vehicle'),
+          emptyLabel: 'Vehicle & plate',
+          emptyHint: _errors['vehicleDoc'] ??
+              'Show the whole vehicle with the plate readable',
+          height: 150,
+          errored: _errors['vehicleDoc'] != null,
+        ),
+        const SizedBox(height: SeSpacing.x8),
+        SeButton(
+          label: 'Submit application',
+          loading: _isLoading,
+          onPressed: _isLoading ? null : _createAccount,
+        ),
+        const SizedBox(height: SeSpacing.x6),
+        SeAuthSwitch(
+          prompt: 'Already have an account?',
+          action: 'Sign in',
+          onTap: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 
   Widget _sectionLabel(String text) => Padding(
         padding: const EdgeInsets.only(bottom: SeSpacing.x3),
         child: Text(text.toUpperCase(), style: SeType.eyebrow),
+      );
+}
+
+/// The four vehicle types, as one row of equal-width tiles.
+///
+/// Each tile is laid out in an `Expanded` slot and its label clamped to one
+/// line: sized to its own content, "Motorcycle" is nearly twice the width of
+/// "Car" and the row stops being a set of choices you can compare at a glance.
+class _VehiclePicker extends StatelessWidget {
+  final List<Map<String, dynamic>> types;
+  final String selected;
+  final ValueChanged<String> onSelect;
+
+  const _VehiclePicker({
+    required this.types,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: List.generate(types.length, (i) {
+          final vehicle = types[i];
+          final label = vehicle['label'] as String;
+          final on = selected == label;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onSelect(label),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: SeMotion.fast,
+                curve: SeMotion.emphasized,
+                margin:
+                    EdgeInsets.only(right: i < types.length - 1 ? SeSpacing.x2 : 0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: SeSpacing.x3, horizontal: SeSpacing.x1),
+                decoration: BoxDecoration(
+                  color: on ? SeColors.brandSoft : SeColors.surface0,
+                  borderRadius: SeRadius.all(SeRadius.sm),
+                  border: Border.all(
+                    color: on ? SeColors.brand : SeColors.ink200,
+                    width: on ? 2 : 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      vehicle['icon'] as IconData,
+                      color: on ? SeColors.brandInk : SeColors.ink400,
+                      size: 22,
+                    ),
+                    const SizedBox(height: SeSpacing.x1),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: SeType.eyebrow.copyWith(
+                        color: on ? SeColors.brandInk : SeColors.ink500,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
       );
 }

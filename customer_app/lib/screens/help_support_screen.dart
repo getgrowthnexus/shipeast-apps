@@ -5,9 +5,13 @@ import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../theme/se_brand.dart';
-import '../widgets/se_card.dart';
-import '../widgets/se_app_bar.dart';
+import '../widgets/se_page.dart';
 
+/// Help.
+///
+/// Two ways to reach a person at the top, because somebody who opens this
+/// screen usually has a problem happening right now; the FAQ is underneath for
+/// everyone else.
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
@@ -15,27 +19,39 @@ class HelpSupportScreen extends StatelessWidget {
     {
       'q': 'How does ShipEast work?',
       'a':
-          'ShipEast connects you with local merchants and delivery drivers in St. Thomas, Jamaica. Browse merchants, add items to cart, checkout, and track your delivery in real time.',
+          'ShipEast connects you with local merchants and delivery drivers in '
+              'St. Thomas, Jamaica. Browse merchants, add items to your cart, '
+              'check out, and follow your delivery as it happens.',
     },
     {
       'q': 'How do I track my order?',
       'a':
-          'After placing an order, tap Orders in the bottom navigation. You can view real-time status updates including when your order is being prepared, picked up, and delivered.',
+          'Tap Orders in the bottom navigation and open the order. You will see '
+              'each step as it happens — driver assigned, picked up, on the way '
+              '— and how far away your driver is once they are carrying it.',
     },
     {
       'q': 'What payment methods are accepted?',
       'a':
-          'Currently we support Cash on Delivery. Card payments and mobile money are coming in the next update.',
+          'Cash on delivery, for now. Card and mobile money are coming.',
     },
     {
       'q': 'How long does delivery take?',
       'a':
-          'Delivery times vary by merchant, typically 15–50 minutes. Estimated delivery time is shown on each merchant card before you order.',
+          'It varies by merchant, typically 15–50 minutes. The estimate is '
+              'shown on each merchant before you order.',
     },
     {
       'q': 'Can I cancel my order?',
+      // Corrected copy. The old answer promised a two-minute window that has
+      // never existed in this system: rules allow a customer cancellation only
+      // while the order is still unclaimed (firestore.rules,
+      // `customerCancelling()`), which may be seconds or many minutes.
       'a':
-          'You can cancel within 2 minutes of placing your order. After that, contact us via WhatsApp for assistance as the merchant may have already started preparing your order.',
+          'Yes, while the order is still waiting for a driver — open the order '
+              'and tap Cancel order. Once a driver has accepted it they are '
+              'already on their way to the merchant, so from that point message '
+              'us and we will sort it out.',
     },
   ];
 
@@ -48,139 +64,57 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      title: 'Help & support',
+      subtitle: 'We usually reply within the hour',
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 28),
         children: [
-          const SeGradientHeader(
-            title: 'Help & Support',
-            subtitle: "We're here to help",
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(SeSpacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildContactCard(),
-                  const SizedBox(height: 14),
-                  _buildFaqSection(),
-                  const SizedBox(height: 14),
-                  _buildVersionCard(),
-                  const SizedBox(height: 16),
-                ],
+          const SeSectionTitle(title: 'Talk to us'),
+          const SizedBox(height: 10),
+          SeRowGroup(
+            children: [
+              SeRow(
+                icon: SeIcons.chat,
+                hue: const Color(0xFF25D366),
+                label: 'WhatsApp',
+                subtitle: 'Fastest — message the team directly',
+                onTap: () => _launch('https://wa.me/18765559988'),
               ),
-            ),
+              SeRow(
+                icon: SeIcons.envelope,
+                label: 'Email',
+                subtitle: 'info@shipeastja.com',
+                onTap: () => _launch('mailto:info@shipeastja.com'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          const SeSectionTitle(title: 'Common questions'),
+          const SizedBox(height: 10),
+          SeRowGroup(
+            children: [
+              for (final faq in _faqs)
+                _FaqItem(question: faq['q']!, answer: faq['a']!),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Center(
+            child: Text('ShipEast · version ${SeBrand.version}',
+                style: SeType.bodyS.copyWith(color: SeColors.ink400)),
           ),
         ],
       ),
     );
   }
-
-  Widget _buildContactCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Contact Us', style: SeType.title),
-            const SizedBox(height: 4),
-            Text('Reach us on WhatsApp or Email — we respond within 1 hour.',
-                style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _contactBtn(
-                    label: 'WhatsApp',
-                    icon: SeIcons.chat,
-                    color: const Color(0xFF25D366),
-                    onTap: () => _launch('https://wa.me/18765559988'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _contactBtn(
-                    label: 'Email Us',
-                    icon: SeIcons.envelope,
-                    color: SeColors.red500,
-                    onTap: () => _launch('mailto:info@shipeastja.com'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _contactBtn({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) =>
-      GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 50,
-          alignment: Alignment.center,
-          decoration:
-              BoxDecoration(color: color, borderRadius: SeRadius.all(SeRadius.md)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(label,
-                  style: SeType.jakarta(14, FontWeight.w700,
-                      color: Colors.white)),
-            ],
-          ),
-        ),
-      );
-
-  Widget _buildFaqSection() => SeCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Text('Frequently Asked Questions', style: SeType.title),
-            ),
-            ..._faqs.map(
-              (faq) => _FaqItem(question: faq['q']!, answer: faq['a']!),
-            ),
-            const SizedBox(height: 4),
-          ],
-        ),
-      );
-
-  Widget _buildVersionCard() => SeCard(
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: SeColors.surface50,
-                borderRadius: SeRadius.all(SeRadius.sm),
-              ),
-              child: const Icon(SeIcons.info, size: 20, color: SeColors.ink500),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ShipEast Customer App', style: SeType.title),
-                Text('Version ${SeBrand.version}',
-                    style: SeType.bodyS.copyWith(color: SeColors.ink400)),
-              ],
-            ),
-          ],
-        ),
-      );
 }
 
+/// One question, expanding in place.
+///
+/// Kept inside a [SeRowGroup] so the FAQ is one surface with hairlines rather
+/// than five separate cards — a list of five shadowed cards reads as five
+/// unrelated things.
 class _FaqItem extends StatefulWidget {
   final String question;
   final String answer;
@@ -197,21 +131,20 @@ class _FaqItemState extends State<_FaqItem> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Divider(height: 1, color: SeColors.ink100),
         GestureDetector(
           onTap: () => setState(() => _expanded = !_expanded),
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
             child: Row(
               children: [
                 Expanded(
                   child: Text(widget.question,
-                      style: SeType.body.copyWith(
-                          color: SeColors.ink900,
-                          fontWeight: FontWeight.w600)),
+                      style: SeType.title.copyWith(fontSize: 15)),
                 ),
+                const SizedBox(width: 10),
                 AnimatedRotation(
                   turns: _expanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 180),
@@ -224,15 +157,14 @@ class _FaqItemState extends State<_FaqItem> {
         ),
         AnimatedCrossFade(
           firstChild: const SizedBox(width: double.infinity),
-          secondChild: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          secondChild: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
             child: Text(widget.answer,
-                style: SeType.body.copyWith(color: SeColors.ink500)),
+                style: SeType.bodyS
+                    .copyWith(color: SeColors.ink500, height: 1.5)),
           ),
-          crossFadeState: _expanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
+          crossFadeState:
+              _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 200),
         ),
       ],

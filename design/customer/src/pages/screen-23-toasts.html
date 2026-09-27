@@ -1,0 +1,88 @@
+<!-- card: Toasts in place | group: Screens · Account | desc: The four toast kinds, docked where they actually appear -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Toasts, in place</h1>
+    <p>Toasts are an overlay, so they can never appear in a screenshot of a
+      screen. They are also the app's entire feedback vocabulary — leave them out
+      of the system and every error state gets invented twice.</p>
+  </div>
+
+  <div class="ds-grid">
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Saved addresses</div><div class="cap-sub">3 addresses saved</div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-body pad">
+              <div class="row-group">
+                <div class="row">
+                  <div class="plate"><svg class="i"><use href="#i-home"/></svg></div>
+                  <div class="rbody"><div class="rlabel">Home</div><div class="rsub">14 Yallahs Main Road, St. Thomas</div></div>
+                </div>
+                <div class="row">
+                  <div class="plate"><svg class="i"><use href="#i-box"/></svg></div>
+                  <div class="rbody"><div class="rlabel">Work</div><div class="rsub">Shop 3, Morant Bay Plaza</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position:absolute;top:calc(var(--safe-top) + 10px);left:var(--gutter);right:var(--gutter)">
+            <div class="toast">
+              <div class="bar"></div>
+              <div class="badge"><svg class="i"><use href="#i-checkCircle"/></svg></div>
+              <p>Address saved</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">Docked over the screen it belongs to</div>
+    </div>
+
+    <div>
+      <div class="ds-frame">
+        <div class="phone" style="background:var(--surface-50);padding:calc(var(--safe-top) + 20px) var(--gutter) 0">
+          <div class="t-h1">Toasts</div>
+          <div class="t-bodyS mt4">Docked under the status bar, tap to dismiss.</div>
+          <div class="stack g12 mt20">
+            <div class="toast">
+              <div class="bar"></div>
+              <div class="badge"><svg class="i"><use href="#i-checkCircle"/></svg></div>
+              <p>Address saved</p>
+            </div>
+            <div class="toast toast--error">
+              <div class="bar"></div>
+              <div class="badge"><svg class="i"><use href="#i-warningCircle"/></svg></div>
+              <p>Please fill in both fields</p>
+            </div>
+            <div class="toast toast--info">
+              <div class="bar"></div>
+              <div class="badge"><svg class="i"><use href="#i-info"/></svg></div>
+              <p>Your driver is 5 minutes away</p>
+            </div>
+            <div class="toast toast--brand">
+              <div class="bar"></div>
+              <div class="badge"><svg class="i"><use href="#i-info"/></svg></div>
+              <p>Promo code ISLAND20 applied</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">All four kinds</div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>success</td><td>Something you did worked. "Address saved", "Order cancelled"</td></tr>
+      <tr><td>error</td><td>Something you did failed, and it is recoverable. Field-level problems belong in the field,
+        not here</td></tr>
+      <tr><td>info</td><td>Something happened that you did not do — a driver update, a status change</td></tr>
+      <tr><td>brand</td><td>A promotion applied. The only kind that uses the identity red</td></tr>
+      <tr><td>Placement</td><td>10px under the safe inset, gutter-wide, over everything including the cap</td></tr>
+    </table>
+  </div>
+</div>

@@ -65,13 +65,12 @@ class _SeTextFieldState extends State<SeTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final hasError = widget.errorText != null;
     final focused = _focus.hasFocus;
     final borderColor = hasError
         ? SeColors.danger
         : focused
-            ? SeColors.red500
+            ? SeColors.brandAction
             : SeColors.ink200;
 
     return Column(
@@ -84,7 +83,14 @@ class _SeTextFieldState extends State<SeTextField> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 140),
           decoration: BoxDecoration(
-            color: widget.enabled ? scheme.surface : SeColors.surface50,
+            // A field is a sunken well you type into: it rests on the field tone
+            // and LIFTS to white on focus (a real change of surface, not just a
+            // recoloured border). Matches the admin's --field behaviour.
+            color: !widget.enabled
+                ? SeColors.surface50
+                : focused
+                    ? SeColors.surfaceRaised
+                    : SeColors.field,
             borderRadius: SeRadius.inputRadius,
             border: Border.all(
               color: borderColor,
@@ -93,7 +99,7 @@ class _SeTextFieldState extends State<SeTextField> {
             boxShadow: focused
                 ? [
                     BoxShadow(
-                      color: SeColors.red500.withValues(alpha: 0.10),
+                      color: SeColors.brandAction.withValues(alpha: 0.12),
                       blurRadius: 0,
                       spreadRadius: 3,
                     )
@@ -111,7 +117,7 @@ class _SeTextFieldState extends State<SeTextField> {
                       left: 14, right: 10, top: widget.maxLines > 1 ? 14 : 0),
                   child: Icon(widget.icon,
                       size: 20,
-                      color: focused ? SeColors.red500 : SeColors.ink400),
+                      color: focused ? SeColors.brandAction : SeColors.ink400),
                 ),
               Expanded(
                 child: TextField(
@@ -128,7 +134,7 @@ class _SeTextFieldState extends State<SeTextField> {
                   onSubmitted: widget.onSubmitted,
                   inputFormatters: widget.inputFormatters,
                   style: SeType.body.copyWith(color: SeColors.ink900),
-                  cursorColor: SeColors.red500,
+                  cursorColor: SeColors.brandAction,
                   decoration: InputDecoration(
                     isDense: true,
                     filled: false,

@@ -7,7 +7,15 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../utils/money.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
+import '../widgets/se_toast.dart';
 
+/// The moment screen.
+///
+/// It has one job — make it unmistakable that the order went through — and one
+/// question to answer immediately after: when, and where. There is no back
+/// button, because there is nowhere sensible to go back TO; the cap's close
+/// returns home and the docked action goes to tracking.
 class OrderConfirmedScreen extends StatefulWidget {
   const OrderConfirmedScreen({super.key});
 
@@ -20,7 +28,6 @@ class _OrderConfirmedScreenState extends State<OrderConfirmedScreen>
   late AnimationController _animCtrl;
   late AnimationController _confettiCtrl;
   late Animation<double> _scaleAnim;
-  late Animation<double> _fadeAnim;
   late Animation<double> _confettiAnim;
 
   late List<_Particle> _particles;
@@ -46,24 +53,23 @@ class _OrderConfirmedScreenState extends State<OrderConfirmedScreen>
       statusBarIconBrightness: Brightness.light,
     ));
     final now = DateTime.now();
-    _etaWindow =
-        '${_clock(now.add(const Duration(minutes: 30)))} – ${_clock(now.add(const Duration(minutes: 40)))}';
+    _etaWindow = _window(
+        now.add(const Duration(minutes: 30)), now.add(const Duration(minutes: 40)));
 
     _animCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
-    _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.elasticOut);
-    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeIn);
+        vsync: this, duration: const Duration(milliseconds: 620));
+    _scaleAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutBack);
 
     _confettiCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2500));
     _confettiAnim =
         CurvedAnimation(parent: _confettiCtrl, curve: Curves.easeOut);
 
-    _particles = List.generate(44, (_) => _Particle());
+    _particles = List.generate(30, (_) => _Particle());
 
     _animCtrl.forward();
     HapticFeedback.mediumImpact();
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 260), () {
       if (mounted) _confettiCtrl.forward();
     });
   }
@@ -79,8 +85,7 @@ class _OrderConfirmedScreenState extends State<OrderConfirmedScreen>
         _orderId = args['orderId'] as String? ?? '';
         _merchantName = args['merchantName'] as String? ?? '';
         _deliveryAddress = args['deliveryAddress'] as String? ?? '';
-        _paymentMethod =
-            args['paymentMethod'] as String? ?? 'Cash on Delivery';
+        _paymentMethod = args['paymentMethod'] as String? ?? 'Cash on Delivery';
         _subtotal = args['subtotal'] as int? ?? 0;
         _deliveryFee = args['deliveryFee'] as int? ?? 0;
         _serviceFee = args['serviceFee'] as int? ?? 0;
@@ -108,273 +113,234 @@ class _OrderConfirmedScreenState extends State<OrderConfirmedScreen>
     super.dispose();
   }
 
-  String _clock(DateTime t) {
+  String _clock(DateTime t, {bool meridiem = true}) {
     final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
     final m = t.minute.toString().padLeft(2, '0');
     final ap = t.hour < 12 ? 'AM' : 'PM';
-    return '$h:$m $ap';
+    return meridiem ? '$h:$m $ap' : '$h:$m';
   }
+
+  /// "6:05 – 6:15 PM", not "6:05 PM – 6:15 PM". Printing the meridiem twice
+  /// pushes a ten-minute window onto two lines for no information at all.
+  String _window(DateTime from, DateTime to) {
+    final sameHalf = (from.hour < 12) == (to.hour < 12);
+    return '${_clock(from, meridiem: !sameHalf)} – ${_clock(to)}';
+  }
+
+  String get _reference => _orderId.isEmpty
+      ? 'SE-ORDER'
+      : _orderId.substring(0, _orderId.length.clamp(0, 8)).toUpperCase();
+
+  void _goHome() =>
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Stack(
-        children: [
-          AnimatedBuilder(
+    return Stack(
+      children: [
+        SePageScaffold(
+          showBack: false,
+          capTitle: _celebration(),
+          bottomBar: SeBottomBar(
+            child: SeButton(
+              label: 'Track my order',
+              icon: SeIcons.arrowRight,
+              onPressed: () => Navigator.pushNamed(context, '/order-status',
+                  arguments: {'orderId': _orderId}),
+            ),
+          ),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+                SeSpacing.gutter, 20, SeSpacing.gutter, 24),
+            children: [
+              _reference2Up(),
+              const SizedBox(height: 12),
+              if (_deliveryAddress.isNotEmpty) ...[
+                _addressPanel(),
+                const SizedBox(height: 12),
+              ],
+              _receipt(),
+            ],
+          ),
+        ),
+        // Purely decorative and short-lived, so it must never eat a tap on the
+        // buttons underneath it.
+        IgnorePointer(
+          child: AnimatedBuilder(
             animation: _confettiAnim,
-            builder: (_, __) => CustomPaint(
+            builder: (_, _) => CustomPaint(
               painter: _ConfettiPainter(_confettiAnim.value, _particles),
               size: Size.infinite,
             ),
           ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                  SeSpacing.gutter, 30, SeSpacing.gutter, 24),
-              child: FadeTransition(
-                opacity: _fadeAnim,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: ScaleTransition(
-                        scale: _scaleAnim,
-                        child: Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            gradient: SeColors.sunsetGradient,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: SeElevation.glow,
-                          ),
-                          child: const Icon(SeIcons.check,
-                              size: 50, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('Order Placed!',
-                        textAlign: TextAlign.center, style: SeType.display),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Your order is confirmed & sent to ${_merchantName.isNotEmpty ? _merchantName : 'the merchant'}. We\'ll notify you at every step.',
-                      textAlign: TextAlign.center,
-                      style: SeType.body.copyWith(color: SeColors.ink500),
-                    ),
-                    const SizedBox(height: 24),
-                    _infoTile(
-                      label: 'ORDER ID',
-                      value: _orderId.isNotEmpty
-                          ? '#${_orderId.substring(0, _orderId.length.clamp(0, 8)).toUpperCase()}'
-                          : '#SE-ORDER',
-                    ),
-                    const SizedBox(height: 12),
-                    _etaTile(),
-                    const SizedBox(height: 12),
-                    _addressTile(),
-                    const SizedBox(height: 12),
-                    _buildReceiptCard(),
-                    const SizedBox(height: 20),
-                    SeButton(
-                      label: 'Track My Order',
-                      icon: SeIcons.arrowRight,
-                      onPressed: () => Navigator.pushNamed(
-                          context, '/order-status',
-                          arguments: {'orderId': _orderId}),
-                    ),
-                    const SizedBox(height: 10),
-                    SeButton(
-                      label: 'Back to Home',
-                      variant: SeButtonVariant.ghost,
-                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                          context, '/home', (route) => false),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _infoTile({required String label, required String value}) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: SeColors.surface0,
-          borderRadius: SeRadius.all(SeRadius.md),
-          boxShadow: SeElevation.e1,
-        ),
-        child: Column(
-          children: [
-            Text(label, style: SeType.eyebrow),
-            const SizedBox(height: 4),
-            Text(value,
-                style: SeType.tabular(SeType.h2).copyWith(color: SeColors.ink900)),
-          ],
-        ),
+  Widget _celebration() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // The close sits level with the tick rather than beside the
+          // headline: as `trailing` it centred itself against the whole block
+          // and floated in the middle of the sentence.
+          Row(
+            children: [
+              ScaleTransition(
+                scale: _scaleAnim,
+                child: Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                  ),
+                  child: const Icon(SeIcons.check,
+                      size: 30, color: SeColors.shellInk),
+                ),
+              ),
+              const Spacer(),
+              SeCapButton(icon: SeIcons.close, onTap: _goHome),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text('Order placed',
+              style: SeType.display
+                  .copyWith(color: SeColors.shellInk, height: 1.1)),
+          const SizedBox(height: 6),
+          Text(
+            _merchantName.isEmpty
+                ? 'We are letting the merchant know now.'
+                : '$_merchantName is getting it ready. We will tell you at every step.',
+            style: SeType.bodyS.copyWith(
+                color: SeColors.shellInk.withValues(alpha: 0.78), height: 1.45),
+          ),
+        ],
       );
 
-  Widget _etaTile() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: SeColors.red50,
-          border: Border.all(color: SeColors.red100, width: 1.5),
-          borderRadius: SeRadius.all(SeRadius.md),
-        ),
+  /// The two facts wanted first, side by side: when it lands, and what to quote
+  /// if something goes wrong.
+  // IntrinsicHeight, because the two panels must match each other's height and
+  // `stretch` alone inside a ListView asks for an infinite one.
+  Widget _reference2Up() => IntrinsicHeight(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                  color: SeColors.surface0, shape: BoxShape.circle),
-              child: const Icon(SeIcons.clock, size: 24, color: SeColors.red500),
+          Expanded(
+            child: SePanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(SeIcons.clock,
+                          size: 15, color: SeColors.brandAction),
+                      const SizedBox(width: 6),
+                      Text('ARRIVES', style: SeType.eyebrow),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(_etaWindow,
+                      style: SeType.tabular(SeType.title)
+                          .copyWith(color: SeColors.ink900)),
+                ],
+              ),
             ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ESTIMATED ARRIVAL', style: SeType.eyebrow),
-                const SizedBox(height: 2),
-                Text(_etaWindow,
-                    style: SeType.tabular(SeType.h3)
-                        .copyWith(color: SeColors.red600)),
-              ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SePanel(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: _reference));
+                SeToast.success(context, 'Order number copied');
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(SeIcons.copy, size: 14, color: SeColors.ink400),
+                      const SizedBox(width: 6),
+                      Text('ORDER', style: SeType.eyebrow),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text('#$_reference',
+                      style: SeType.tabular(SeType.title)
+                          .copyWith(color: SeColors.ink900),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+          ),
+          ],
+        ),
+      );
+
+  Widget _addressPanel() => SePanel(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(SeIcons.location, size: 18, color: SeColors.brandAction),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('DELIVERING TO', style: SeType.eyebrow),
+                  const SizedBox(height: 3),
+                  Text(_deliveryAddress,
+                      style: SeType.bodyS.copyWith(
+                          color: SeColors.ink700, height: 1.4)),
+                ],
+              ),
             ),
           ],
         ),
       );
 
-  Widget _addressTile() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: SeColors.surface0,
-          borderRadius: SeRadius.all(SeRadius.md),
-          boxShadow: SeElevation.e1,
-        ),
+  Widget _receipt() => SePanel(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('RECEIPT', style: SeType.eyebrow),
+            const SizedBox(height: 8),
+            for (final item in _items)
+              SeMoneyLine(
+                label: '${item['name']} × ${item['qty']}',
+                value: Money.format(item['price'] as int),
+              ),
+            if (_items.isNotEmpty)
+              const Divider(height: 18, color: SeColors.ink100),
+            SeMoneyLine(label: 'Subtotal', value: Money.format(_subtotal)),
+            SeMoneyLine(
+                label: 'Delivery fee', value: Money.deliveryFee(_deliveryFee)),
+            SeMoneyLine(label: 'Service fee', value: Money.format(_serviceFee)),
+            // The receipt has to explain the gap between the items and the
+            // amount charged, or it does not reconcile (P3-02).
+            if (_discount > 0)
+              SeMoneyLine(
+                label: 'Discount',
+                value: '− ${Money.format(_discount)}',
+                valueColor: SeColors.success,
+              ),
+            const Divider(height: 18, color: SeColors.ink200),
+            SeMoneyLine(
+                label: 'Total', value: Money.format(_total), strong: true),
+            const SizedBox(height: 10),
             Row(
               children: [
-                const Icon(SeIcons.location, size: 16, color: SeColors.ink700),
-                const SizedBox(width: 6),
-                Text('DELIVERING TO', style: SeType.eyebrow),
+                const Icon(SeIcons.cash, size: 15, color: SeColors.ink400),
+                const SizedBox(width: 7),
+                Text(_paymentMethod,
+                    style: SeType.bodyS.copyWith(color: SeColors.ink400)),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              _deliveryAddress.isNotEmpty
-                  ? _deliveryAddress
-                  : 'No address provided',
-              style: SeType.body.copyWith(color: SeColors.ink700),
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildReceiptCard() => Container(
-        decoration: BoxDecoration(
-          color: SeColors.surface0,
-          borderRadius: SeRadius.all(SeRadius.md),
-          boxShadow: SeElevation.e1,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: SeColors.ink100)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(SeIcons.orders, size: 18, color: SeColors.ink700),
-                  const SizedBox(width: 8),
-                  Text('Order Receipt', style: SeType.title),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Column(
-                children: [
-                  ..._items.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text('${item['name']} × ${item['qty']}',
-                                  style: SeType.body
-                                      .copyWith(color: SeColors.ink700)),
-                            ),
-                            Text(Money.format(item['price'] as int),
-                                style: SeType.tabular(SeType.body)
-                                    .copyWith(color: SeColors.ink700)),
-                          ],
-                        ),
-                      )),
-                  if (_items.isNotEmpty)
-                    const Divider(height: 1, color: SeColors.ink100),
-                  const SizedBox(height: 12),
-                  _receiptRow('Subtotal', Money.format(_subtotal)),
-                  _receiptRow('Delivery fee',
-                      Money.deliveryFee(_deliveryFee)),
-                  _receiptRow('Service fee', Money.format(_serviceFee)),
-                  // The receipt has to explain the gap between the items and
-                  // the amount charged, or it does not reconcile (P3-02).
-                  if (_discount > 0)
-                    _receiptRow('Discount', '- ${Money.format(_discount)}'),
-                ],
-              ),
-            ),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(color: SeColors.red50),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total Paid', style: SeType.h3),
-                  Text(Money.format(_total),
-                      style: SeType.tabular(SeType.h3)
-                          .copyWith(color: SeColors.red600)),
-                ],
-              ),
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(SeIcons.cash, size: 16, color: SeColors.ink400),
-                  const SizedBox(width: 8),
-                  Text('Paid via $_paymentMethod',
-                      style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _receiptRow(String label, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: SeType.body.copyWith(color: SeColors.ink500)),
-            Text(value,
-                style:
-                    SeType.tabular(SeType.body).copyWith(color: SeColors.ink700)),
           ],
         ),
       );
@@ -392,14 +358,13 @@ class _Particle {
       : x = math.Random().nextDouble(),
         speedY = 0.3 + math.Random().nextDouble() * 0.7,
         speedX = (math.Random().nextDouble() - 0.5) * 0.3,
-        size = 4 + math.Random().nextDouble() * 8,
+        size = 4 + math.Random().nextDouble() * 7,
         color = [
           SeColors.red500,
-          SeColors.red400,
-          SeColors.gold500,
-          const Color(0xFFFF6A3D),
-          SeColors.ocean500,
-        ][math.Random().nextInt(5)],
+          SeColors.star,
+          SeColors.success,
+          SeColors.info,
+        ][math.Random().nextInt(4)],
         startY = -0.1 - math.Random().nextDouble() * 0.3;
 }
 

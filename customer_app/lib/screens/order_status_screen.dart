@@ -11,11 +11,21 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../models/order_status.dart';
 import '../utils/phone.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_toast.dart';
 
+/// Tracking.
+///
+/// Ordered by how fresh the information is, not by how the data is shaped: what
+/// is happening RIGHT NOW (the driver, the live distance) sits at the top, and
+/// the step history — which the customer has mostly already lived through —
+/// sits under it.
+///
+/// Every state uses the same brand cap. A cancelled order used to get a black
+/// header and a delivered one a green header, which made three screens out of
+/// one; the state now shows in the words, the route bar and the stepper.
 class OrderStatusScreen extends StatefulWidget {
   const OrderStatusScreen({super.key});
 
@@ -72,7 +82,13 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   /// displayed "Order Confirmed" on a cancelled order.
   bool get _isCancelled => _status == OrderStatus.cancelled;
 
+  bool get _delivered => _status == OrderStatus.delivered;
+
   String get _statusLabel => OrderStatus.label(_status);
+
+  String get _reference => _orderId.isEmpty
+      ? ''
+      : '#${_orderId.substring(0, _orderId.length.clamp(0, 8)).toUpperCase()}';
 
   /// P5-03, audit §15. The app has always rendered a "Cancelled" tab and a
   /// cancelled badge that **no customer action could ever produce**.
@@ -101,10 +117,10 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   // to fake a map for the same reason. Revisit with the maps work (P5-05).
 
   static const _stepNames = [
-    'Order Placed',
-    'Driver Assigned',
-    'Picked Up',
-    'On the Way',
+    'Order placed',
+    'Driver assigned',
+    'Picked up',
+    'On the way',
     'Delivered',
   ];
 
@@ -117,21 +133,21 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   ];
 
   String _stepSub(int index) {
-    final merchantName = _order?['merchantName'] as String? ?? 'Merchant';
+    final merchantName = _order?['merchantName'] as String? ?? 'the merchant';
     switch (index) {
       case 0:
         // The old copy claimed "$merchantName accepted your order", which was
         // wrong even before this change — no merchant accepts anything in this
         // system. Only a driver ever accepts an order.
-        return 'Your order was sent to $merchantName';
+        return 'Sent to $merchantName';
       case 1:
         return 'A driver accepted and is heading to $merchantName';
       case 2:
-        return 'Driver collected your order';
+        return 'Your order is with the driver';
       case 3:
-        return 'Driver is heading to you now';
+        return 'Heading to you now';
       case 4:
-        return 'Order delivered successfully!';
+        return 'Delivered — thanks for ordering';
       default:
         return '';
     }
@@ -256,264 +272,130 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Cancelled is a terminal state with its own presentation — not a stepper
-    // frozen at some index. Handled before anything reads _currentStep.
-    if (_isCancelled) return _buildCancelledScaffold();
+    // Cancelled is a terminal state with its own content — not a stepper frozen
+    // at some index. Handled before anything reads _currentStep.
+    if (_isCancelled) return _cancelledView();
 
-    final delivered = _currentStep == OrderStatus.stepCount - 1;
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      title: _statusLabel,
+      subtitle: _delivered
+          ? 'Thanks for ordering with ShipEast.'
+          : 'Live · updates automatically',
+      trailing: _reference.isEmpty
+          ? null
+          : Text(_reference,
+              style: SeType.tabular(SeType.label).copyWith(
+                  color: SeColors.shellInk.withValues(alpha: 0.78))),
+      capBottom: _routeBar(),
+      bottomBar: _delivered && _order?['rated'] != true
+          ? SeBottomBar(
+              child: SeButton(
+                label: 'Rate your experience',
+                icon: SeIcons.star,
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  '/rate-driver',
+                  arguments: {
+                    'orderId': _orderId,
+                    'driverId': _order?['driverId'] ?? '',
+                    'merchantId': _order?['merchantId'] ?? '',
+                    'merchantName': _order?['merchantName'] ?? '',
+                  },
+                ),
+              ),
+            )
+          : null,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 28),
         children: [
-          _buildHero(delivered),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(SeSpacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildStepper(),
-                  const SizedBox(height: 16),
-                  _buildDriverCard(),
-                  const SizedBox(height: 12),
-                  if (_isEnRoute && _driverLoc != null) ...[
-                    _buildLiveDistanceCard(),
-                    const SizedBox(height: 12),
-                  ],
-                  if (delivered && _order?['rated'] != true)
-                    SeButton(
-                      label: 'Rate Your Experience',
-                      icon: SeIcons.star,
-                      onPressed: () => Navigator.pushNamed(
-                        context,
-                        '/rate-driver',
-                        arguments: {
-                          'orderId': _orderId,
-                          'driverId': _order?['driverId'] ?? '',
-                          'merchantId': _order?['merchantId'] ?? '',
-                          'merchantName': _order?['merchantName'] ?? '',
-                        },
-                      ),
-                    ),
-                  if (!delivered) _buildTrackingNote(),
-                  if (_canCancel) ...[
-                    const SizedBox(height: 12),
-                    SeButton(
-                      label: _cancelling ? 'Cancelling…' : 'Cancel Order',
-                      icon: SeIcons.close,
-                      variant: SeButtonVariant.destructive,
-                      onPressed: _cancelling ? null : _showCancelSheet,
-                    ),
-                  ],
-                ],
+          _driverPanel(),
+          if (_isEnRoute && _driverLoc != null) ...[
+            const SizedBox(height: 12),
+            _liveDistancePanel(),
+          ],
+          const SizedBox(height: 22),
+          const SeSectionTitle(title: 'Progress'),
+          const SizedBox(height: 10),
+          _stepper(),
+          if (!_delivered) ...[
+            const SizedBox(height: 14),
+            SeNotice.info("We'll notify you when your order is delivered."),
+          ],
+          if (_canCancel) ...[
+            const SizedBox(height: 18),
+            Center(
+              child: SeButton(
+                label: _cancelling ? 'Cancelling…' : 'Cancel order',
+                variant: SeButtonVariant.ghost,
+                size: SeButtonSize.medium,
+                expand: false,
+                onPressed: _cancelling ? null : _showCancelSheet,
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  // Honest live-tracking status hero (SEDS) — deliberately NOT a fake street
-  // map. Shows the real order status, a route progress bar, and a pulsing
-  // "current" node. A real map lands with the maps integration (see audit).
-  Widget _buildHero(bool delivered) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient:
-            delivered ? _successGradient : SeColors.emberGradient,
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, SeSpacing.gutter, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(SeIcons.arrowLeft,
-                          size: 20, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _orderId.isNotEmpty
-                          ? 'Order #${_orderId.substring(0, _orderId.length.clamp(0, 8)).toUpperCase()}'
-                          : 'Your Order',
-                      style: SeType.label.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85)),
-                    ),
-                  ),
-                  // The ETA pill stood here. Removed — see _stepNames.
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(_statusLabel, style: SeType.h1.copyWith(color: Colors.white)),
-              const SizedBox(height: 4),
-              Text(
-                delivered
-                    ? 'Thanks for ordering with ShipEast.'
-                    : 'Live status · updates automatically',
-                style: SeType.bodyS.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85)),
-              ),
-              const SizedBox(height: 16),
-              _routeBar(delivered),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static const LinearGradient _successGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF16A34A), Color(0xFF0B7A38)],
-  );
-
-  /// Neutral slate, deliberately not the brand ember and not alarm red. A
-  /// cancelled order is a dead end, not an error the customer caused.
-  static const LinearGradient _cancelledGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF475467), Color(0xFF1D2939)],
-  );
-
   /// Terminal presentation for a cancelled order.
   ///
-  /// Deliberately does not fall through to the stepper: there is no progress to
-  /// show, and [OrderStatus.step] returns -1 here. Shows the reason when one was
-  /// recorded, and routes to support rather than leaving the customer with a
-  /// dead screen and no next action.
-  Widget _buildCancelledScaffold() {
+  /// Same shell as every other state — only the words and the content change.
+  /// There is no progress to show, and [OrderStatus.step] returns -1 here, so
+  /// nothing on this path touches the stepper.
+  Widget _cancelledView() {
     final reason = (_order?['cancellationReason'] as String?)?.trim() ?? '';
     final cancelledBy = _order?['cancelledBy'] as String? ?? '';
+    final wasCash = (_order?['paymentMethod'] as String? ?? '')
+        .toLowerCase()
+        .contains('cash');
 
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      title: OrderStatus.label(OrderStatus.cancelled),
+      subtitle: 'This order is no longer being delivered.',
+      trailing: _reference.isEmpty
+          ? null
+          : Text(_reference,
+              style: SeType.tabular(SeType.label).copyWith(
+                  color: SeColors.shellInk.withValues(alpha: 0.78))),
+      bottomBar: SeBottomBar(
+        child: SeButton(
+          label: 'Contact support',
+          icon: SeIcons.chat,
+          onPressed: () => Navigator.pushNamed(context, '/help-support'),
+        ),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 24),
         children: [
-          Container(
-            decoration: const BoxDecoration(gradient: _cancelledGradient),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding:
-                    const EdgeInsets.fromLTRB(12, 8, SeSpacing.gutter, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(SeIcons.arrowLeft,
-                                size: 20, color: Colors.white),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _orderId.isNotEmpty
-                                ? 'Order #${_orderId.substring(0, _orderId.length.clamp(0, 8)).toUpperCase()}'
-                                : 'Your Order',
-                            style: SeType.label.copyWith(
-                                color: Colors.white.withValues(alpha: 0.85)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(OrderStatus.label(OrderStatus.cancelled),
-                        style: SeType.h1.copyWith(color: Colors.white)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'This order is no longer being delivered.',
-                      style: SeType.bodyS.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85)),
-                    ),
-                  ],
+          const SeSectionTitle(title: 'What happened'),
+          const SizedBox(height: 10),
+          SePanel(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reason.isNotEmpty
+                      ? reason
+                      : cancelledBy == 'customer'
+                          ? 'You cancelled this order.'
+                          : 'This order was cancelled. No reason was recorded.',
+                  style: SeType.body
+                      .copyWith(color: SeColors.ink900, height: 1.45),
                 ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(SeSpacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SeCard(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(SeIcons.warningCircle,
-                                size: 20, color: SeColors.danger),
-                            const SizedBox(width: 8),
-                            Text('What happened',
-                                style: SeType.label
-                                    .copyWith(color: SeColors.ink500)),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          reason.isNotEmpty
-                              ? reason
-                              : cancelledBy == 'customer'
-                                  ? 'You cancelled this order.'
-                                  : 'This order was cancelled. No reason was '
-                                      'recorded.',
-                          style: SeType.bodyS,
-                        ),
-                        // Matched loosely on purpose: the stored value is the
-                        // display string 'Cash on Delivery', not a slug.
-                        // Normalising it is a schema migration, not a Phase 1
-                        // change — see SCHEMA.md §orders.paymentMethod.
-                        if ((_order?['paymentMethod'] as String? ?? '')
-                            .toLowerCase()
-                            .contains('cash')) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            'Nothing was charged — this order was cash on '
-                            'delivery.',
-                            style: SeType.bodyS
-                                .copyWith(color: SeColors.ink300),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                // Matched loosely on purpose: the stored value is the display
+                // string 'Cash on Delivery', not a slug. Normalising it is a
+                // schema migration, not a Phase 1 change — see
+                // SCHEMA.md §orders.paymentMethod.
+                if (wasCash) ...[
                   const SizedBox(height: 12),
-                  SeButton(
-                    label: 'Contact Support',
-                    icon: SeIcons.chat,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/help-support'),
-                  ),
+                  SeNotice.info(
+                      'Nothing was charged — this order was cash on delivery.'),
                 ],
-              ),
+              ],
             ),
           ),
         ],
@@ -545,45 +427,41 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SeSheetHandle(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text('Cancel this order?', style: SeType.h2),
               const SizedBox(height: 4),
               Text(
                 'This cannot be undone. Nothing was charged — this order is '
                 'cash on delivery.',
-                style: SeType.bodyS.copyWith(color: SeColors.ink500),
+                style: SeType.bodyS
+                    .copyWith(color: SeColors.ink500, height: 1.45),
               ),
               const SizedBox(height: 18),
-              Text('Why are you cancelling?',
-                  style: SeType.label.copyWith(color: SeColors.ink700)),
-              const SizedBox(height: 8),
+              const SeFieldLabel('WHY ARE YOU CANCELLING?'),
               ..._cancelReasons.map((reason) {
                 final isSelected = selected == reason;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: GestureDetector(
                     onTap: () => setSheetState(() => selected = reason),
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 13),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? SeColors.dangerTint
+                            ? SeColors.dangerSoft
                             : SeColors.surface50,
-                        borderRadius: SeRadius.inputRadius,
+                        borderRadius: SeRadius.all(SeRadius.md),
                         border: Border.all(
-                          color: isSelected
-                              ? SeColors.danger
-                              : SeColors.ink200,
-                          width: 1.5,
+                          color:
+                              isSelected ? SeColors.danger : SeColors.ink200,
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            isSelected
-                                ? SeIcons.checkCircle
-                                : SeIcons.radioOff,
+                            isSelected ? SeIcons.checkCircle : SeIcons.radioOff,
                             size: 20,
                             color: isSelected
                                 ? SeColors.danger
@@ -603,8 +481,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
               }),
               const SizedBox(height: 10),
               SeButton(
-                label: 'Cancel Order',
-                icon: SeIcons.close,
+                label: 'Cancel order',
                 variant: SeButtonVariant.destructive,
                 // Disabled until a reason is chosen. An optional reason is an
                 // empty reason: nobody fills in a field they can skip, and the
@@ -618,8 +495,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
               ),
               const SizedBox(height: 8),
               SeButton(
-                label: 'Keep My Order',
-                icon: SeIcons.arrowLeft,
+                label: 'Keep my order',
                 variant: SeButtonVariant.ghost,
                 onPressed: () => Navigator.pop(ctx),
               ),
@@ -648,7 +524,9 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     }
   }
 
-  Widget _routeBar(bool delivered) {
+  /// The one piece of motion in the app: a node that creeps along the cap as
+  /// the order moves. It sits ON the brand, so it is drawn in warm white.
+  Widget _routeBar() {
     // Guarded against the cancelled case: step() returns -1 there, and a
     // negative width factor throws. The cancelled view never reaches this
     // widget, and the clamp is the belt to that braces.
@@ -658,30 +536,29 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
       builder: (context, c) {
         final width = c.maxWidth;
         return SizedBox(
-          height: 24,
+          height: 22,
           child: Stack(
             alignment: Alignment.centerLeft,
             children: [
               Container(
-                height: 5,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(3),
+                  color: Colors.black.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               FractionallySizedBox(
                 widthFactor: progress == 0 ? 0.02 : progress,
                 child: Container(
-                  height: 5,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(3),
+                    color: SeColors.shellInk,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              // Moving node
               Positioned(
-                left: (width - 20) * progress,
+                left: (width - 22) * progress,
                 child: _pulseNode(),
               ),
             ],
@@ -691,59 +568,54 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     );
   }
 
-  Widget _pulseNode() {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (_currentStep < 3)
-            AnimatedBuilder(
-              animation: _pulseCtrl,
-              builder: (context, child) => Transform.scale(
-                scale: 0.7 + _pulseCtrl.value * 1.3,
-                child: Opacity(
-                  opacity: (1 - _pulseCtrl.value).clamp(0.0, 1.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+  Widget _pulseNode() => SizedBox(
+        width: 22,
+        height: 22,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (_currentStep < OrderStatus.stepCount - 1)
+              AnimatedBuilder(
+                animation: _pulseCtrl,
+                builder: (context, child) => Transform.scale(
+                  scale: 0.7 + _pulseCtrl.value * 1.3,
+                  child: Opacity(
+                    opacity: (1 - _pulseCtrl.value).clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: SeColors.shellInk.withValues(alpha: 0.45),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
               ),
+            Container(
+              width: 18,
+              height: 18,
+              decoration: const BoxDecoration(
+                  color: SeColors.shellInk, shape: BoxShape.circle),
+              child: Icon(
+                _currentStep >= OrderStatus.stepCount - 1
+                    ? SeIcons.check
+                    : SeIcons.bike,
+                size: 11,
+                color: SeColors.shell,
+              ),
             ),
-          Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: SeElevation.e1,
-            ),
-            child: Icon(
-              _currentStep >= 3 ? SeIcons.check : SeIcons.bike,
-              size: 8,
-              color: SeColors.red500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepper() {
-    return SeCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        children: List.generate(
-          OrderStatus.stepCount,
-          (i) => _stepRow(i, isLast: i == OrderStatus.stepCount - 1),
+          ],
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _stepper() => SePanel(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+        child: Column(
+          children: List.generate(
+            OrderStatus.stepCount,
+            (i) => _stepRow(i, isLast: i == OrderStatus.stepCount - 1),
+          ),
+        ),
+      );
 
   Widget _stepRow(int stepIndex, {required bool isLast}) {
     final state = _stepState(stepIndex);
@@ -751,12 +623,12 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     final isNow = state == 'now';
     final isWait = state == 'wait';
 
-    final Color dotBg = isDone
-        ? SeColors.successTint
+    final Color plate = isDone
+        ? SeColors.successSoft
         : isNow
-            ? SeColors.red500
+            ? SeColors.brandAction
             : SeColors.surface50;
-    final Color iconColor = isDone
+    final Color glyph = isDone
         ? SeColors.success
         : isNow
             ? Colors.white
@@ -769,41 +641,37 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
           Column(
             children: [
               Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: dotBg,
-                  shape: BoxShape.circle,
-                  boxShadow:
-                      isNow ? SeElevation.glow : SeElevation.e0,
-                ),
-                child: Icon(_stepIcons[stepIndex], size: 18, color: iconColor),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: plate, shape: BoxShape.circle),
+                child: Icon(_stepIcons[stepIndex], size: 16, color: glyph),
               ),
               if (!isLast)
                 Expanded(
                   child: Container(
-                    width: 2.5,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 3),
                     color: isDone ? SeColors.success : SeColors.ink200,
                   ),
                 ),
             ],
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(top: 8, bottom: isLast ? 8 : 20),
+              padding: EdgeInsets.only(top: 5, bottom: isLast ? 8 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _stepNames[stepIndex],
                     style: SeType.title.copyWith(
+                        fontSize: 15,
                         color: isWait ? SeColors.ink400 : SeColors.ink900),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isDone || isNow ? _stepSub(stepIndex) : 'Waiting...',
+                    isDone || isNow ? _stepSub(stepIndex) : 'Not yet',
                     style: SeType.bodyS.copyWith(color: SeColors.ink400),
                   ),
                 ],
@@ -815,7 +683,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     );
   }
 
-  Future<void> _callDriver(String name) async {
+  Future<void> _callDriver() async {
     final phone = (_driver?['phone'] as String?)?.trim() ?? '';
     if (phone.isEmpty) {
       if (mounted) SeToast.info(context, 'Driver contact not available yet');
@@ -831,17 +699,17 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     }
   }
 
-  Widget _buildDriverCard() {
+  Widget _driverPanel() {
     final driverId = _order?['driverId'] as String?;
     final hasDriver = driverId != null && driverId.isNotEmpty;
 
     if (!hasDriver) {
-      return SeCard(
+      return SePanel(
         child: Row(
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: SeColors.surface50,
                 borderRadius: SeRadius.all(SeRadius.sm),
@@ -853,7 +721,8 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Finding your driver...', style: SeType.title),
+                  Text('Finding your driver…',
+                      style: SeType.title.copyWith(fontSize: 15)),
                   const SizedBox(height: 2),
                   Text('A driver will be assigned shortly',
                       style: SeType.bodyS.copyWith(color: SeColors.ink400)),
@@ -865,7 +734,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
       );
     }
 
-    final driverName = _driver?['name'] as String? ?? 'Your Driver';
+    final driverName = _driver?['name'] as String? ?? 'Your driver';
     final avgRating =
         (_driver?['averageRating'] as num?)?.toStringAsFixed(1) ?? '5.0';
     // British spelling, per SCHEMA.md §c — both writers (driver registration
@@ -882,28 +751,32 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
       if (licencePlate.isNotEmpty) licencePlate,
     ].join('  ·  ');
 
-    return SeCard(
+    return SePanel(
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              gradient: SeColors.emberGradient,
+              color: SeColors.brandSoft,
               borderRadius: SeRadius.all(SeRadius.sm),
             ),
-            child: const Icon(SeIcons.user, size: 22, color: Colors.white),
+            child: const Icon(SeIcons.user,
+                size: 22, color: SeColors.brandAction),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(driverName, style: SeType.title),
+                Text(driverName,
+                    style: SeType.title.copyWith(fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(SeIcons.star, size: 12, color: SeColors.gold500),
+                    const Icon(SeIcons.star, size: 12, color: SeColors.star),
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
@@ -918,16 +791,19 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
               ],
             ),
           ),
+          const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => _callDriver(driverName),
+            onTap: _callDriver,
+            behavior: HitTestBehavior.opaque,
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: SeColors.successTint,
+                color: SeColors.successSoft,
                 borderRadius: SeRadius.all(SeRadius.sm),
               ),
-              child: const Icon(SeIcons.phone, size: 18, color: SeColors.success),
+              child:
+                  const Icon(SeIcons.phone, size: 18, color: SeColors.success),
             ),
           ),
         ],
@@ -952,9 +828,9 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   /// Live distance from the driver to the customer — no map, no ETA. Shows a
   /// real number when the customer has shared their location, and an honest
   /// "live location active" state (with a prompt) when they have not.
-  Widget _buildLiveDistanceCard() {
+  Widget _liveDistancePanel() {
     final fresh = _driverLocFresh();
-    final accent = fresh ? SeColors.ocean500 : SeColors.ink400;
+    final accent = fresh ? SeColors.info : SeColors.ink400;
 
     String headline;
     String sub;
@@ -976,12 +852,8 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
       sub = 'Getting a live position from your driver.';
     }
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SeColors.oceanTint,
-        borderRadius: SeRadius.all(SeRadius.md),
-      ),
+    return SePanel(
+      color: SeColors.infoSoft,
       child: Row(
         children: [
           Container(
@@ -1001,24 +873,20 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
                 Row(
                   children: [
                     Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: accent,
-                        shape: BoxShape.circle,
-                      ),
+                      width: 6,
+                      height: 6,
+                      decoration:
+                          BoxDecoration(color: accent, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 6),
                     Text(fresh ? 'LIVE' : 'PAUSED',
-                        style: SeType.label.copyWith(
-                            color: accent,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5)),
+                        style: SeType.eyebrow.copyWith(color: accent)),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(headline,
-                    style: SeType.title.copyWith(color: SeColors.ink900)),
+                    style: SeType.title
+                        .copyWith(fontSize: 15, color: SeColors.ink900)),
                 const SizedBox(height: 1),
                 Text(sub,
                     style: SeType.bodyS.copyWith(color: SeColors.ink500)),
@@ -1029,25 +897,4 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
       ),
     );
   }
-
-  Widget _buildTrackingNote() => Container(
-        margin: const EdgeInsets.only(top: 4),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: SeColors.oceanTint,
-          borderRadius: SeRadius.all(SeRadius.md),
-        ),
-        child: Row(
-          children: [
-            const Icon(SeIcons.info, size: 18, color: SeColors.ocean500),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                "We'll notify you when your order is delivered.",
-                style: SeType.bodyS.copyWith(color: SeColors.ocean500),
-              ),
-            ),
-          ],
-        ),
-      );
 }

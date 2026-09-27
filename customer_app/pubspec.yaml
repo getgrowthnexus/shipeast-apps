@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.9+10
+version: 1.2.2+16
 
 environment:
   sdk: ^3.11.5
@@ -77,6 +77,18 @@ flutter:
 
   assets:
     - assets/logo.png
+    - assets/brand/rider.png
+    # Figtree, bundled. `google_fonts` looks in an asset folder literally named
+    # `google_fonts/` for files named `{Family}-{Variant}.ttf` and uses those
+    # instead of reaching for fonts.gstatic.com. Five weights, 184KB total.
+    #
+    # Why bundle rather than fetch: the whole type system is one face, so a
+    # failed fetch is not a subtle degradation — it drops the entire app onto
+    # Roboto. That happens on exactly the launch we can least afford it, a
+    # first run with no signal. It also means widget tests render REAL metrics
+    # instead of the fixed-advance test font, which is what makes the layout
+    # tests in test/screens/ worth trusting.
+    - google_fonts/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

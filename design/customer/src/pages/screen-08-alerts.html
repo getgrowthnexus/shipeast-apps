@@ -1,0 +1,96 @@
+<!-- card: Alerts | group: Screens · Main tabs | desc: Notifications, with the unread signal as a single edge stripe -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Alerts</h1>
+    <p>Tab 4, and route <code>/notifications</code>. Order updates, delivery
+      confirmations and offers in one list.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap">
+        <div class="cap-row">
+          <div>
+            <div class="cap-title">Alerts</div>
+            <div class="cap-sub">1 new update</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad" style="padding-bottom:110px">
+          <div class="stack g10">
+            <div style="background:var(--surface-0);border:1px solid var(--ink-200);border-radius:var(--r-md);overflow:hidden;display:flex">
+              <div style="width:3px;background:var(--brand-action);flex:none"></div>
+              <div style="padding:13px;display:flex;gap:12px;flex:1;min-width:0">
+                <div style="width:38px;height:38px;border-radius:var(--r-sm);background:rgba(247,43,84,.10);color:var(--brand);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:19px;height:19px"><use href="#i-bike"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="hstack g10" style="align-items:flex-start">
+                    <div class="grow" style="font-size:15px;font-weight:700;letter-spacing:-.2px;line-height:22px">Your order is on the way</div>
+                    <div class="t-label ink-400" style="padding-top:2px;white-space:nowrap">2 min ago</div>
+                  </div>
+                  <div class="t-bodyS mt2" style="line-height:1.45">Marcus picked up your order from Island Grill and is heading over.</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--surface-0);border:1px solid var(--ink-200);border-radius:var(--r-md);overflow:hidden;display:flex">
+              <div style="width:3px;flex:none"></div>
+              <div style="padding:13px;display:flex;gap:12px;flex:1;min-width:0">
+                <div style="width:38px;height:38px;border-radius:var(--r-sm);background:rgba(28,130,82,.10);color:var(--success);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:19px;height:19px"><use href="#i-checkCircle"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="hstack g10" style="align-items:flex-start">
+                    <div class="grow" style="font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:22px">Order delivered</div>
+                    <div class="t-label ink-400" style="padding-top:2px;white-space:nowrap">Yesterday</div>
+                  </div>
+                  <div class="t-bodyS mt2" style="line-height:1.45">SE-4790 was delivered. Tap to rate your driver.</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--surface-0);border:1px solid var(--ink-200);border-radius:var(--r-md);overflow:hidden;display:flex">
+              <div style="width:3px;flex:none"></div>
+              <div style="padding:13px;display:flex;gap:12px;flex:1;min-width:0">
+                <div style="width:38px;height:38px;border-radius:var(--r-sm);background:rgba(211,122,13,.10);color:var(--warning);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:19px;height:19px"><use href="#i-tag"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="hstack g10" style="align-items:flex-start">
+                    <div class="grow" style="font-size:15px;font-weight:600;letter-spacing:-.2px;line-height:22px">20% off at Island Grill</div>
+                    <div class="t-label ink-400" style="padding-top:2px;white-space:nowrap">3 days ago</div>
+                  </div>
+                  <div class="t-bodyS mt2" style="line-height:1.45">This weekend only, on orders over J$2,000.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="navbar">
+          <div><svg class="i"><use href="#i-home"/></svg><span>Home</span></div>
+          <div><svg class="i"><use href="#i-search"/></svg><span>Search</span></div>
+          <div><svg class="i"><use href="#i-orders"/></svg><span>Orders</span></div>
+          <div class="on"><svg class="i"><use href="#i-bellFill"/></svg><span class="dot"></span><span>Alerts</span></div>
+          <div><svg class="i"><use href="#i-user"/></svg><span>Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Unread</td><td>A 3px action-red stripe down the card's leading edge, and the title steps from weight
+        600 to 700. That is the <b>whole</b> unread signal — no dot, no tint, no badge on the row</td></tr>
+      <tr><td>Kind → glyph</td><td>order → bike/brand · delivered → check/success · promo → tag/warning · anything
+        else → info</td></tr>
+      <tr><td>Plate</td><td>38px at <code>sm</code> radius, the kind's hue at 10%</td></tr>
+      <tr><td>Timestamp</td><td>A <code>label</code> in <code>ink400</code>, top-aligned with the title so it does not
+        drift when the title wraps to two lines</td></tr>
+    </table>
+  </div>
+</div>

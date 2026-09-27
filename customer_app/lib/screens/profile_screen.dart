@@ -13,11 +13,10 @@ import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../theme/se_brand.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
-import '../widgets/se_stat_tile.dart';
 import '../widgets/se_bottom_sheet.dart';
 import 'help_support_screen.dart';
 import 'notifications_screen.dart';
@@ -25,6 +24,12 @@ import 'privacy_security_screen.dart';
 import 'saved_addresses_screen.dart';
 import 'coming_soon_screen.dart';
 
+/// Profile.
+///
+/// The identity block sits in the brand cap — photo, name, contact — and the
+/// sheet holds everything you can DO. Settings are one hairlined group rather
+/// than five separately shadowed cards, which is what stops a settings page
+/// from reading as a pile of unrelated boxes.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -148,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showEditDialog() {
+  void _showEditSheet() {
     final nameCtrl = TextEditingController(text: _name);
     final phoneCtrl = TextEditingController(text: _phone);
     final emailCtrl = TextEditingController(text: _email);
@@ -167,31 +172,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SeSheetHandle(),
-            const SizedBox(height: 12),
-            Text('Edit Profile', style: SeType.h2),
+            const SizedBox(height: 14),
+            Text('Edit profile', style: SeType.h2),
             const SizedBox(height: 18),
             SeTextField(
                 controller: nameCtrl,
-                label: 'Full Name',
+                label: 'Full name',
                 icon: SeIcons.user,
                 keyboardType: TextInputType.name),
             const SizedBox(height: 14),
             SeTextField(
                 controller: phoneCtrl,
-                label: 'Phone Number',
+                label: 'Phone number',
                 hint: '1-876-000-0000',
                 icon: SeIcons.phone,
                 keyboardType: TextInputType.phone),
             const SizedBox(height: 14),
             SeTextField(
                 controller: emailCtrl,
-                label: 'Email Address',
+                label: 'Email address',
                 icon: SeIcons.envelope,
                 keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 22),
             SeButton(
-              label: 'Save Changes',
-              icon: SeIcons.check,
+              label: 'Save changes',
               onPressed: () {
                 final name = nameCtrl.text.trim();
                 // DR-25: normalise to the one app-wide format on save.
@@ -203,7 +207,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 }
                 _saveProfile(name, phone, email);
                 Navigator.pop(ctx);
-                SeToast.success(context, 'Profile saved!');
+                SeToast.success(context, 'Profile saved');
               },
             ),
           ],
@@ -214,145 +218,154 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      showBack: false,
+      capTitle: _identity(),
+      trailing: SeCapButton(icon: SeIcons.edit, onTap: _showEditSheet),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 110),
         children: [
-          _buildHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(SeSpacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildStats(),
-                  const SizedBox(height: 16),
-                  _buildMenuCard(context),
-                  const SizedBox(height: 16),
-                  SeButton(
-                    label: 'Sign Out',
-                    icon: SeIcons.signOut,
-                    variant: SeButtonVariant.destructive,
-                    onPressed: _handleSignOut,
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text('ShipEast · v${SeBrand.version}',
-                        style:
-                            SeType.bodyS.copyWith(color: SeColors.ink400)),
-                  ),
-                  const SizedBox(height: 8),
-                ],
+          _stats(),
+          const SizedBox(height: 20),
+          SeRowGroup(
+            children: [
+              SeRow(
+                icon: SeIcons.addresses,
+                label: 'Saved addresses',
+                subtitle: 'Where we deliver to',
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SavedAddressesScreen())),
               ),
-            ),
+              SeRow(
+                icon: SeIcons.bell,
+                label: 'Notifications',
+                subtitle: 'Order updates and offers',
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen())),
+              ),
+              SeRow(
+                icon: SeIcons.creditCard,
+                label: 'Payment methods',
+                subtitle: 'Cash on delivery today',
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            const ComingSoonScreen(title: 'Payment Methods'))),
+              ),
+              SeRow(
+                icon: SeIcons.shield,
+                label: 'Privacy & security',
+                subtitle: 'Password, data and permissions',
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const PrivacySecurityScreen())),
+              ),
+              SeRow(
+                icon: SeIcons.help,
+                label: 'Help & support',
+                subtitle: 'FAQs, WhatsApp and email',
+                onTap: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const HelpSupportScreen())),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SeButton(
+            label: 'Sign out',
+            variant: SeButtonVariant.destructive,
+            onPressed: _handleSignOut,
+          ),
+          const SizedBox(height: 18),
+          Center(
+            child: Text('ShipEast · v${SeBrand.version}',
+                style: SeType.bodyS.copyWith(color: SeColors.ink400)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 18,
-          bottom: 24,
-          left: SeSpacing.gutter,
-          right: SeSpacing.gutter,
-        ),
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    padding: const EdgeInsets.all(2.5),
+  Widget _identity() => Row(
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            behavior: HitTestBehavior.opaque,
+            child: Stack(
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.35), width: 2),
+                  ),
+                  child: Container(
                     decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
                       shape: BoxShape.circle,
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          width: 2),
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: ClipOval(
-                        child: _avatarUrl != null
-                            ? CachedNetworkImage(
-                                imageUrl: _avatarUrl!,
-                                fit: BoxFit.cover,
-                                placeholder: (ctx, url) => _initialsWidget(26),
-                                errorWidget: (ctx, url, err) =>
-                                    _initialsWidget(26),
-                              )
-                            : _initialsWidget(26),
-                      ),
+                    child: ClipOval(
+                      child: _avatarUrl != null
+                          ? CachedNetworkImage(
+                              imageUrl: _avatarUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (ctx, url) => _initials(25),
+                              errorWidget: (ctx, url, err) => _initials(25),
+                            )
+                          : _initials(25),
                     ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: SeElevation.e1,
-                      ),
-                      child: const Icon(SeIcons.camera,
-                          size: 12, color: SeColors.red500),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: SeColors.shellInk,
+                      shape: BoxShape.circle,
                     ),
+                    child: const Icon(SeIcons.camera,
+                        size: 12, color: SeColors.shell),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _name.isNotEmpty ? _name : 'ShipEast customer',
+                  style: SeType.h2.copyWith(color: SeColors.shellInk),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                // One contact line, not two. Whichever we have is enough to
+                // confirm "this is my account"; both is a stack of grey text.
+                if (_phone.isNotEmpty || _email.isNotEmpty)
                   Text(
-                    _name.isNotEmpty ? _name : 'ShipEast User',
-                    style: SeType.h3.copyWith(color: Colors.white),
+                    _phone.isNotEmpty ? SePhone.format(_phone) : _email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    style: SeType.bodyS.copyWith(
+                        color: SeColors.shellInk.withValues(alpha: 0.76)),
                   ),
-                  const SizedBox(height: 3),
-                  if (_phone.isNotEmpty)
-                    Text(SePhone.format(_phone),
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.85))),
-                  if (_email.isNotEmpty)
-                    Text(_email,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7))),
-                ],
-              ),
+              ],
             ),
-            GestureDetector(
-              onTap: _showEditDialog,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: SeRadius.all(SeRadius.sm),
-                ),
-                child: const Icon(SeIcons.edit, size: 19, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
 
-  Widget _initialsWidget(double size) {
+  Widget _initials(double size) {
     final initials = _name.isNotEmpty
         ? _name
             .trim()
@@ -366,179 +379,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: initials.isNotEmpty
           ? Text(initials,
               style: SeType.jakarta(size * 0.62, FontWeight.w800,
-                  color: Colors.white))
-          : Icon(SeIcons.user, size: size, color: Colors.white),
+                  color: SeColors.shellInk))
+          : Icon(SeIcons.user, size: size, color: SeColors.shellInk),
     );
   }
 
-  Widget _buildStats() {
-    if (!_statsLoaded) {
-      return SeCard(
-        child: SizedBox(
-          height: 60,
-          child: Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                  color: SeColors.red500, strokeWidth: 2.4),
-            ),
-          ),
-        ),
-      );
-    }
+  Widget _stats() {
+    // An em dash is the honest answer for a customer who has not been rated
+    // yet; a 0.0 rating is a claim, not a placeholder.
+    final rating = _avgRating > 0 ? _avgRating.toStringAsFixed(1) : '—';
     return Row(
       children: [
         Expanded(
-          child: SeStatTile(
+          child: SeStat(
             icon: SeIcons.orders,
+            value: _statsLoaded ? '$_orderCount' : '–',
             label: 'Orders',
-            value: _orderCount,
-            hue: SeColors.red500,
-            tint: SeColors.red50,
+            hue: SeColors.brand,
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(child: _ratingTile()),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
-          child: SeStatTile(
+          child: SeStat(
+            icon: SeIcons.star,
+            value: _statsLoaded ? rating : '–',
+            label: 'Rating',
+            hue: SeColors.star,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SeStat(
             icon: SeIcons.heartFill,
+            value: _statsLoaded ? '$_savedCount' : '–',
             label: 'Saved',
-            value: _savedCount,
-            hue: SeColors.ocean500,
-            tint: SeColors.oceanTint,
+            hue: SeColors.info,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _ratingTile() => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: SeColors.surface0,
-          borderRadius: SeRadius.all(SeRadius.md),
-          border: Border.all(color: SeColors.ink200, width: 1),
-          boxShadow: SeElevation.e1,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: const BoxDecoration(
-                  color: SeColors.goldTint, shape: BoxShape.circle),
-              child: const Icon(SeIcons.star, size: 20, color: SeColors.gold500),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _avgRating > 0 ? _avgRating.toStringAsFixed(1) : '—',
-              style: SeType.tabular(SeType.h2).copyWith(color: SeColors.ink900),
-            ),
-            const SizedBox(height: 2),
-            Text('Rating', style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-          ],
-        ),
-      );
-
-  Widget _buildMenuCard(BuildContext context) {
-    final menuItems = [
-      {
-        'icon': SeIcons.addresses,
-        'label': 'Saved Addresses',
-        'sub': 'Manage your delivery locations',
-        'action': () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const SavedAddressesScreen())),
-      },
-      {
-        'icon': SeIcons.bell,
-        'label': 'Notifications',
-        'sub': 'Push alerts & order updates',
-        'action': () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const NotificationsScreen())),
-      },
-      {
-        'icon': SeIcons.creditCard,
-        'label': 'Payment Methods',
-        'sub': 'Cards, PayPal & Cash',
-        'action': () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) =>
-                    const ComingSoonScreen(title: 'Payment Methods'))),
-      },
-      {
-        'icon': SeIcons.shield,
-        'label': 'Privacy & Security',
-        'sub': 'Password, data & permissions',
-        'action': () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const PrivacySecurityScreen())),
-      },
-      {
-        'icon': SeIcons.help,
-        'label': 'Help & Support',
-        'sub': 'FAQs, WhatsApp & Email',
-        'action': () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const HelpSupportScreen())),
-      },
-    ];
-
-    return SeCard(
-      padding: EdgeInsets.zero,
-      clip: true,
-      shadow: SeElevation.e1,
-      border: Border.all(color: SeColors.ink200, width: 1),
-      child: Column(
-        children: menuItems.asMap().entries.map((entry) {
-          final i = entry.key;
-          final item = entry.value;
-          final isLast = i == menuItems.length - 1;
-          return Column(
-            children: [
-              InkWell(
-                onTap: item['action'] as VoidCallback,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: SeColors.surface50,
-                          borderRadius: SeRadius.all(SeRadius.sm),
-                        ),
-                        child: Icon(item['icon'] as IconData,
-                            size: 20, color: SeColors.ink700),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item['label'] as String, style: SeType.title),
-                            const SizedBox(height: 1),
-                            Text(item['sub'] as String,
-                                style: SeType.bodyS
-                                    .copyWith(color: SeColors.ink400)),
-                          ],
-                        ),
-                      ),
-                      const Icon(SeIcons.caretRight,
-                          size: 18, color: SeColors.ink300),
-                    ],
-                  ),
-                ),
-              ),
-              if (!isLast)
-                const Divider(height: 1, indent: 70, color: SeColors.ink100),
-            ],
-          );
-        }).toList(),
-      ),
     );
   }
 }

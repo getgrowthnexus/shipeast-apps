@@ -1,0 +1,7 @@
+{
+  "projectId": "4af9d86c-07c4-482f-a50a-5575b9a7693f",
+  "shape": "custom",
+  "bundleDir": "design/customer/build",
+  "readmeHeader": ".design-sync/conventions.md",
+  "note": "Not a React design system. The shipped UI is Flutter (customer_app/lib/widgets + lib/theme); the uploaded bundle is a hand-built HTML mirror of it under design/customer/. See design/customer/README.md for the build and verification loop."
+}

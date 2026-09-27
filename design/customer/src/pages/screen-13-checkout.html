@@ -1,0 +1,74 @@
+<!-- card: Checkout | group: Screens · Ordering | desc: Address selection and the order summary -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Checkout</h1>
+    <p>Route <code>/checkout</code>. Two decisions only — where it goes, and
+      whether the numbers are right. Payment is the next screen.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">Checkout</div><div class="cap-sub">Island Grill Morant Bay</div></div></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="section-title">
+            <h2>Deliver to</h2>
+            <a>Manage<svg class="i"><use href="#i-caretRight"/></svg></a>
+          </div>
+
+          <div class="row-group mt10">
+            <div class="row" style="background:var(--brand-soft)">
+              <div class="plate"><svg class="i"><use href="#i-home"/></svg></div>
+              <div class="rbody">
+                <div class="rlabel">Home</div>
+                <div class="rsub">14 Yallahs Main Road, St. Thomas</div>
+              </div>
+              <div style="width:22px;height:22px;border-radius:999px;background:var(--brand-action);display:grid;place-items:center;color:#fff;flex:none">
+                <svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg>
+              </div>
+            </div>
+            <div class="row">
+              <div class="plate" style="background:var(--surface-50);color:var(--ink-400)"><svg class="i"><use href="#i-box"/></svg></div>
+              <div class="rbody">
+                <div class="rlabel">Work</div>
+                <div class="rsub">Shop 4, Morant Bay Square, Morant Bay</div>
+              </div>
+              <div style="width:22px;height:22px;border-radius:999px;border:2px solid var(--ink-200);flex:none"></div>
+            </div>
+          </div>
+
+          <div class="section-title mt22"><h2>Order summary</h2></div>
+          <div class="panel mt10" style="padding:16px">
+            <div class="money"><span class="lbl">Curry Goat with Rice &amp; Peas × 2</span><span class="amt">$2,900</span></div>
+            <div class="money"><span class="lbl">Festival (2 pcs) × 1</span><span class="amt">$300</span></div>
+            <div class="money"><span class="lbl">Ting × 3</span><span class="amt">$750</span></div>
+            <div style="height:1px;background:var(--ink-100);margin:9px 0"></div>
+            <div class="money"><span class="lbl">Delivery fee</span><span class="amt">$350</span></div>
+            <div class="money"><span class="lbl">Service fee (10%)</span><span class="amt">$385</span></div>
+            <div style="height:1px;background:var(--ink-200);margin:9px 0"></div>
+            <div class="money money--strong"><span class="lbl">Total</span><span class="amt">$4,585</span></div>
+          </div>
+        </div>
+        <div class="bottom-bar"><button class="btn btn--primary">Choose payment · $4,585</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Address rows</td><td>One row group, selection shown by a filled check on the right and a
+        <code>brandSoft</code> wash on the row. The unselected row keeps a neutral plate so the selected one is
+        unmistakable</td></tr>
+      <tr><td>"Manage"</td><td>A text action on the section title, routing to saved addresses. Not a second button</td></tr>
+      <tr><td>Summary</td><td>Items, then a hairline, then the fees, then a heavier rule, then the total. Three tiers
+        of separation for three tiers of meaning</td></tr>
+      <tr><td>The button</td><td>Says what happens next ("Choose payment"), not "Continue" — the customer should know
+        they are not being charged yet</td></tr>
+    </table>
+  </div>
+</div>

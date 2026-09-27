@@ -1,0 +1,130 @@
+<!-- card: Colour | group: Foundations | desc: The two-tier red, blush neutrals and semantic roles -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Colour</h1>
+    <p>Three ideas carry the palette: a <b>two-tier red</b>, <b>blush neutrals</b>
+      instead of white, and <b>no gradients</b> anywhere. Transcribed from
+      <code>lib/theme/se_colors.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The two-tier red — the rule that governs everything</h2>
+    <div class="wrap g12" style="margin-bottom:14px">
+      <div style="flex:1;min-width:220px;background:#F72B54;color:#fff;border-radius:16px;padding:16px">
+        <div style="font-weight:800;font-size:17px">red500 · #F72B54</div>
+        <div style="font-size:13px;line-height:18px;opacity:.92;margin-top:4px">
+          <b>Identity.</b> Straight off the app icon. Large fills, icon plates,
+          accents, focus rings. Never carries small white text.</div>
+      </div>
+      <div style="flex:1;min-width:220px;background:#E30D3B;color:#fff;border-radius:16px;padding:16px">
+        <div style="font-weight:800;font-size:17px">red600 · #E30D3B</div>
+        <div style="font-size:13px;line-height:18px;opacity:.92;margin-top:4px">
+          <b>Action.</b> Buttons, links, active states. White on it clears AA at
+          4.79:1 — this is the only red allowed under white label text.</div>
+      </div>
+      <div style="flex:1;min-width:220px;background:#B00D33;color:#FFF4F7;border-radius:16px;padding:16px">
+        <div style="font-weight:800;font-size:17px">shell · #B00D33</div>
+        <div style="font-size:13px;line-height:18px;opacity:.92;margin-top:4px">
+          <b>Surface.</b> Big permanent brand fields — the cap, splash, auth
+          hero. Warm white sits on it at 7.12:1.</div>
+      </div>
+    </div>
+    <table>
+      <tr><td>Red text on a red tint</td><td><span class="swatch" style="background:#B60C31"></span>red700 #B60C31 — 5.84:1 on <code>brandSoft</code></td></tr>
+      <tr><td>Brand text on dark</td><td><span class="swatch" style="background:#FA5775"></span>red400 #FA5775 — 5.37:1</td></tr>
+      <tr><td>Accent on the shell</td><td><span class="swatch" style="background:#FFC9D6"></span>shellMark #FFC9D6 — the pink that reads as a highlight against deep red instead of vanishing into it</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Full red ramp</h2>
+    <div class="wrap" style="gap:0;border-radius:12px;overflow:hidden">
+      <div style="flex:1;background:#FFE8EE;height:56px"></div>
+      <div style="flex:1;background:#FFD8E1;height:56px"></div>
+      <div style="flex:1;background:#FEC3CF;height:56px"></div>
+      <div style="flex:1;background:#FC92A6;height:56px"></div>
+      <div style="flex:1;background:#FA5775;height:56px"></div>
+      <div style="flex:1;background:#F72B54;height:56px"></div>
+      <div style="flex:1;background:#E30D3B;height:56px"></div>
+      <div style="flex:1;background:#B60C31;height:56px"></div>
+      <div style="flex:1;background:#890B28;height:56px"></div>
+      <div style="flex:1;background:#5C0A1F;height:56px"></div>
+    </div>
+    <div class="wrap" style="gap:0;font-size:11px;color:#8A7A81;margin-top:5px">
+      <div style="flex:1">50</div><div style="flex:1">100</div><div style="flex:1">200</div>
+      <div style="flex:1">300</div><div style="flex:1">400</div><div style="flex:1">500</div>
+      <div style="flex:1">600</div><div style="flex:1">700</div><div style="flex:1">800</div>
+      <div style="flex:1">900</div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Blush neutrals — surfaces are not white</h2>
+    <p style="margin:0 0 12px;font-size:13px;line-height:19px;color:#6E5F66">
+      The neutral hue is the brand's own at 3–6% saturation, so the red belongs
+      to the same family as its background instead of floating on a white sheet.
+      Pure white survives only as <code>surfaceRaised</code> — a focused field,
+      an elevated pill.</p>
+    <table>
+      <tr><td><span class="swatch" style="background:#33292E"></span>ink900 #33292E</td><td>Primary text — 14.0:1 on a card</td></tr>
+      <tr><td><span class="swatch" style="background:#463940"></span>ink700 #463940</td><td>Headings, body</td></tr>
+      <tr><td><span class="swatch" style="background:#79676F"></span>ink500 #79676F</td><td>Secondary text — 5.27:1</td></tr>
+      <tr><td><span class="swatch" style="background:#9C8B93"></span>ink400 #9C8B93</td><td>Placeholder, disabled — 3.22:1</td></tr>
+      <tr><td><span class="swatch" style="background:#C9BAC1"></span>ink300 #C9BAC1</td><td>Muted icons, carets</td></tr>
+      <tr><td><span class="swatch" style="background:#E6DAE0"></span>ink200 #E6DAE0</td><td>Dividers, hairline borders</td></tr>
+      <tr><td><span class="swatch" style="background:#F0E6EB"></span>ink100 #F0E6EB</td><td>Inset divider inside a row group</td></tr>
+      <tr><td><span class="swatch" style="background:#F8ECF0"></span>surface50 #F8ECF0</td><td>The sheet's ground</td></tr>
+      <tr><td><span class="swatch" style="background:#FFF6F8"></span>surface0 #FFF6F8</td><td>Cards, panels, docked bars</td></tr>
+      <tr><td><span class="swatch" style="background:#FFFFFF"></span>surfaceRaised #FFFFFF</td><td>Lifted OFF a card — focused field, shell pill</td></tr>
+      <tr><td><span class="swatch" style="background:#FBEFF4"></span>field #FBEFF4</td><td>The sunken well you type into</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Semantic — muted, and matched to the admin panel</h2>
+    <div class="wrap g10" style="margin-bottom:12px">
+      <div class="notice notice--success" style="flex:1;min-width:230px">
+        <svg class="i"><use href="#i-checkCircle"/></svg>
+        <p><b>Success</b> #1C8252 on #EFF8F2</p>
+      </div>
+      <div class="notice notice--warning" style="flex:1;min-width:230px">
+        <svg class="i"><use href="#i-warning"/></svg>
+        <p><b>Warning</b> #D37A0D on #FDF4E7</p>
+      </div>
+      <div class="notice notice--danger" style="flex:1;min-width:230px">
+        <svg class="i"><use href="#i-warningCircle"/></svg>
+        <p><b>Danger</b> #A51D2F on #FDEFF1</p>
+      </div>
+      <div class="notice" style="flex:1;min-width:230px">
+        <svg class="i"><use href="#i-info"/></svg>
+        <p><b>Info</b> #1F6BC1 on #EFF4FC</p>
+      </div>
+    </div>
+    <table>
+      <tr><td>Danger is not brand red</td><td>#A51D2F is a deep maroon on purpose — a destructive action must not look like the primary one</td></tr>
+      <tr><td><span class="swatch" style="background:#E8A317"></span>star #E8A317</td><td>The one surviving gold. Ratings only, nothing else</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Category hues — the four duotone chips</h2>
+    <div class="hstack g16" style="background:#F8ECF0;padding:16px;border-radius:12px">
+      <div class="cat cat--on">
+        <div class="plate" style="background:#F72B54"><svg class="i"><use href="#i-food"/></svg></div>
+        <div class="lbl">Food</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#EFF8F2;color:#1C8252;border:1px solid rgba(28,130,82,.14)"><svg class="i"><use href="#i-grocery"/></svg></div>
+        <div class="lbl">Grocery</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#FDF4E7;color:#D37A0D;border:1px solid rgba(211,122,13,.14)"><svg class="i"><use href="#i-packages"/></svg></div>
+        <div class="lbl">Packages</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#EFF4FC;color:#1F6BC1;border:1px solid rgba(31,107,193,.14)"><svg class="i"><use href="#i-pharmacy"/></svg></div>
+        <div class="lbl">Pharmacy</div>
+      </div>
+    </div>
+  </div>
+</div>

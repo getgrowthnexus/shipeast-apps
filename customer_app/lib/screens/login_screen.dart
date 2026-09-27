@@ -8,7 +8,7 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../theme/se_brand.dart';
+import '../widgets/se_auth_scaffold.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_button.dart';
@@ -29,9 +29,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // The page is capped in brand red, so the status bar glyphs go light.
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
     ));
   }
 
@@ -138,150 +140,57 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface0,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-              SeSpacing.gutter, 8, SeSpacing.gutter, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                        color: SeColors.surface50, shape: BoxShape.circle),
-                    child: const Icon(SeIcons.arrowLeft,
-                        size: 20, color: SeColors.ink900),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Ember brand lockup — gives the sign-in the same branded presence
-              // as the home storefront rather than a bare form.
-              Container(
-                padding: const EdgeInsets.all(SeSpacing.x5),
-                decoration: BoxDecoration(
-                  gradient: SeColors.emberGradient,
-                  borderRadius: SeRadius.all(SeRadius.lg),
-                  boxShadow: SeElevation.glow,
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: SeRadius.all(SeRadius.md),
-                      ),
-                      child: const Icon(SeIcons.packages,
-                          color: Colors.white, size: 26),
-                    ),
-                    const SizedBox(width: SeSpacing.x4),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SeWordmark(size: 24, onDark: true),
-                          const SizedBox(height: 4),
-                          Text(
-                            SeBrand.tagline,
-                            style: SeType.bodyS.copyWith(
-                                color: Colors.white.withValues(alpha: 0.85)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              Text('Welcome back', style: SeType.display),
-              const SizedBox(height: 6),
-              Text('Sign in to your ShipEast account',
-                  style: SeType.body.copyWith(color: SeColors.ink500)),
-              const SizedBox(height: 28),
-              SeTextField(
-                controller: _emailController,
-                label: 'EMAIL ADDRESS',
-                hint: 'your@email.com',
-                icon: SeIcons.envelope,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 16),
-              SeTextField(
-                controller: _passwordController,
-                label: 'PASSWORD',
-                hint: '••••••••',
-                icon: SeIcons.lock,
-                obscure: true,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _handleLogin(),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 22),
-                  child: GestureDetector(
-                    onTap: _handleForgotPassword,
-                    child: Text('Forgot Password?',
-                        style: SeType.label.copyWith(color: SeColors.red500)),
-                  ),
-                ),
-              ),
-              SeButton(
-                label: 'Sign In',
-                icon: SeIcons.arrowRight,
-                loading: _isLoading,
-                onPressed: _isLoading ? null : _handleLogin,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Expanded(child: Divider(color: SeColors.ink200)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('or continue with',
-                        style: SeType.bodyS.copyWith(color: SeColors.ink400)),
-                  ),
-                  const Expanded(child: Divider(color: SeColors.ink200)),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _GoogleButton(
-                onTap: _isLoading ? null : _handleGoogleSignIn,
-              ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/register'),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "Don't have an account?  ",
-                        style: SeType.body.copyWith(color: SeColors.ink500),
-                      ),
-                      TextSpan(
-                        text: 'Sign Up',
-                        style: SeType.body.copyWith(
-                            color: SeColors.red500, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
+    return SeAuthScaffold(
+      title: 'Welcome back',
+      subtitle: 'Sign in to pick up where you left off.',
+      children: [
+        SeTextField(
+          controller: _emailController,
+          label: 'Email address',
+          hint: 'you@email.com',
+          icon: SeIcons.envelope,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 16),
+        SeTextField(
+          controller: _passwordController,
+          label: 'Password',
+          hint: 'Enter your password',
+          icon: SeIcons.lock,
+          obscure: true,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _handleLogin(),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: _handleForgotPassword,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 4),
+              child: Text('Forgot password?',
+                  style: SeType.label.copyWith(color: SeColors.brandAction)),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 22),
+        SeButton(
+          label: 'Sign in',
+          loading: _isLoading,
+          onPressed: _isLoading ? null : _handleLogin,
+        ),
+        const SizedBox(height: 24),
+        const SeAuthDivider(),
+        const SizedBox(height: 20),
+        _GoogleButton(onTap: _isLoading ? null : _handleGoogleSignIn),
+        const SizedBox(height: 26),
+        SeAuthSwitch(
+          prompt: 'New to ShipEast?',
+          action: 'Create an account',
+          onTap: () => Navigator.pushReplacementNamed(context, '/register'),
+        ),
+      ],
     );
   }
 }
@@ -365,8 +274,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
           const SizedBox(height: 20),
           SeTextField(
             controller: _controller,
-            label: 'EMAIL ADDRESS',
-            hint: 'your@email.com',
+            label: 'Email address',
+            hint: 'you@email.com',
             icon: SeIcons.envelope,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
@@ -375,7 +284,6 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
           const SizedBox(height: 20),
           SeButton(
             label: 'Send reset link',
-            icon: SeIcons.envelope,
             loading: _sending,
             onPressed: _sending ? null : _send,
           ),
@@ -385,6 +293,8 @@ class _ForgotPasswordSheetState extends State<_ForgotPasswordSheet> {
   }
 }
 
+/// Federated sign-in. Deliberately quieter than the primary pill — an outline
+/// on white — so the page still has one obvious action.
 class _GoogleButton extends StatelessWidget {
   final VoidCallback? onTap;
   const _GoogleButton({required this.onTap});
@@ -395,22 +305,28 @@ class _GoogleButton extends StatelessWidget {
       opacity: onTap == null ? 0.6 : 1,
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Container(
           height: 50,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: SeColors.surface0,
+            color: SeColors.surfaceRaised,
             border: Border.all(color: SeColors.ink200, width: 1.5),
-            borderRadius: SeRadius.all(SeRadius.md),
+            borderRadius: SeRadius.pill,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(SeIcons.google, size: 22, color: Color(0xFF4285F4)),
-              const SizedBox(width: 10),
-              Text('Continue with Google',
-                  style: SeType.jakarta(15, FontWeight.w600,
-                      color: SeColors.ink900)),
+              const Icon(SeIcons.google, size: 24, color: Color(0xFF4285F4)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text('Continue with Google',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SeType.jakarta(15, FontWeight.w600,
+                        color: SeColors.ink900)),
+              ),
             ],
           ),
         ),

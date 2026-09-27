@@ -131,7 +131,7 @@ export const USE_EMULATORS = SE_ENV === 'local';
 /* ── Non-production banner ──────────────────────────────────────
    Self-contained: inline styles, injected at runtime, and rendered only when
    the environment is not production. Production is visually untouched, and
-   this needs no change to index.html or styles.css.                        */
+   this needs no change to index.html or the stylesheets.                        */
 if (SE_ENV !== 'prod' || FORCED_PROD) {
   const paint = function () {
     const bar = document.createElement('div');

@@ -247,7 +247,7 @@ export function createUploader(opts) {
     } else {
       /* Half of the "form shows the last restaurant's photo" bug. The other
          half was CSS (`.up-preview{display:flex}` outranked the UA's
-         `[hidden]{display:none}` — fixed in styles.css), but even hidden
+         `[hidden]{display:none}` — fixed in css/tokens.css), but even hidden
          correctly, leaving the old src on the <img> meant the component still
          held the previous merchant's image and would flash it the instant
          anything made the preview visible again. A cleared uploader must hold

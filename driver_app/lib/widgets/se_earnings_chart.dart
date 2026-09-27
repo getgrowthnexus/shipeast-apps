@@ -77,7 +77,11 @@ class _SeEarningsChartState extends State<SeEarningsChart>
                 bottom: 22,
                 child: _Grid(maxVal: hasData ? maxVal : 0),
               ),
+              // The bars are inset by the axis gutter, or the last one is
+              // drawn straight through the scale labels — which is how the
+              // Sunday bar came to sit on top of "1,400".
               Positioned.fill(
+                right: _axisWidth + 6,
                 child: AnimatedBuilder(
                   animation: _ctrl,
                   builder: (context, _) {
@@ -118,8 +122,7 @@ class _SeEarningsChartState extends State<SeEarningsChart>
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                gradient: hasData ? SeColors.emberGradient : null,
-                color: hasData ? null : SeColors.ink300,
+                color: hasData ? SeColors.brandAction : SeColors.ink300,
                 shape: BoxShape.circle,
               ),
             ),
@@ -163,26 +166,20 @@ class _Bar extends StatelessWidget {
               heightFactor: ghost ? 0.04 : fraction.clamp(0.02, 1.0),
               widthFactor: 0.52,
               child: Container(
+                // Two flat tones and nothing else. The peak used to be marked
+                // three times over — a gradient, a red glow AND a gold cap —
+                // which is two more than a bar chart of seven bars needs. The
+                // peak is now simply the only bar in the action red; the rest
+                // sit in the pale ramp step, which stays visible on blush.
                 decoration: BoxDecoration(
-                  gradient: emphasised && !ghost
-                      ? SeColors.emberGradient
-                      : null,
                   color: ghost
                       ? SeColors.ink200
                       : emphasised
-                          ? null
-                          : SeColors.red100,
+                          ? SeColors.brandAction
+                          : SeColors.red200,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(SeRadius.xs),
                   ),
-                  boxShadow: emphasised && !ghost
-                      ? SeElevation.glowColor(SeColors.red500, opacity: 0.22)
-                      : null,
-                  // Gold cap marks the peak without adding a legend.
-                  border: emphasised && !ghost
-                      ? const Border(
-                          top: BorderSide(color: SeColors.gold500, width: 3))
-                      : null,
                 ),
               ),
             ),
@@ -207,6 +204,11 @@ class _Bar extends StatelessWidget {
 }
 
 /// Four faint horizontal rules with currency values on the right edge.
+/// Width reserved for the scale labels down the right edge. Fixed rather than
+/// intrinsic so the bars do not shift sideways when a period's peak gains a
+/// digit.
+const double _axisWidth = 46;
+
 class _Grid extends StatelessWidget {
   final double maxVal;
   const _Grid({required this.maxVal});
@@ -223,10 +225,15 @@ class _Grid extends StatelessWidget {
               child: Container(height: 1, color: SeColors.ink100),
             ),
             const SizedBox(width: 6),
-            Text(
-              maxVal > 0 ? Money.plain(value) : '—',
-              style: SeType.tabular(SeType.eyebrow)
-                  .copyWith(color: SeColors.ink300, letterSpacing: 0),
+            SizedBox(
+              width: _axisWidth,
+              child: Text(
+                maxVal > 0 ? Money.plain(value) : '—',
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                style: SeType.tabular(SeType.eyebrow)
+                    .copyWith(color: SeColors.ink300, letterSpacing: 0),
+              ),
             ),
           ],
         );

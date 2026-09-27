@@ -1,0 +1,75 @@
+<!-- card: Privacy & security | group: Screens · Account | desc: What we hold, password reset, and account deletion -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Privacy &amp; security</h1>
+    <p>Route <code>/privacy-security</code>. States plainly what is stored, then
+      gives the two controls that matter: reset the password, delete
+      everything.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">Privacy &amp; security</div><div class="cap-sub">What we hold, and what you control</div></div></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="section-title"><h2>What we hold</h2></div>
+          <div class="row-group mt10">
+            <div class="row">
+              <div class="plate"><svg class="i"><use href="#i-user"/></svg></div>
+              <div class="rbody"><div class="rlabel">Profile</div><div class="rsub">Name, phone number, email address</div></div>
+            </div>
+            <div class="row">
+              <div class="plate"><svg class="i"><use href="#i-addresses"/></svg></div>
+              <div class="rbody"><div class="rlabel">Delivery addresses</div><div class="rsub">The places you have saved</div></div>
+            </div>
+            <div class="row">
+              <div class="plate"><svg class="i"><use href="#i-orders"/></svg></div>
+              <div class="rbody"><div class="rlabel">Order history</div><div class="rsub">Your past and current orders</div></div>
+            </div>
+            <div class="row">
+              <div class="plate"><svg class="i"><use href="#i-star"/></svg></div>
+              <div class="rbody"><div class="rlabel">Ratings</div><div class="rsub">The scores you give drivers and merchants</div></div>
+            </div>
+          </div>
+
+          <div class="notice mt12">
+            <svg class="i"><use href="#i-info"/></svg>
+            <p>We never sell your data. It is used to run ShipEast and nothing else.</p>
+          </div>
+
+          <div class="section-title mt22"><h2>Security</h2></div>
+          <div class="panel mt10" style="padding:16px">
+            <div class="t-bodyS" style="line-height:1.5">We send a reset link to your registered email address;
+              you set the new password there.</div>
+            <div class="mt14"><button class="btn btn--secondary"><svg class="i"><use href="#i-lock"/></svg>Send password reset email</button></div>
+          </div>
+
+          <div class="section-title mt22"><h2>Delete account</h2></div>
+          <div class="panel mt10" style="padding:16px">
+            <div class="t-bodyS" style="line-height:1.5">Permanently deletes your ShipEast account and everything
+              attached to it. This cannot be undone.</div>
+            <div class="mt14"><button class="btn btn--destructive">Delete my account</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Inventory first</td><td>Four read-only rows naming what is held, in plain words. No carets — these rows
+        go nowhere, they inform</td></tr>
+      <tr><td>Two panels</td><td>Each destructive-ish control gets its own panel with a sentence of explanation above
+        the button. A bare "Delete my account" button in a row group would be far too easy to hit</td></tr>
+      <tr><td>Deletion</td><td>Behind a confirm sheet, destructive variant, and it says <b>cannot be undone</b> before
+        the sheet as well as in it</td></tr>
+      <tr><td>Reset</td><td>Secondary, not primary. It is a safe action, and the screen's loudest control should not be
+        one you press by accident</td></tr>
+    </table>
+  </div>
+</div>

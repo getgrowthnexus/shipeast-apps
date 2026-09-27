@@ -1,0 +1,84 @@
+<!-- card: Rate driver | group: Screens · Ordering | desc: Post-delivery rating for driver and merchant -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Rate driver</h1>
+    <p>Route <code>/rate-driver</code>. Asked once, after delivery. The reason
+      chips change with the score, so a low rating is never met with "what went
+      well?".</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">How did we do?</div><div class="cap-sub">Ten seconds, and it changes who we send next time</div></div></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="panel" style="padding:20px 16px">
+            <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+              <div style="width:72px;height:72px;border-radius:999px;background:var(--brand-soft);display:grid;place-items:center;color:var(--brand);flex:none">
+                <svg class="i" style="width:34px;height:34px"><use href="#i-user"/></svg>
+              </div>
+              <div class="t-h3 mt12">Marcus Powell</div>
+              <div class="t-bodyS mt2">Delivered your order</div>
+              <div class="hstack g8 mt16">
+                <svg class="i" style="width:38px;height:38px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:38px;height:38px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:38px;height:38px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:38px;height:38px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:38px;height:38px;color:var(--ink-200)"><use href="#i-starOutline"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title mt22"><h2>What went well?</h2></div>
+          <div class="wrap g8 mt10">
+            <span class="chip chip--on">On time</span>
+            <span class="chip">Friendly</span>
+            <span class="chip chip--on">Careful with the food</span>
+            <span class="chip">Good communication</span>
+            <span class="chip">Found the address easily</span>
+          </div>
+
+          <div class="section-title mt22"><h2>And the merchant?</h2></div>
+          <div class="panel mt10">
+            <div class="hstack g12">
+              <div style="width:44px;height:44px;border-radius:var(--r-sm);background:var(--surface-50);display:grid;place-items:center;color:var(--ink-400);flex:none">
+                <svg class="i" style="width:22px;height:22px"><use href="#i-storefront"/></svg>
+              </div>
+              <div class="grow t-title">Island Grill Morant Bay</div>
+              <div class="hstack g2">
+                <svg class="i" style="width:22px;height:22px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:22px;height:22px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:22px;height:22px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:22px;height:22px;color:var(--star)"><use href="#i-star"/></svg>
+                <svg class="i" style="width:22px;height:22px;color:var(--star)"><use href="#i-star"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title mt22"><h2>Anything else</h2></div>
+          <div class="field field--multi mt10">
+            <svg class="i"><use href="#i-note"/></svg>
+            <span class="ph">Optional — tell us more</span>
+          </div>
+        </div>
+        <div class="bottom-bar"><button class="btn btn--primary">Submit rating</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Stars</td><td>38px for the driver, 22px for the merchant. The driver is the subject of the screen and the
+        merchant is a secondary question, and the size says so</td></tr>
+      <tr><td>Reason chips</td><td>Multi-select, and the <b>set changes with the score</b>: "What went well?" above
+        three stars, "What went wrong?" at or below</td></tr>
+      <tr><td>Comment</td><td>Explicitly optional. A required free-text box at the end of a delivery is how you get
+        blank ratings</td></tr>
+    </table>
+  </div>
+</div>

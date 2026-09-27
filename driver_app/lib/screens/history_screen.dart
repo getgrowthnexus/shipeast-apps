@@ -11,6 +11,7 @@ import '../theme/se_typography.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_chip.dart';
 import '../widgets/se_empty_state.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_skeleton.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -64,8 +65,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       default:
         return (
           label: 'In progress',
-          hue: SeColors.ocean500,
-          tint: SeColors.oceanTint,
+          hue: SeColors.info,
+          tint: SeColors.infoSoft,
           icon: SeIcons.bike
         );
     }
@@ -83,129 +84,48 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          _header(),
-          _tabsBar(),
-          Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: DriverFirestoreService.driverOrderHistoryStream(uid),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const SeEmptyState(
-                    icon: SeIcons.noConnection,
-                    title: 'Could not load history',
-                    message: 'Check your connection and try again.',
-                    hue: SeColors.danger,
-                    tint: SeColors.dangerTint,
-                  );
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _skeleton();
-                }
+    return SePageScaffold(
+      showBack: false,
+      title: 'Delivery history',
+      subtitle: 'Your past deliveries',
+      // The filter lives ON the cap, where it belongs: it scopes the whole
+      // page, so it should not scroll away with the results it is scoping.
+      capBottom: SeShellTabs(
+        tabs: _tabs,
+        selected: _activeTab,
+        onSelect: (i) => setState(() => _activeTab = i),
+      ),
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: DriverFirestoreService.driverOrderHistoryStream(uid),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const SeEmptyState(
+              icon: SeIcons.noConnection,
+              title: 'Could not load history',
+              message: 'Check your connection and try again.',
+              hue: SeColors.danger,
+              tint: SeColors.dangerTint,
+            );
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _skeleton();
+          }
 
-                final all = snapshot.data ?? [];
-                final displayOrders = _filtered(all);
-                final completed =
-                    all.where((o) => o['status'] == OrderStatus.delivered).length;
+          final all = snapshot.data ?? [];
+          final displayOrders = _filtered(all);
+          final completed =
+              all.where((o) => o['status'] == OrderStatus.delivered).length;
 
-                return Column(
-                  children: [
-                    _summaryStrip(all.length, completed),
-                    Expanded(child: _list(displayOrders)),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
+          return Column(
+            children: [
+              _summaryStrip(all.length, completed),
+              Expanded(child: _list(displayOrders)),
+            ],
+          );
+        },
       ),
     );
   }
-
-  Widget _header() => Container(
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, SeSpacing.x4,
-                SeSpacing.gutter, SeSpacing.x5),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(SeIcons.history,
-                      color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: SeSpacing.x3),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Delivery History',
-                        style: SeType.h2.copyWith(color: Colors.white)),
-                    Text('Your past deliveries',
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.82))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-  // A calm segmented control on a single track — no glow, no gradient, no
-  // shadow animation. Switching tabs slides a solid fill, so it never does the
-  // "fast flashing hover" that a glowing gradient pill does on every tap.
-  Widget _tabsBar() => Container(
-        color: SeColors.surface0,
-        padding: const EdgeInsets.symmetric(
-            horizontal: SeSpacing.gutter, vertical: SeSpacing.x3),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: SeColors.surface50,
-            borderRadius: SeRadius.all(SeRadius.full),
-            border: Border.all(color: SeColors.ink200, width: 1),
-          ),
-          child: Row(
-            children: List.generate(_tabs.length, (i) {
-              final selected = _activeTab == i;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _activeTab = i),
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected ? SeColors.red500 : Colors.transparent,
-                      borderRadius: SeRadius.all(SeRadius.full),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _tabs[i],
-                        style: SeType.label.copyWith(
-                          color: selected ? Colors.white : SeColors.ink500,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      );
 
   Widget _summaryStrip(int total, int completed) {
     final rate = total > 0 ? (completed / total * 100).toStringAsFixed(0) : '0';
@@ -220,7 +140,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           _vDivider(),
           _summaryItem('$completed', 'Completed', SeColors.success),
           _vDivider(),
-          _summaryItem('$rate%', 'Completion', SeColors.ocean500),
+          _summaryItem('$rate%', 'Completion', SeColors.info),
         ],
       ),
     );
@@ -263,8 +183,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
           message: cancelledTab
               ? 'You have not had a delivery cancelled. Keep it up.'
               : 'Your completed and cancelled deliveries will appear here',
-          hue: cancelledTab ? SeColors.success : SeColors.red500,
-          tint: cancelledTab ? SeColors.successTint : SeColors.red50,
+          hue: cancelledTab ? SeColors.success : SeColors.brand,
+          tint: cancelledTab ? SeColors.successTint : SeColors.brandSoft,
         ),
       );
     }

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.6+8
+version: 1.2.2+11
 
 environment:
   sdk: ^3.11.5
@@ -34,7 +34,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  # Serves the two SEDS families: Plus Jakarta Sans (display/UI) + Inter (body/data).
+  # Resolves Figtree — the design system's one face — from the bundled
+  # `google_fonts/` directory rather than over HTTP. See the assets list below.
   google_fonts: ^6.2.1
   image_picker: ^1.1.2
   # Opens the device dialer so the driver can call the customer from the pickup
@@ -75,6 +76,13 @@ flutter:
 
   assets:
     - assets/logo.png
+    # The courier silhouette from the ShipEast mark, used at the foot of the
+    # welcome screen. Same file the customer app ships — one brand, one rider.
+    - assets/brand/
+    # Figtree, bundled. Without this, `google_fonts` fetches the family over
+    # HTTP on first launch: a driver signing on at the depot with no data sees
+    # the fallback face, and the app never renders as designed offline.
+    - google_fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

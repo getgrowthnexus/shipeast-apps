@@ -1,0 +1,89 @@
+<!-- card: Track order | group: Screens · Ordering | desc: Live status — the rail on the cap, the spine in the sheet -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Track order</h1>
+    <p>Route <code>/order-status</code>. Streams the order document, so the cap
+      title <i>is</i> the status. Driver location arrives on
+      <code>orders/{id}.driverLoc</code> and only while the order is live.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back has-bottom">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">Order Placed</div><div class="cap-sub">Live · updates automatically</div></div></div>
+        <div class="mt16">
+          <div class="rail">
+            <div class="puck"><span><svg class="i"><use href="#i-bike"/></svg></span></div>
+            <div class="track"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="panel" style="padding:16px">
+            <div class="hstack g14">
+              <div style="width:60px;height:60px;border-radius:var(--r-sm);background:var(--ink-100);display:grid;place-items:center;color:var(--ink-300);flex:none">
+                <svg class="i" style="width:28px;height:28px"><use href="#i-user"/></svg>
+              </div>
+              <div class="grow">
+                <div class="t-h3 ink-400">Finding your driver…</div>
+                <div class="t-body ink-400 mt2">A driver will be assigned shortly</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title mt20"><h2>Progress</h2></div>
+
+          <div class="panel mt10" style="padding:16px">
+            <div class="spine">
+              <div class="step done">
+                <div class="dot"><svg class="i"><use href="#i-check"/></svg></div>
+                <div><div class="ttl">Order placed</div><div class="sub">Sent to the merchant</div></div>
+              </div>
+              <div class="step todo">
+                <div class="dot"><svg class="i"><use href="#i-user"/></svg></div>
+                <div><div class="ttl">Driver assigned</div><div class="sub">Not yet</div></div>
+              </div>
+              <div class="step todo">
+                <div class="dot"><svg class="i"><use href="#i-box"/></svg></div>
+                <div><div class="ttl">Picked up</div><div class="sub">Not yet</div></div>
+              </div>
+              <div class="step todo">
+                <div class="dot"><svg class="i"><use href="#i-bike"/></svg></div>
+                <div><div class="ttl">On the way</div><div class="sub">Not yet</div></div>
+              </div>
+              <div class="step todo">
+                <div class="dot"><svg class="i"><use href="#i-home"/></svg></div>
+                <div><div class="ttl">Delivered</div><div class="sub">Not yet</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="notice mt14">
+            <svg class="i"><use href="#i-info"/></svg>
+            <p>We'll notify you when your order is delivered.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Title is the status</td><td>The cap title changes with the order — "Order Placed", "On the Way",
+        "Delivered". Naming the actual state beats a static title over a changing body</td></tr>
+      <tr><td>The rail</td><td>A white puck carrying the bike glyph, travelling a 22% white track across the cap.
+        Position tracks the same step index the spine below does</td></tr>
+      <tr><td>Driver card</td><td>Before assignment it is a genuine placeholder — greyed plate, "Finding your driver…".
+        Once assigned it carries the name, photo, rating and a call button</td></tr>
+      <tr><td>Spine</td><td>44px pucks, 2px connector between them. Done fills action red with a check; the current
+        step adds a 5px ring at 14%; pending stays <code>ink100</code> with an <code>ink300</code> glyph and an
+        <code>ink400</code> label</td></tr>
+      <tr><td>Privacy</td><td>Driver GPS lives on the order document, not a public collection, and is written only
+        while the order is active</td></tr>
+    </table>
+  </div>
+</div>

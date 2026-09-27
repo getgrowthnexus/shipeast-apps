@@ -1,0 +1,928 @@
+/* ═══════════════════════════════════════════════════════════════
+   ShipEast Design System (SEDS) — Admin Panel
+   components.css
+
+   Reusable surfaces: cards, stat cards, tables, badges, buttons,
+   forms, tabs, toggle, skeletons, empty states, uploader, fieldsets.
+
+   Values come from DESIGN-SPEC.md §2. Nothing here invents a colour, a
+   size or a spacing value.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────── CARDS ─────────────── */
+/* --card-pad is declared here rather than used inline so .card-title and
+   .tbl-wrap can pull themselves back out to the card's edges with a single
+   value the responsive block changes in one place. */
+/* The card carries the whole "light clay" idea, so it is worth being explicit
+   about what changed and why:
+
+   · NO BORDER. The 1px line was doing the separating, which is why every card
+     read as a boxed-in region on a form rather than a raised object. --ring
+     replaces it inside the shadow stack — same job, no hard edge, and the
+     corner radius stays true because a ring does not have to be mitred.
+   · --e2, not --e1. The old shadow was a 5%-opacity 1px smudge, i.e. nothing.
+   · --lip on the top edge, the one hairline of light that makes a surface feel
+     soft instead of printed.
+   · --r-lg (20px). At 10px a 900px-wide card is a rectangle with the corners
+     knocked off.
+   Hover lifts it, because a card that reacts feels like an object.           */
+.card{
+  --card-pad:var(--pad-card);
+  background:var(--surface);border-radius:var(--r-lg);
+  padding:var(--card-pad);box-shadow:var(--ring),var(--e2),var(--lip);
+  margin-bottom:var(--gap-section);min-width:0;
+  transition:box-shadow var(--d-base) var(--ease);
+}
+/* The grey banded header is GONE. It was the panel's most dated single
+   detail — a tinted strip with a rule under it at the top of every card is
+   the shape of a 2010 portlet, and it appeared eleven times per screen.
+
+   What separates a title from its content now is what should always have: a
+   step up in size and weight (17px/600 → 20px/700), and real space beneath
+   it. The hairline stays, run full-bleed to the card's edges, because a card
+   that opens onto a dense table still needs the header to be a header — but
+   it is a rule, not a container. */
+.card-title{
+  font-size:var(--fs-h3);line-height:var(--lh-h3);
+  font-weight:700;letter-spacing:var(--tr-h3);color:var(--ink);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  flex-wrap:wrap;
+  margin:0 calc(var(--card-pad) * -1) var(--sp-5);
+  padding:0 var(--card-pad) var(--sp-4);
+  border-bottom:1px solid var(--line);
+}
+.card-note{font-size:var(--fs-caption);font-weight:600;color:var(--ink-3);
+  display:inline-flex;align-items:center;gap:var(--gap-tight);}
+/* Danger Zone tints the whole card rather than just a header band, so the one
+   card in the panel that can destroy data never shares a silhouette with the
+   pricing form beside it. The ink is --danger-ink rather than --danger: on a
+   red tint the mid-tone red drops under AA, the deep one reads at 8.8:1. */
+.card.danger-zone{background:var(--danger-tint);box-shadow:0 0 0 1px var(--red-200),var(--e2);}
+.card.danger-zone .card-title{border-bottom-color:var(--red-200);color:var(--danger-ink);}
+.card.danger-zone .dz-label{display:inline-flex;align-items:center;gap:var(--gap-inline);color:inherit;}
+
+/* ─────────────── STAT CARDS ─────────────── */
+.sg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-5);
+  margin-bottom:var(--gap-section);}
+.sg.g3{grid-template-columns:repeat(3,minmax(0,1fr));}
+/* The rail is gone — see .ni in shell.css for the same reasoning. A 4px
+   coloured sliver welded to the left edge of a box is the signature of the
+   era this redesign is leaving, and it was doing a job the chip beside it
+   already does better: the chip is bigger, it is tinted in the same hue, and
+   it carries a glyph that says WHICH metric rather than only that there is
+   one. Losing the rail also lets the card go back to even padding.          */
+.sc{
+  position:relative;background:var(--brand-soft);
+  border-radius:var(--r-lg);padding:var(--pad-card);
+  box-shadow:var(--ring-brand),var(--e2),var(--lip);overflow:hidden;
+  transition:box-shadow var(--d-base) var(--ease),transform var(--d-base) var(--ease);
+}
+.sc:hover{box-shadow:var(--ring-strong),var(--e3),var(--lip);transform:translateY(-3px);}
+/* THE TONED STAT CARD.
+   app.js has emitted `.ac-success` / `.ac-warning` / `.ac-info` alongside the
+   chip's tone class since the metric cards were written, and nothing in the
+   stylesheet has ever matched them — so the chip was tinted and the card it
+   sat in was the same white as the three beside it. Four cards across the top
+   of a page is the panel's most-repeated composition and it was carrying one
+   colour.
+
+   Each variant now names one soft tone and one ring; every other property is
+   inherited. The default (no accent) is brand, which is the right default —
+   an untoned metric is a ShipEast metric. Deliberately NOT the badge tints:
+   at that saturation four cards in a row read as a stack of highlighters. */
+.sc.ac-success{background:var(--success-soft);box-shadow:var(--ring-success),var(--e2),var(--lip);}
+.sc.ac-warning{background:var(--warning-soft);box-shadow:var(--ring-warning),var(--e2),var(--lip);}
+.sc.ac-info{background:var(--info-soft);box-shadow:var(--ring-info),var(--e2),var(--lip);}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--sp-3);margin-bottom:var(--sp-2);}
+/* 46px, squircled, and now a PLATE rather than a flat tint square — see §9 in
+   tokens.css. Four of these sit across the top of every page, so they are the
+   panel's most-repeated piece of iconography and the most visible place the
+   old flat treatment read as dated. Each variant names only its tint; the
+   sheen, the bevel and the cast shadow come from the shared tokens, and the
+   glyph gets the raised-relief pass on top. */
+.sc-chip{
+  width:46px;height:46px;border-radius:var(--r-md);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;
+  background-color:var(--accent-wash);color:var(--accent-ink);
+  box-shadow:var(--plate-bevel);
+  transition:transform var(--d-base) var(--ease);
+}
+.sc-chip .ic{filter:var(--emboss);}
+.sc:hover .sc-chip{transform:translateY(-1px) scale(1.04);}
+.sc-chip.c-warning{background-color:var(--warning-tint);color:var(--warning-ink);}
+.sc-chip.c-info{background-color:var(--info-tint);color:var(--info-ink);}
+.sc-chip.c-success{background-color:var(--success-tint);color:var(--success-ink);}
+/* The label was --text-mute at 3.33:1 against a card — the single most-repeated
+   contrast failure in the panel, since every stat on every page uses it. At
+   --ink-3 it is 5.27:1, and dropping from 700 to 600 stops four of these
+   shouting across the top of the Dashboard. */
+.sc-lbl{font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  color:var(--ink-3);text-transform:uppercase;letter-spacing:var(--tr-micro);
+  margin-bottom:var(--gap-tight);}
+/* 32px, up from 26px, at hero tracking. A dashboard's whole job is that the
+   number is readable from across a desk; at 26px/-.02em these were the same
+   optical weight as the table below them. `.sm` is the money variant, which
+   carries a currency symbol and up to seven digits — 24px keeps "$128,400"
+   on one line in a quarter-width card. */
+.sc-val{font-size:var(--fs-stat);line-height:var(--lh-stat);
+  font-weight:800;letter-spacing:var(--tr-hero);color:var(--ink);
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+/* The money variant does NOT follow the count up to 34px. A quarter-width card
+   gives it ~228px, and "J$418,900" is nine glyphs — at 30px/800 it wrapped
+   onto a second line and pushed the sub-label out of the card. 24px is the
+   largest step that keeps the widest real revenue figure on one line, and it
+   is still the loudest thing in the card. */
+.sc-val.sm{font-size:var(--fs-h2);letter-spacing:var(--tr-hero);}
+.sc-sub{font-size:var(--fs-caption);line-height:var(--lh-caption);color:var(--ink-3);
+  margin-top:var(--gap-tight);}
+.spark{display:block;width:100%;height:26px;margin-top:var(--sp-3);overflow:visible;}
+/* app.js paints the sparkline entirely in currentColor, so the tone lives here.
+   Orders are the brand metric; money is the one place gold still reads as
+   money rather than as a warning. */
+.spark-accent{color:var(--accent-quiet);}
+.spark-money{color:var(--star);}
+
+/* ─────────────── TABLES ─────────────── */
+/* The wrapper is the scrollport in both axes — that is what lets the header
+   stick reliably (a sticky <th> can only stick within its own scroll container).
+
+   Pulled out to the card's own edges, hence max-width:none — with max-width:100%
+   the negative margins would shift the box left and leave the right edge short.
+   The point is the header band below: a tinted strip that stops halfway across a
+   card looks like a rendering fault, whereas one running the full width reads as
+   the table's header. Cells get their inset back through first/last-column
+   padding. */
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:min(68vh,720px);
+  max-width:none;-webkit-overflow-scrolling:touch;
+  margin:0 calc(var(--card-pad) * -1) calc(var(--card-pad) * -1);
+  padding-bottom:var(--sp-1);
+  /* The wrapper is pulled flush to the card's bottom edge, so it has to carry
+     the card's bottom corners itself. Without this the last row's hover tint
+     paints square into a 20px radius — invisible at the old 10px, obvious now.
+     A scroll container clips to its own radius, so this needs nothing else. */
+  border-radius:0 0 var(--r-lg) var(--r-lg);}
+/* On Orders, Drivers, Merchants, Customers and Shop & Deliver the table IS the
+   card — there is no .card-title above it. The wrapper pulls out to the left,
+   right and bottom edges but not the top, so the header band ran full width
+   with a strip of bare card surface floating above it, which looked like the
+   band had slipped down. Pull it to the top edge too and let it carry the
+   card's upper corners; where a title DOES sit above, the rule does not apply
+   and nothing moves. */
+.card>.tbl-wrap:first-child{
+  margin-top:calc(var(--card-pad) * -1);border-radius:var(--r-lg);}
+/* ── COLUMN WIDTHS ARE DECLARED, NOT DISCOVERED ──────────────────────────
+   Every table in the panel is `table-layout:fixed` with a <colgroup>, and the
+   widths below are the whole story.
+
+   Auto layout was measuring the CONTENT of each column and sizing to it, which
+   meant the grid moved whenever the data did. On Drivers that produced the
+   visible fault: "Active" swelled to 231px because ONE row held an
+   Approve/Reject pair, "Trips" was crushed to 58px because a number is narrow,
+   and the count ended up hugging the right edge of a column three times its
+   width — sitting under the tail of its own heading rather than under the
+   heading. It also meant the columns re-flowed every time an Orders filter or a
+   Customers search changed which rows were on screen.
+
+   Fixed layout ends all of that: a column is the width its ROLE needs, the same
+   width on every page and in every state. The roles below were sized from the
+   real rendered controls — a 44px switch, a 32px icon button, a five-star
+   rating, a status pill — plus the 2×12px cell padding they sit in. Exactly one
+   column per table is left `auto` (.tc-flex) to absorb the slack, which is
+   always the name or the prose.
+
+   Anything longer than its column now ellipsises rather than widening it (see
+   the td rule below), so the row stays one line tall and the column stays put. */
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.tc-flex{width:auto;}          /* names, addresses, prose — takes the slack */
+.tc-name{width:152px;}         /* a person's name where it cannot have the slack */
+.tc-ref{width:120px;}          /* #A1B2C3D4, a promo code */
+.tc-ref-type{width:196px;}     /* the same, plus the package/food type badge */
+.tc-num{width:80px;}           /* a right-aligned count */
+.tc-money{width:120px;}        /* a right-aligned currency figure */
+.tc-badge{width:132px;}        /* one status pill — sized on "On the Way", the widest label OrderStatus has */
+.tc-chip{width:100px;}         /* a plain data chip: a plate, a payment method */
+.tc-phone{width:116px;}
+.tc-date{width:108px;}         /* a timestamp or a date */
+.tc-rating{width:128px;}       /* five stars and a figure, or "No ratings yet" */
+.tc-switch{width:152px;}       /* the online switch, or the approve/reject pair */
+.tc-usage{width:128px;}        /* the promo usage bar */
+/* Sized by the HEADING, not the button. One 32px icon needs 68px of column and
+   the word "ACTIONS" needs 92 — a column narrower than its own label is not a
+   column, and the last one in the table pays the card's 24px padding on top. */
+.tc-act1{width:96px;}          /* one icon button */
+.tc-act3{width:144px;}         /* three icon buttons */
+/* The declared columns above force the table to at least their own sum, so this
+   is not about them — it is the floor under the .tc-flex columns, which would
+   otherwise be free to collapse to an ellipsis and nothing else. Below it
+   .tbl-wrap scrolls, which is the honest outcome for nine columns of controls
+   on a narrow desktop. Phones never reach it: they get row cards from ≤720px
+   (responsive.css), where this is switched off entirely. */
+.tbl-wrap table{min-width:880px;}
+.tbl-wrap table.t-wide{min-width:1096px;}   /* the nine-column rosters */
+.tbl-wrap table.t-narrow{min-width:0;}      /* tables inside a half-width card */
+/* The column-name strip was --card on --card: white labels on a white card,
+   which is the "no contrast, no professional layout" complaint on Drivers and
+   every other table. It is a banded header now, and the labels sit at --ink-2
+   (7.2:1 on the band) rather than whispering against it at 600 weight instead
+   of 800. Sticky, so the background must stay fully opaque. */
+/* The column strip is a BAND again, and this time a coloured one.
+   It has now been both: a grey portlet strip (dated), then the card's own
+   surface with a rule under it (invisible — --surface on --surface is the
+   "white on white" reading, and the rule was doing all the work on its own).
+   --sunken was re-cut this pass specifically so a third option exists: a
+   rose tint that is a real step off the card at 0.888 against 0.940 luminance,
+   still carries the labels at 4.71:1, and belongs to the brand's hue rather
+   than to a neutral ramp borrowed from somewhere else.
+
+   Sticky still requires a fully opaque background, so this must stay a solid
+   token and never --zebra or another translucent value. */
+thead th{
+  position:sticky;top:0;z-index:2;background:var(--sunken);
+  text-align:left;padding:var(--sp-3) var(--pad-cell-x);
+  font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  color:var(--ink-2);text-transform:uppercase;letter-spacing:var(--tr-micro);
+  border-bottom:1px solid var(--line-strong);white-space:nowrap;
+  /* A heading must not escape its own column. Under fixed layout it no longer
+     widens the column to fit, so without this it simply painted over the
+     neighbour — or off the card's right edge, in the last column's case. */
+  overflow:hidden;text-overflow:ellipsis;
+}
+thead th:first-child,tbody td:first-child{padding-left:var(--card-pad);}
+thead th:last-child,tbody td:last-child{padding-right:var(--card-pad);}
+/* Rows breathe. --pad-cell-y was 12px against a 13px/1.45 cell, so a roster
+   read as a wall of text with hairlines through it; at 16px the eye can track
+   across a nine-column row without a ruler. */
+/* One line, then an ellipsis. This is the other half of fixed layout: a column
+   can only hold still if the cell inside it refuses to push. Overflow is
+   clipped with a visible ellipsis rather than wrapped, so every row is exactly
+   one line tall and each value stays inside the band its heading names.
+   Cells that are legitimately taller — a two-line address, a name over its
+   origin — opt out below. */
+td{padding:var(--sp-4) var(--pad-cell-x);
+  font-size:var(--fs-dense);line-height:var(--lh-dense);color:var(--ink);
+  border-bottom:1px solid var(--line);vertical-align:middle;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* text-overflow only draws on the box that clips, so a block child inside a
+   cell — the origin line under a customer's name — has to clip for itself. */
+td>div{overflow:hidden;text-overflow:ellipsis;}
+/* Scroll-margin keeps a row that JS jumps to clear of the sticky topbar. */
+tbody tr{transition:background var(--d-fast) var(--ease);scroll-margin-top:var(--h-topbar);}
+tbody tr:last-child td{border-bottom:none;}
+/* Zebra. A nine-column roster is the widest thing the panel draws and the eye
+   has to track across it without losing the line; hairlines alone stop working
+   somewhere around the sixth column. --zebra is translucent (see tokens.css)
+   so the same rule holds on a card, on the white mobile row-cards and inside a
+   modal without three values.
+   This MUST stay above the hover rule: the two selectors have identical
+   specificity, so source order is the only thing deciding which one paints a
+   hovered even row. */
+tbody tr:nth-child(even) td{background:var(--zebra);}
+/* The hover tint is the brand wash, not neutral grey. It is the cheapest place
+   in the panel to make the brand felt during ordinary use, and a red-tinted
+   row under the cursor reads as "this one" far faster than a grey one. */
+tbody tr:hover td{background:var(--accent-wash);}
+td.right,th.right{text-align:right;font-variant-numeric:tabular-nums;}
+.cell-id{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums;}
+/* A promo code in a table cell — "SUMMER25", read letter by letter and typed
+   in by a customer, so it wants the same open tracking the coupon artwork
+   gives it. It used to carry `style="letter-spacing:1.2px"` inline from
+   app.js: the one piece of type in the panel that lived outside the system
+   entirely, in a unit (px) that does not scale with the type around it. */
+.cell-code{letter-spacing:var(--tr-code);}
+.cell-mute{color:var(--ink-2);}
+/* A street address is the one cell that will happily run to 60 characters and
+   push every column after it off-screen. Capped and clipped to two lines. */
+.cell-addr{max-width:180px;font-size:var(--fs-caption);line-height:var(--lh-caption);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  white-space:normal;}
+/* ── The three opt-outs from the one-line rule ──
+   A full-width empty state and a skeleton line are not values in a column, so
+   neither the nowrap nor the ellipsis applies to them; without this the empty
+   state's prose would run off the side of the table as a single line. */
+td[colspan]{white-space:normal;overflow:visible;text-overflow:clip;}
+.cell-strong{font-weight:600;font-variant-numeric:tabular-nums;}
+/* Wraps now. The Approve/Reject pair on a pending driver measures 207px and the
+   switch column it shares is 156px — under auto layout that ONE row set the
+   width of the column for the whole roster. It stacks instead, which costs a
+   line on the row that is actually asking to be dealt with and leaves the other
+   eight rows their proper shape. */
+.cell-actions{display:flex;gap:var(--gap-tight);flex-wrap:wrap;}
+/* A disabled customer's row (P5-05). Dimmed rather than hidden — an admin
+   looking for the account they just disabled must still be able to find it.
+   Opacity alone would be an accessibility failure, so the row keeps its explicit
+   "Disabled" badge and this is only reinforcement. */
+tr.row-muted td{opacity:.6;}
+tr.row-muted:hover td{opacity:1;}
+/* A flex box does not inherit its parent cell's ellipsis — the cell clips the
+   BOX, so the name inside it would simply disappear at the edge. The text child
+   has to clip for itself, and min-width:0 is what lets it shrink below its own
+   content width in the first place. */
+.cell-media{display:flex;align-items:center;gap:var(--gap-inline);min-width:0;}
+.cell-media>b,.cell-media>span:not(.dot){
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ─────────────── BADGES ─────────────── */
+.bdg{
+  display:inline-flex;align-items:center;gap:var(--gap-tight);
+  padding:var(--sp-1) var(--sp-3);border-radius:var(--r-full);
+  font-size:var(--fs-micro);font-weight:600;letter-spacing:var(--tr-micro);
+  white-space:nowrap;line-height:1.5;
+}
+.bdg::before{content:'';width:6px;height:6px;border-radius:50%;
+  background:currentColor;flex-shrink:0;}
+.bdg.plain::before{display:none;}
+/* Free-text values (a merchant's own category name) rather than a fixed status
+   vocabulary — uppercase + tracking makes arbitrary words hard to read. */
+.bdg-cap{text-transform:capitalize;letter-spacing:var(--tr-body);}
+/* Each pair is a verified tint + deep-ink combination; the mid-tone semantic
+   colours are for fills and rails, not for text on their own tint. */
+.bg-success{background:var(--success-tint);color:var(--success-ink);}
+.bg-warning{background:var(--warning-tint);color:var(--warning-ink);}
+.bg-danger{background:var(--danger-tint);color:var(--danger-ink);}
+.bg-info{background:var(--info-tint);color:var(--info-ink);}
+.bg-brand{background:var(--accent-wash);color:var(--accent-ink);}
+.bg-neutral{background:var(--sunken);color:var(--ink-2);box-shadow:var(--ring);}
+
+/* ─────────────── BUTTONS ─────────────── */
+/* min-height pins every button to the control height whatever its padding
+   rounds to, so a button and the input beside it line up. */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--gap-inline);
+  min-height:var(--h-control);
+  padding:var(--pad-btn-y) var(--pad-btn-x);border-radius:var(--r-full);
+  font-size:var(--fs-body);line-height:1.2;font-weight:600;
+  letter-spacing:var(--tr-body);
+  cursor:pointer;border:1px solid transparent;white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease),border-color var(--d-fast) var(--ease);
+}
+.btn:active:not(:disabled){transform:scale(.97);}
+.btn:disabled{opacity:.6;cursor:not-allowed;}
+.btn .ic{width:18px;height:18px;}
+/* A flat brand fill with a lit top edge and a shadow mixed in its own red, so
+   it reads as an object made of the colour rather than a swatch dropped on the
+   page. It used to carry --dome, a darkening wash down the lower half; the
+   wash is gone with every other gradient and the button loses nothing, because
+   what actually sold the shape was --fill-lip and the coloured cast shadow. */
+.btn-primary{
+  background:var(--accent);color:#fff;
+  box-shadow:var(--fill-lip),
+             0 1px 2px rgba(137,11,40,.28),0 6px 14px -3px rgba(137,11,40,.34);}
+.btn-primary:hover:not(:disabled){background:var(--red-700);
+  box-shadow:var(--fill-lip),
+             0 2px 5px rgba(137,11,40,.3),0 10px 22px -4px rgba(137,11,40,.4);
+  transform:translateY(-1px);}
+.btn-primary:active:not(:disabled){background:var(--red-800);
+  box-shadow:inset 0 2px 4px rgba(46,5,16,.32);transform:translateY(0) scale(.97);}
+/* The outline button sits on cards AND on the page ground, so it takes a
+   surface of its own rather than `transparent` — on the tinted ground a
+   transparent button with a hairline read as an empty slot. */
+.btn-outline{background:var(--surface);border-color:var(--line-strong);color:var(--ink);
+  box-shadow:var(--e1);}
+.btn-outline:hover:not(:disabled){
+  border-color:var(--accent);color:var(--accent);background:var(--accent-wash);
+  box-shadow:var(--e2);}
+.btn-ghost{background:transparent;color:var(--ink-2);}
+.btn-ghost:hover:not(:disabled){background:var(--sunken);color:var(--ink);}
+/* Destructive actions are a deep maroon, nineteen lightness points below the
+   brand. In a panel whose brand IS red they cannot also be brand red, or "Erase
+   all data" and "Save pricing" are the same button. */
+.btn-danger{background:var(--danger);color:#fff;
+  box-shadow:var(--fill-lip),0 1px 2px rgba(74,10,20,.26),
+             0 6px 14px -3px rgba(74,10,20,.3);}
+.btn-danger:hover:not(:disabled){background:var(--danger-ink);}
+.btn-success{background:var(--success);color:#fff;
+  box-shadow:var(--fill-lip),0 1px 2px rgba(10,60,36,.26),
+             0 6px 14px -3px rgba(10,60,36,.3);}
+.btn-success:hover:not(:disabled){background:var(--success-ink);}
+.btn-block{width:100%;min-height:var(--h-control-lg);font-size:var(--fs-body-lg);}
+.btn-sm{min-height:32px;padding:var(--sp-1) var(--sp-4);
+  font-size:var(--fs-caption);border-radius:var(--r-full);}
+.btn-sm .ic{width:16px;height:16px;}
+/* Trailing action row for a form inside a card. Separated by a rule so the
+   button belongs to the form above it rather than floating after the last field.
+   Full-width on phones — see responsive.css. */
+.form-actions{
+  display:flex;justify-content:flex-end;gap:var(--gap-inline);flex-wrap:wrap;
+  margin-top:var(--gap-section);padding-top:var(--sp-4);border-top:1px solid var(--line);
+}
+/* The driver modal's "send a reset link" sits under its own explanatory hint
+   rather than in a .form-actions row, so it needs the gap itself. */
+.drv-reset-btn{margin-top:var(--sp-3);}
+
+/* Row actions. 32px, not the 40px control height: three of these sit in every
+   table row, and at 40px they set the row height for the whole roster. The
+   mobile card-fold bumps them to a proper touch target — see responsive.css. */
+/* Resting state stays neutral on purpose. Three of these sit in every row of
+   every table, so tinting them at rest would put nine coloured tiles in view
+   per screenful and drown the badges — which are the cells that genuinely
+   encode state. The tone arrives on hover, where it identifies the action you
+   are about to take, and the ring goes with it. */
+.aicon{
+  width:32px;height:32px;border-radius:var(--r-md);display:inline-flex;align-items:center;
+  justify-content:center;cursor:pointer;border:1px solid transparent;
+  background:var(--sunken);
+  box-shadow:var(--ring);color:var(--ink-2);flex-shrink:0;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease);
+}
+.aicon .ic{width:18px;height:18px;}
+.aicon:hover{background:var(--line);color:var(--ink);}
+.aicon:active{transform:scale(.92);}
+.ai-v:hover{background:var(--info-tint);color:var(--info-ink);box-shadow:var(--ring-info);}
+.ai-e:hover{background:var(--success-tint);color:var(--success-ink);box-shadow:var(--ring-success);}
+.ai-d:hover{background:var(--danger-tint);color:var(--danger-ink);box-shadow:var(--ring-danger);}
+
+/* ─────────────── FORMS ─────────────── */
+.fg{margin-bottom:var(--gap-field);}
+.fg label{display:block;font-size:var(--fs-dense);font-weight:600;color:var(--ink);
+  margin-bottom:var(--gap-inline);}
+.fr{margin-bottom:var(--gap-field);min-width:0;}
+/* This label was --text-mute at 3.33:1 — it appears on every field of every form
+   in the panel, so it was the widest-reaching contrast failure of the lot. At
+   --ink-2 it is 7.9:1, and 600 rather than 700 stops a modal full of fields
+   reading as a wall of uppercase. */
+.fr label{display:block;font-size:var(--fs-micro);line-height:var(--lh-micro);
+  font-weight:600;color:var(--ink-2);margin-bottom:var(--gap-tight);
+  text-transform:uppercase;letter-spacing:var(--tr-micro);}
+.fr label small{font-weight:400;text-transform:none;letter-spacing:var(--tr-body);color:var(--ink-3);}
+/* A .fr used on its own inside a dialog rather than in a form flow — it supplies
+   its own top gap and resets the dialog's centred text. */
+.fr-standalone{margin-top:var(--sp-4);text-align:left;}
+/* A WELL, not a white rectangle. Fields were --surface-raised, i.e. pure white,
+   and there are more of them than of anything else in the panel — the driver
+   modal alone stacks eight. Collectively they were the largest surviving block
+   of white on a screen whose whole point this pass is that white is not the
+   product's colour.
+
+   --field is the sunken tone (see tokens.css), so an input now reads as
+   something cut INTO the card. On focus it lifts to --surface-raised: the
+   white is not gone, it is earned, and "which field am I in" is answered by a
+   change of surface rather than by a 1px border going red. */
+.fg input,.fr input,.fr select,.fr textarea{
+  width:100%;min-height:var(--h-control);
+  padding:var(--pad-input-y) var(--pad-input-x);
+  background:var(--field);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--r-md);
+  font-size:var(--fs-body);line-height:1.3;outline:none;
+  box-shadow:inset 0 1px 2px rgba(110,26,48,.05);
+  transition:border-color var(--d-fast) var(--ease),background var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease);
+}
+.fg input::placeholder,.fr input::placeholder,.fr textarea::placeholder{color:var(--ink-4);}
+/* The ring used to be painted with --red-50, a near-white tint on a near-white
+   page — so a focused field showed a border change and nothing else. A real
+   translucent red reads at any surface lightness. */
+/* background-COLOR, not the `background` shorthand: a <select> carries its
+   chevron as a background-image, and the shorthand would reset it to none —
+   so the arrow would vanish the moment the control was focused. */
+.fg input:focus,.fr input:focus,.fr select:focus,.fr textarea:focus{
+  background-color:var(--surface-raised);
+  border-color:var(--accent);box-shadow:var(--focus-ring);
+}
+.fr textarea{resize:vertical;min-height:88px;line-height:var(--lh-body);}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3) var(--sp-4);}
+
+/* ── Selects ──────────────────────────────────────────────────────────
+   The native control was the one un-designed thing left in every form: a
+   platform chevron, platform metrics, and a different look on each OS. These
+   drop the native arrow and draw our own, so a Vehicle Type / Status / Promo
+   Type / Enquiry Status dropdown matches the inputs beside it everywhere.
+   The chevron is a background image, and a background image cannot inherit
+   currentColor, so its stroke is themed by hand rather than dynamic. */
+.fr select,.fg select,select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  padding-right:42px;cursor:pointer;font-weight:500;
+  background-color:var(--field);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C4D54' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 13px center;
+  background-size:18px 18px;
+  text-overflow:ellipsis;
+}
+.fr select:hover,.fg select:hover{border-color:var(--ink-4);}
+[data-theme="dark"] .fr select,[data-theme="dark"] .fg select,[data-theme="dark"] select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D6CCD0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E");
+}
+/* The dropdown list itself is drawn by the OS; these are the only two properties
+   it honours, and without them a dark-theme list renders as black text on white
+   while the closed control is light-on-dark. */
+select option{background:var(--surface);color:var(--ink);}
+/* --line, not --sunken: --sunken is what an ENABLED field is painted in now, so
+   a disabled one had to move a step further down or the two looked identical. */
+select:disabled{cursor:not-allowed;opacity:.6;background-color:var(--line);}
+
+/* ── Date input ───────────────────────────────────────────────────────
+   Chrome renders a bare, low-contrast calendar glyph flush against the border.
+   Give it the same hit area and hover feedback as an .iconbtn so it reads as a
+   control rather than an artefact. */
+.fr input[type="date"]{cursor:pointer;font-weight:500;}
+.fr input[type="date"]::-webkit-calendar-picker-indicator{
+  cursor:pointer;opacity:.5;padding:var(--sp-1);margin-right:-4px;border-radius:var(--r-xs);
+  transition:opacity var(--d-fast) var(--ease),background var(--d-fast) var(--ease);
+}
+.fr input[type="date"]:hover::-webkit-calendar-picker-indicator,
+.fr input[type="date"]:focus::-webkit-calendar-picker-indicator{opacity:1;background:var(--sunken);}
+[data-theme="dark"] .fr input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.55;}
+.fr input[type="date"]::-webkit-datetime-edit{padding:0;}
+
+/* Radius matched to .tabs — the two sit stacked on Orders, Customers and
+   Shop & Deliver, and two different corner radii one above the other was the
+   most visible seam on those pages. */
+/* The search box sits on the page GROUND, not on a card, and it was painted
+   --surface — one step off the ground, with a 1px ring, which is why it read as
+   a faint outline rather than as a place to type. It takes the field tone like
+   every other input, its leading glyph takes the identity red so the control is
+   findable from the corner of the eye, and it lifts to white on focus. */
+.srch{
+  display:flex;align-items:center;gap:var(--gap-inline);
+  min-height:var(--h-control);
+  background:var(--field);color:var(--accent-quiet);
+  border:1px solid transparent;border-radius:var(--r-full);
+  padding:var(--pad-input-y) var(--pad-input-x);
+  margin-bottom:var(--gap-field);width:min(420px,100%);
+  box-shadow:var(--ring-brand),var(--e1);
+  transition:border-color var(--d-fast) var(--ease),background var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease);
+}
+.srch:focus-within{border-color:var(--accent);background:var(--surface-raised);
+  box-shadow:var(--focus-ring);}
+.srch input{border:none;outline:none;font-size:var(--fs-body);width:100%;
+  background:transparent;color:var(--ink);}
+
+/* ─────────────── TABS / SEGMENTED (filter bars) ───────────────
+   The track is a FLAT light bar, not a trench. It used to be --sunken with an
+   inset shadow AND a ring on top of that — three layers saying "dug out", which
+   is a heavier statement than a filter bar has any business making. A segmented
+   control does not need a well: the selection is legible because the pill is
+   lifted and lettered in the identity red, and the container only has to say
+   where the control begins and ends. One light surface, one hairline, no
+   shadow at all does that.
+
+   Painting it --surface rather than --sunken also means it reads the same on
+   the page ground (Orders, Shop & Deliver) as it does inside the merchant side
+   panel, where the old sunken track was a second dark band under the red head.
+
+   On phones this was a horizontally scrolling strip that hid whole filters off
+   the right edge behind a scrollbar nobody notices. Below 720px it becomes a
+   wrapping grid — every filter visible at once. See responsive.css. */
+.tabs{
+  display:flex;gap:var(--sp-1);background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-full);
+  padding:var(--sp-1);margin-bottom:var(--gap-field);width:fit-content;max-width:100%;
+}
+.tab{
+  display:flex;align-items:center;gap:var(--gap-inline);
+  padding:var(--sp-2) var(--sp-4);border-radius:var(--r-full);
+  font-size:var(--fs-dense);font-weight:600;cursor:pointer;color:var(--ink-2);
+  user-select:none;white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease);
+}
+.tab:hover{color:var(--ink);background:rgba(51,41,46,.05);}
+[data-theme="dark"] .tab:hover{background:rgba(255,255,255,.05);}
+/* The track is light now, so the selected pill can no longer rely on being the
+   only pale thing in a dark groove. Its hairline takes the identity red instead
+   — the same red the label is set in — which marks the selection unmistakably
+   on both themes and lets the drop shadow drop to --e1. That is one border and
+   one soft shadow where there used to be a ring, a shadow, an inner lip, and a
+   separate per-theme override. */
+.tab.active{
+  background:var(--surface-raised);color:var(--accent);font-weight:600;
+  box-shadow:var(--ring-brand),var(--e1);
+}
+.tab.active:hover{background:var(--surface-raised);}
+/* The count sits on the pill, so it needs a surface that reads against BOTH the
+   sunken track (inactive) and the raised pill (active). */
+.tab b{font-variant-numeric:tabular-nums;font-weight:600;
+  background:var(--line);color:var(--ink-2);
+  border-radius:var(--r-full);padding:var(--sp-half) var(--sp-2);
+  font-size:var(--fs-micro);min-width:20px;text-align:center;}
+.tab.active b{background:var(--accent-wash);color:var(--accent-ink);}
+
+/* ── Mobile filter affordance ──
+   On desktop the wrapper is inert: display:contents removes its box so the
+   .tabs track sits as a direct child of the page exactly as it did before, and
+   the Filter button is hidden. Everything visible below only turns on inside
+   the ≤720px block, where the bar collapses to the active filter + a Filter
+   button that drops the rest of the options as a panel. */
+.filterbar{display:contents;}
+.fbtn{display:none;}
+
+/* Period selector — same track, but the selection is a flat brand fill rather
+   than a raised pill, because this control chooses what the numbers below it
+   MEAN rather than which subset of a list is shown. */
+.pbs{display:flex;gap:var(--sp-1);background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-full);
+  padding:var(--sp-1);width:fit-content;max-width:100%;}
+.pb{padding:var(--sp-2) var(--sp-4);border-radius:var(--r-full);
+  font-size:var(--fs-dense);font-weight:600;cursor:pointer;
+  border:1px solid transparent;background:transparent;color:var(--ink-2);white-space:nowrap;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease);}
+.pb:hover{color:var(--ink);background:rgba(51,41,46,.05);}
+[data-theme="dark"] .pb:hover{background:rgba(255,255,255,.05);}
+.pb.active{background:var(--accent);color:#fff;
+  border-color:transparent;font-weight:600;
+  box-shadow:var(--fill-lip),0 2px 6px -1px rgba(137,11,40,.34);}
+.pb.active:hover{background:var(--accent);color:#fff;}
+
+/* ─────────────── TOGGLE ─────────────── */
+/* 44×24 with an 18px knob: even numbers, so the 3px inset is equal on all four
+   sides and the travel (44 − 18 − 3 − 3) is a round 20px. */
+.tgl{position:relative;width:44px;height:24px;cursor:pointer;display:inline-block;flex-shrink:0;}
+.tgl input{opacity:0;width:0;height:0;position:absolute;}
+.ts{position:absolute;inset:0;background:var(--line-strong);border-radius:var(--r-full);
+  transition:background var(--d-base) var(--ease);}
+.ts::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;
+  background:#fff;border-radius:50%;box-shadow:0 1px 2px rgba(31,25,28,.28);
+  transition:transform var(--d-base) var(--ease);}
+.tgl input:checked+.ts{background:var(--accent);}
+.tgl input:checked+.ts::before{transform:translateX(20px);}
+.tgl input:focus-visible+.ts{outline:2px solid var(--accent);outline-offset:2px;}
+
+/* ─────────────── SKELETONS ─────────────── */
+/* The sweeping highlight is gone with the rest of the gradients; the block
+   breathes its own opacity instead. Same signal, one layer instead of two, and
+   it needs no per-theme rule because it is not painting a colour at all. */
+.sk{position:relative;overflow:hidden;border-radius:var(--r-xs);background:var(--line);
+  animation:skpulse 1400ms var(--ease) infinite;}
+.sk-line{height:11px;}
+.sk-pill{height:20px;border-radius:var(--r-full);}
+.sk-sq{border-radius:var(--r-xs);}
+.sk-row td{padding:var(--sp-4) var(--pad-cell-x);}
+
+/* ─────────────── EMPTY STATES ─────────────── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:var(--sp-8) var(--sp-5);gap:var(--sp-3);}
+/* 150px of illustration above two lines of text made an empty table read as a
+   marketing panel; 128px still carries the drawing without dominating. */
+.empty svg{width:128px;height:128px;margin-bottom:var(--sp-1);}
+/* Illustration palette. app.js emits these as classes rather than fills so the
+   art follows the theme: on light it is a pale-to-deep red ramp, on dark the
+   same four steps shift up so the drawing stays readable on a dark card
+   instead of glowing as a white disc. Flat fills only — no gradients. */
+.empty svg .a-bg{fill:var(--red-50);}
+.empty svg .a-pale{fill:var(--red-100);}
+.empty svg .a-soft{fill:var(--red-200);}
+.empty svg .a-mid{fill:var(--red-500);}
+.empty svg .a-deep{fill:var(--red-700);}
+.empty svg .a-sbg{stroke:var(--red-50);fill:none;}
+.empty svg .a-smid{stroke:var(--red-500);}
+.empty svg .a-sdeep{stroke:var(--red-700);}
+/* The 50/100/200 steps are already re-cut for dark in tokens.css, so only the
+   darkest tone needs flipping: --red-700 on a dark card is a near-black shape.
+   Sending it UP the ramp keeps the drawing's depth order intact. */
+[data-theme="dark"] .empty svg .a-deep{fill:var(--red-300);}
+[data-theme="dark"] .empty svg .a-sdeep{stroke:var(--red-300);}
+/* An empty table is a whole card of nothing with two lines of text in the
+   middle of it, and at --fs-title the heading was SMALLER than the card
+   title above it — so the one thing the screen has to say was the quietest
+   thing on it. --fs-h3 puts it level with a section head, which is what it
+   is. The copy takes the prose measure, not the UI one. */
+.empty-title{font-size:var(--fs-h3);
+  line-height:var(--lh-h3);font-weight:700;letter-spacing:var(--tr-h3);color:var(--ink);}
+.empty-copy{font-size:var(--fs-body);line-height:var(--lh-prose);color:var(--ink-2);
+  max-width:320px;}
+/* The weight-band verdict ("Not saveable yet — add at least one band"). It sits
+   between the textarea and the next field row, so without a gap its last line
+   touched the "PER EXTRA KG" label and read as part of it. Guarded on :empty
+   because the element is always in the DOM and usually has nothing in it. */
+#pr-preview:not(:empty){margin-bottom:var(--gap-field);}
+td .empty{padding:var(--sp-6) var(--sp-5);}
+
+/* ─────────────── STARS / RATING ─────────────── */
+/* Gold survives in exactly one place: a star that is not yellow is not a star.
+   Everywhere else the old --gold-500 accent folded into --warning. */
+.stars{display:inline-flex;align-items:center;gap:1px;color:var(--star);vertical-align:middle;}
+.stars .ic{width:14px;height:14px;}
+.stars .off{color:var(--line-strong);}
+.rating-val{font-size:var(--fs-caption);color:var(--ink-2);margin-left:var(--gap-tight);
+  font-variant-numeric:tabular-nums;}
+.rbar-row{display:flex;align-items:center;gap:var(--gap-inline);margin-bottom:var(--sp-2);}
+.rbar-lbl{font-size:var(--fs-caption);width:14px;text-align:right;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;}
+.rbar-t{flex:1;height:8px;background:var(--line);border-radius:var(--r-full);overflow:hidden;}
+.rbar-f{height:100%;border-radius:var(--r-full);background:var(--star);
+  width:0;transition:width var(--d-deliberate) var(--ease);}
+.rbar-pct{font-size:var(--fs-caption);color:var(--ink-3);width:36px;text-align:right;
+  font-variant-numeric:tabular-nums;}
+
+/* ── Image uploader (P4-01 / P4-02) ──
+   The click target is a real <input type=file> inside its <label>, not a div
+   with a click handler, so it is keyboard-reachable and announced without any
+   ARIA faking it. The input is visually hidden, never display:none —
+   display:none removes it from the focus order entirely. */
+.up{ display:flex; flex-direction:column; gap:var(--gap-inline); }
+.up-input{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+.up-zone{ position:relative; }
+/* `label.up-drop`, not `.up-drop`: the uploader lives inside a `.fr`, and
+   `.fr label` has the same specificity, so a bare class here lost the fight over
+   `display` (the two lines collapsed into one run of text: "…PHOTO HEREor click
+   to browse") and inherited the field-label uppercase and sizing. It wins on
+   source order, so this block must stay BELOW the FORMS block above. */
+label.up-drop{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:var(--sp-1); min-height:112px; padding:var(--sp-4); margin-bottom:0;
+  border:1.5px dashed var(--line-strong); border-radius:var(--r-md);
+  background:var(--sunken); cursor:pointer; text-align:center;
+  text-transform:none; letter-spacing:var(--tr-body);
+  transition:border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease);
+}
+.up-drop:hover{ border-color:var(--accent-quiet); background:var(--accent-wash); }
+.up-zone.up-over .up-drop{ border-color:var(--accent-quiet); background:var(--accent-wash); }
+.up-input:focus-visible + .up-drop,
+.up-zone:focus-within .up-drop{ outline:2px solid var(--accent); outline-offset:2px; }
+.up-drop .up-drop-title{ font-size:var(--fs-dense); font-weight:600; color:var(--ink); }
+.up-drop .up-drop-hint{ font-size:var(--fs-caption); font-weight:400; color:var(--ink-3); }
+
+/* --surface-raised: this row sits on a card that is itself --surface, so the
+   old value drew a bordered rectangle in exactly the colour behind it. */
+.up-preview{
+  display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3);
+  border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface-raised);
+}
+.up-thumb{
+  width:72px; height:44px; object-fit:cover; border-radius:var(--r-xs);
+  background:var(--sunken); flex-shrink:0;
+}
+.up-meta{ flex:1; min-width:0; }
+.up-name{
+  font-size:var(--fs-caption); font-weight:600; color:var(--ink);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.up-sub{ font-size:var(--fs-caption); color:var(--ink-3); font-variant-numeric:tabular-nums; }
+.up-actions{ display:flex; gap:var(--gap-tight); flex-shrink:0; }
+.up-danger:hover:not(:disabled){
+  border-color:var(--danger); color:var(--danger-ink); background:var(--danger-tint); }
+
+.up-progress{ padding-top:var(--sp-1); }
+.up-bar{ height:5px; border-radius:var(--r-full); background:var(--line); overflow:hidden; }
+.up-bar-fill{
+  display:block; height:100%; width:0; border-radius:var(--r-full);
+  background:var(--accent); transition:width var(--d-fast) linear;
+}
+.up-status{ font-size:var(--fs-caption); color:var(--ink-3); min-height:14px; }
+.up-disabled{ opacity:.55; pointer-events:none; }
+.up-locked{ font-size:var(--fs-caption); color:var(--ink-3); margin-top:var(--sp-1); }
+
+/* ── Emoji picker (P4-02) ──
+   A collapsible panel, not a permanently-open grid. See the comment beside
+   #m-emoji-toggle in index.html. */
+.emoji-field{
+  width:76px; flex:0 0 76px!important; text-align:center;
+  font-size:var(--fs-h3); line-height:1.2;
+}
+.emoji-picker{
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(40px,1fr));
+  gap:var(--sp-1); margin-top:var(--sp-2); padding:var(--sp-3);
+  background:var(--sunken); border:1px solid var(--line); border-radius:var(--r-sm);
+  box-shadow:var(--e1);
+}
+/* The tray is sunken and the tiles are raised out of it. Both were --surface,
+   which is also the colour of the card behind them, so a grid of 40px options
+   showed as a field of floating emoji with hairlines between them. */
+.emoji-opt{
+  aspect-ratio:1; width:100%; font-size:var(--fs-h3); line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); border-radius:var(--r-xs); background:var(--surface-raised);
+  transition:border-color var(--d-fast) var(--ease), background var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease);
+}
+.emoji-opt:hover{ border-color:var(--accent-quiet); background:var(--accent-wash);
+  transform:translateY(-1px); }
+.emoji-opt:active{ transform:scale(.92); }
+.emoji-opt.sel{ border-color:var(--accent); background:var(--accent-wash);
+  box-shadow:inset 0 0 0 1px var(--accent); }
+.emoji-opt:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+/* ── Grouped form sections ────────────────────────────────────────────
+   The driver form ran eight fields together with no indication that the last two
+   decide whether the person can log in at all. These split it into named groups
+   so "Driver app sign-in" is visibly a different kind of information from
+   "Vehicle Model". */
+/* The group is painted in --surface, not --sunken, because --sunken is now what
+   the FIELDS inside it are painted in — leaving both at the same tone would
+   have made every input inside a fieldset disappear into its own container.
+   The group is defined by its ring and its banded title instead, which is the
+   same two-part treatment a card gets, one size down. */
+.fset{
+  box-shadow:var(--ring-strong); border-radius:var(--r-md);
+  padding:var(--sp-4); margin-bottom:var(--gap-field); background:var(--surface);
+}
+.fset>.fr:last-child,.fset>.mg:last-child>.fr{margin-bottom:0;}
+.fset-title{
+  font-size:var(--fs-micro); font-weight:600;
+  text-transform:uppercase; letter-spacing:var(--tr-micro); color:var(--ink-2);
+  margin:calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-4);
+  padding:var(--sp-2) var(--sp-4);
+  background:var(--sunken); border-bottom:1px solid var(--line);
+  border-radius:calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0 0;
+}
+/* Explanatory text under a field. Same role as .up-locked, which it supersedes
+   for form hints; .up-locked stays for the uploader's own locked state. */
+.fr-hint{font-size:var(--fs-caption); line-height:var(--lh-dense); color:var(--ink-3);
+  margin-top:var(--gap-tight);}
+/* A hint that IS the first thing in its .fr, directly under the label, rather
+   than sitting below a field — so it must not add the gap a field would need. */
+.fr-hint-tight{margin-top:0;}
+/* An input with a button welded to its right — "Generate" beside the password.
+   The button must not shrink; the input takes whatever is left. align-items
+   stretch is what makes the button match the input's height exactly. */
+.inline-field{display:flex; gap:var(--gap-inline); align-items:stretch;}
+.inline-field input{flex:1; min-width:0;}
+.inline-field .btn{flex-shrink:0;}
+
+/* Credentials handover — shown once, never retrievable. Monospaced because the
+   admin is about to read a password out loud or copy it by eye. */
+.cred-box{
+  margin-top:var(--sp-3); border-radius:var(--r-md);
+  background:var(--brand-soft); box-shadow:var(--ring-brand); overflow:hidden;
+}
+.cred-row{
+  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-4);
+  padding:var(--sp-3); border-bottom:1px solid var(--line);
+}
+.cred-row:last-child{border-bottom:none;}
+.cred-row span{
+  font-size:var(--fs-micro); font-weight:600; text-transform:uppercase;
+  letter-spacing:var(--tr-micro); color:var(--ink-3); flex-shrink:0;
+}
+.cred-row b{
+  font-family:var(--ff-mono); font-size:var(--fs-dense);
+  font-weight:600; color:var(--ink); text-align:right;
+  overflow-wrap:anywhere; user-select:all;
+}
+
+/* ─────────────── Client review round (Sep 2026) ───────────────
+   Ported from the pre-redesign styles.css onto this token system. */
+
+/* NT-5 notification character counter. Sits inline in the field label. */
+.char-count{float:right;font-size:11px;font-weight:600;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;}
+.char-count-warn{color:var(--warning);}
+.char-count-full{color:var(--danger);}
+
+/* DB-5: a destination address can be long; clip it to one line with the full
+   value on hover (title attribute). */
+.cell-clip{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* DB-5: a table row that opens a detail panel on click. The icon button in the
+   last cell stays as the keyboard-accessible affordance. */
+tr.row-click{cursor:pointer;}
+
+/* ── Filter bar (Orders OR-3 / OR-4, Drivers DV-*) ─────────────────────
+   A wrapping row of compact dropdowns above a table or grid. Each control is
+   small enough that 3–4 sit per row on a laptop and the whole set stays
+   visible without a horizontal scroll. */
+.fbar{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-4);}
+.fbar select,.fbar .fbar-txt{
+  padding:7px 12px;font-size:12.5px;font-weight:600;
+  background:var(--field);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--r-sm);
+  outline:none;max-width:190px;
+  transition:border-color var(--d-fast) var(--ease),box-shadow var(--d-fast) var(--ease);
+}
+.fbar select{padding-right:34px;background-position:right 10px center;background-size:15px 15px;}
+.fbar .fbar-txt{font-weight:500;width:150px;}
+.fbar select:focus,.fbar .fbar-txt:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
+.fbar select:hover,.fbar .fbar-txt:hover{border-color:var(--line-strong);}
+/* An active (non-default) filter reads at a glance so nobody wonders why the
+   table is short. */
+.fbar select.on,.fbar .fbar-txt.on{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-wash);}
+.fbar .btn-sm{margin-left:auto;}
+
+/* PR-10 / DV-*: small text buttons that wrap (promo rows, driver cards). */
+.promo-acts{display:flex;flex-wrap:wrap;gap:4px;}
+.pa-btn{
+  display:inline-block;padding:4px 9px;font-size:11.5px;font-weight:600;line-height:1.3;
+  background:var(--field);color:var(--ink-2);text-decoration:none;
+  border:1px solid var(--line);border-radius:var(--r-xs);cursor:pointer;
+  transition:border-color var(--d-fast) var(--ease),color var(--d-fast) var(--ease),background var(--d-fast) var(--ease);
+}
+.pa-btn:hover{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-wash);}
+.pa-btn.pa-del{color:var(--danger);}
+.pa-btn.pa-del:hover{border-color:var(--danger);background:var(--danger-tint);color:var(--danger);}
+.pa-btn.pa-ok{color:var(--success);}
+.pa-btn.pa-ok:hover{border-color:var(--success);background:var(--success-tint);color:var(--success);}
+.pa-btn .ic{width:13px;height:13px;vertical-align:-2px;margin-right:3px;}
+
+/* CU-4 tag picker (in the confirm modal) */
+.tag-picker{display:flex;flex-direction:column;gap:8px;margin-top:8px;text-align:left;}
+.tag-opt{display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 8px;
+  border:1px solid var(--line);border-radius:var(--r-xs);background:var(--field);}
+.tag-opt:hover{border-color:var(--line-strong);}
+.tag-opt input{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;}
+.bdg.sm{font-size:10.5px;padding:1px 6px;}
+
+/* Client checklist OR-2 / DB-8: tighter rows so long order and request lists
+   scroll in fewer screens. Overrides the roomier default above. */
+thead th{padding-top:var(--sp-2);padding-bottom:var(--sp-2);}
+td{padding-top:var(--sp-2);padding-bottom:var(--sp-2);}
+
+/* PR-10: the promo table's action column holds up to six text buttons. */
+.tc-acts{width:232px;}

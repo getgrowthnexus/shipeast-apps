@@ -10,11 +10,18 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../services/firestore_service.dart';
 import '../utils/money.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_toast.dart';
 import '../widgets/se_bottom_sheet.dart';
 
+/// The last screen before money changes hands.
+///
+/// One decision (how you pay), one optional extra (a code), one figure. The
+/// previous version also carried a card of three trust badges — "256-bit SSL
+/// Encryption" above a cash-on-delivery option, which is both untrue and the
+/// kind of claim that makes a careful person trust an app less. It is now one
+/// honest line about buyer protection.
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
 
@@ -37,7 +44,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   int _subtotal = 0;
   int _deliveryFee = 0;
   int _serviceFee = 0;
-  /// Pre-discount total as passed from checkout. Kept for the "Order total"
+
+  /// Pre-discount total as passed from checkout. Kept for the struck-through
   /// line above the discount row; the charged figure is [_finalTotal].
   int _total = 0;
   String _deliveryAddress = '';
@@ -53,7 +61,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
   }
 
@@ -113,7 +121,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
         // Say WHY. "Invalid or expired" for an under-minimum order sends the
         // customer looking for a new code instead of adding one more item.
-        SeToast.error(context, result.message ?? 'That promo code is not valid.');
+        SeToast.error(
+            context, result.message ?? 'That promo code is not valid.');
         return;
       }
       setState(() {
@@ -132,6 +141,291 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return SePageScaffold(
+      title: 'Payment',
+      subtitle: _merchantName.isEmpty ? null : 'Order from $_merchantName',
+      bottomBar: SeBottomBar(
+        child: SeButton(
+          label: 'Place order · ${Money.format(_finalTotal)}',
+          loading: _placingOrder,
+          onPressed: _placingOrder ? null : _placeOrder,
+        ),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 24),
+        children: [
+          const SeSectionTitle(title: 'How you will pay'),
+          const SizedBox(height: 10),
+          _methods(),
+          if (_deliveryAddress.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            const SeSectionTitle(title: 'Delivering to'),
+            const SizedBox(height: 10),
+            _addressRecap(),
+          ],
+          const SizedBox(height: 22),
+          const SeSectionTitle(title: 'Promo code'),
+          const SizedBox(height: 10),
+          _promo(),
+          const SizedBox(height: 22),
+          _totals(),
+          const SizedBox(height: 16),
+          _protection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _methods() => SeRowGroup(
+        children: [
+          _methodRow(
+            index: 1,
+            icon: SeIcons.cash,
+            hue: SeColors.success,
+            name: 'Cash on delivery',
+            sub: 'Pay the rider when your order arrives',
+            onTap: () => setState(() => _selectedPayment = 1),
+          ),
+          // Shown, not hidden: people look for the card option and need to know
+          // the answer is "not yet" rather than "you missed it".
+          _methodRow(
+            index: 0,
+            icon: SeIcons.creditCard,
+            hue: SeColors.info,
+            name: 'Card / PayPal',
+            sub: 'Coming soon to ShipEast',
+            disabled: true,
+          ),
+        ],
+      );
+
+  Widget _methodRow({
+    required int index,
+    required IconData icon,
+    required Color hue,
+    required String name,
+    required String sub,
+    VoidCallback? onTap,
+    bool disabled = false,
+  }) {
+    final selected = !disabled && _selectedPayment == index;
+    final row = Container(
+      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+      color: selected ? SeColors.brandSoft : Colors.transparent,
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: hue.withValues(alpha: 0.10),
+              borderRadius: SeRadius.all(SeRadius.xs),
+            ),
+            child: Icon(icon, size: 20, color: hue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name,
+                    style: SeType.title.copyWith(
+                        fontSize: 15,
+                        color: disabled ? SeColors.ink500 : SeColors.ink900)),
+                const SizedBox(height: 2),
+                Text(sub,
+                    style: SeType.bodyS.copyWith(color: SeColors.ink400),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          if (disabled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              decoration: BoxDecoration(
+                color: SeColors.ink100,
+                borderRadius: SeRadius.pill,
+              ),
+              child: Text('Soon',
+                  style: SeType.eyebrow.copyWith(color: SeColors.ink500)),
+            )
+          else
+            // A filled circle rather than a Material Radio: the whole row is
+            // the target, and a stock radio invites people to aim at the 20dp
+            // circle instead.
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? SeColors.brandAction : SeColors.ink300,
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: const BoxDecoration(
+                            color: SeColors.brandAction, shape: BoxShape.circle),
+                      ),
+                    )
+                  : null,
+            ),
+        ],
+      ),
+    );
+    if (disabled) return Opacity(opacity: 0.6, child: row);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: row,
+    );
+  }
+
+  Widget _addressRecap() => SePanel(
+        child: Row(
+          children: [
+            const Icon(SeIcons.location, size: 18, color: SeColors.brandAction),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(_deliveryAddress,
+                  style: SeType.bodyS.copyWith(color: SeColors.ink700),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      );
+
+  Widget _promo() {
+    final applied = _promoApplied;
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: applied ? SeColors.successSoft : SeColors.surface0,
+              borderRadius: SeRadius.all(SeRadius.md),
+              border: Border.all(
+                  color: applied ? SeColors.success : SeColors.ink200),
+            ),
+            child: Row(
+              children: [
+                Icon(SeIcons.tag,
+                    size: 17,
+                    color: applied ? SeColors.success : SeColors.ink400),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _promoController,
+                    enabled: !applied,
+                    textCapitalization: TextCapitalization.characters,
+                    style: SeType.body.copyWith(color: SeColors.ink900),
+                    cursorColor: SeColors.brandAction,
+                    decoration: InputDecoration(
+                      hintText:
+                          applied ? '$_appliedCode applied' : 'Have a code?',
+                      hintStyle: SeType.body.copyWith(
+                          color:
+                              applied ? SeColors.successInk : SeColors.ink400),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      filled: false,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SeButton(
+          label: applied ? 'Remove' : 'Apply',
+          variant:
+              applied ? SeButtonVariant.ghost : SeButtonVariant.secondary,
+          size: SeButtonSize.medium,
+          expand: false,
+          loading: _validatingPromo,
+          onPressed: applied
+              ? () => setState(() {
+                    _promoApplied = false;
+                    _discount = 0;
+                    _appliedCode = null;
+                    _promoController.clear();
+                  })
+              : (_validatingPromo ? null : _applyPromo),
+        ),
+      ],
+    );
+  }
+
+  Widget _totals() => SePanel(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            SeMoneyLine(label: 'Items', value: Money.format(_subtotal)),
+            SeMoneyLine(
+                label: 'Delivery fee', value: Money.deliveryFee(_deliveryFee)),
+            SeMoneyLine(
+                label: 'Service fee', value: Money.format(_serviceFee)),
+            if (_discount > 0)
+              SeMoneyLine(
+                label: 'Promo ${_appliedCode ?? ''}'.trim(),
+                value: '− ${Money.format(_discount)}',
+                valueColor: SeColors.success,
+              ),
+            const Divider(height: 20, color: SeColors.ink200),
+            SeMoneyLine(
+                label: 'Total to pay',
+                value: Money.format(_finalTotal),
+                strong: true),
+            if (_discount > 0) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('was ${Money.format(_total)}',
+                      style: SeType.tabular(SeType.bodyS).copyWith(
+                          color: SeColors.ink400,
+                          decoration: TextDecoration.lineThrough)),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+
+  /// One line, not a badge wall. It says the only thing that is actually true
+  /// of a cash order: if it does not arrive, we handle it.
+  Widget _protection() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(SeIcons.shield, size: 15, color: SeColors.ink400),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              'Covered by ShipEast buyer protection',
+              style: SeType.bodyS.copyWith(color: SeColors.ink400),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      );
+
   Future<bool> _showOrderConfirmation() async {
     final res = await showSeBottomSheet<bool>(
       context: context,
@@ -147,43 +441,44 @@ class _PaymentScreenState extends State<PaymentScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SeSheetHandle(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Center(
               child: Container(
-                width: 64,
-                height: 64,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  gradient: SeColors.sunsetGradient,
+                  color: SeColors.brandSoft,
                   borderRadius: SeRadius.all(SeRadius.lg),
-                  boxShadow: SeElevation.glow,
                 ),
-                child: const Icon(SeIcons.orders, size: 32, color: Colors.white),
+                child: const Icon(SeIcons.bike,
+                    size: 30, color: SeColors.brandAction),
               ),
             ),
             const SizedBox(height: 16),
-            Text('Confirm Your Order',
+            Text('Place this order?',
                 style: SeType.h2, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
-              'You are placing an order from $_merchantName for ${Money.format(_finalTotal)}.',
+              _merchantName.isEmpty
+                  ? '${Money.format(_finalTotal)}, cash on delivery.'
+                  : '$_merchantName · ${Money.format(_finalTotal)}, cash on delivery.',
               textAlign: TextAlign.center,
-              style: SeType.body.copyWith(color: SeColors.ink500),
+              style: SeType.body.copyWith(color: SeColors.ink500, height: 1.45),
             ),
             if (_deliveryAddress.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text('Delivering to: $_deliveryAddress',
+              Text(_deliveryAddress,
                   textAlign: TextAlign.center,
                   style: SeType.bodyS.copyWith(color: SeColors.ink400)),
             ],
             const SizedBox(height: 22),
             SeButton(
-              label: 'Place Order',
-              icon: SeIcons.check,
+              label: 'Place order',
               onPressed: () => Navigator.pop(ctx, true),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             SeButton(
-              label: 'Cancel',
+              label: 'Not yet',
               variant: SeButtonVariant.ghost,
               onPressed: () => Navigator.pop(ctx, false),
             ),
@@ -193,384 +488,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
     return res ?? false;
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(SeSpacing.gutter),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildPaymentCard(),
-                    const SizedBox(height: 14),
-                    _buildSecurityCard(),
-                    const SizedBox(height: 14),
-                    _buildPromoCard(),
-                    const SizedBox(height: 14),
-                    _buildTotalCard(),
-                    const SizedBox(height: 20),
-                    _buildPlaceOrderButton(),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() => Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, SeSpacing.gutter, 12),
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                    color: SeColors.surface50, shape: BoxShape.circle),
-                child: const Icon(SeIcons.arrowLeft,
-                    size: 20, color: SeColors.ink900),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text('Payment Method', style: SeType.h2),
-          ],
-        ),
-      );
-
-  Widget _buildPaymentCard() => SeCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            _coHead('Select Payment'),
-            Opacity(
-              opacity: 0.45,
-              child: IgnorePointer(
-                child: _paymentRow(
-                  index: 0,
-                  icon: _paypalLogo(),
-                  name: 'PayPal',
-                  sub: 'Pay securely via PayPal',
-                  iconBg: const Color(0xFFF0F4FF),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                        color: SeColors.ink400,
-                        borderRadius: SeRadius.all(SeRadius.xs)),
-                    child: Text('Soon',
-                        style: SeType.inter(9, FontWeight.w700,
-                            color: Colors.white)),
-                  ),
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => setState(() => _selectedPayment = 1),
-              behavior: HitTestBehavior.opaque,
-              child: _paymentRow(
-                index: 1,
-                icon: const Icon(SeIcons.cash,
-                    size: 24, color: SeColors.success),
-                name: 'Cash on Delivery',
-                sub: 'Pay when your order arrives',
-                iconBg: SeColors.successTint,
-                isLast: true,
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _paymentRow({
-    required int index,
-    required Widget icon,
-    required String name,
-    required String sub,
-    required Color iconBg,
-    bool isLast = false,
-    Widget? trailing,
-  }) {
-    final selected = _selectedPayment == index;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: selected ? SeColors.red50 : Colors.transparent,
-        border: isLast
-            ? null
-            : const Border(bottom: BorderSide(color: SeColors.ink100)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-                color: iconBg, borderRadius: SeRadius.all(SeRadius.sm)),
-            child: Center(child: icon),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(name, style: SeType.title),
-                    if (trailing != null) ...[
-                      const SizedBox(width: 8),
-                      trailing,
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 1),
-                Text(sub,
-                    style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-              ],
-            ),
-          ),
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: selected ? SeColors.red500 : SeColors.ink300,
-                width: 2,
-              ),
-            ),
-            child: selected
-                ? Center(
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: const BoxDecoration(
-                          color: SeColors.red500, shape: BoxShape.circle),
-                    ),
-                  )
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _paypalLogo() => RichText(
-        text: TextSpan(
-          style: SeType.jakarta(15, FontWeight.w800),
-          children: const [
-            TextSpan(text: 'Pay', style: TextStyle(color: Color(0xFF003087))),
-            TextSpan(text: 'Pal', style: TextStyle(color: Color(0xFF009CDE))),
-          ],
-        ),
-      );
-
-  Widget _buildSecurityCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Your payment is protected', style: SeType.title),
-            const SizedBox(height: 12),
-            _securityRow(SeIcons.shield, SeColors.success,
-                '256-bit SSL Encryption'),
-            const SizedBox(height: 10),
-            _securityRow(SeIcons.lock, SeColors.ocean500,
-                '100% Secure Payment'),
-            const SizedBox(height: 10),
-            _securityRow(SeIcons.checkCircle, SeColors.red500,
-                'ShipEast Buyer Protection'),
-          ],
-        ),
-      );
-
-  Widget _securityRow(IconData icon, Color color, String label) => Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 10),
-          Text(label, style: SeType.body.copyWith(color: SeColors.ink500)),
-        ],
-      );
-
-  Widget _buildPromoCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(SeIcons.tag, size: 16, color: SeColors.gold500),
-                const SizedBox(width: 8),
-                Text('Promo Code', style: SeType.title),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: _promoApplied
-                          ? SeColors.successTint
-                          : SeColors.surface50,
-                      borderRadius: SeRadius.inputRadius,
-                      border: Border.all(
-                          color: _promoApplied
-                              ? SeColors.success
-                              : SeColors.ink200,
-                          width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _promoController,
-                            enabled: !_promoApplied,
-                            textCapitalization:
-                                TextCapitalization.characters,
-                            style:
-                                SeType.body.copyWith(color: SeColors.ink900),
-                            cursorColor: SeColors.red500,
-                            decoration: InputDecoration(
-                              hintText: _promoApplied
-                                  ? 'Promo applied!'
-                                  : 'Enter promo code...',
-                              hintStyle: SeType.body.copyWith(
-                                  color: _promoApplied
-                                      ? SeColors.success
-                                      : SeColors.ink400),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              filled: false,
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 13),
-                            ),
-                          ),
-                        ),
-                        if (_promoApplied)
-                          const Icon(SeIcons.checkCircle,
-                              size: 20, color: SeColors.success),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: _promoApplied
-                      ? () => setState(() {
-                            _promoApplied = false;
-                            _discount = 0;
-                            _promoController.clear();
-                          })
-                      : _validatingPromo
-                          ? null
-                          : _applyPromo,
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      gradient: _promoApplied ? null : SeColors.emberGradient,
-                      color: _promoApplied ? SeColors.ink100 : null,
-                      borderRadius: SeRadius.all(SeRadius.sm),
-                    ),
-                    child: _validatingPromo
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2.2))
-                        : Text(_promoApplied ? 'Remove' : 'Apply',
-                            style: SeType.jakarta(14, FontWeight.w700,
-                                color: _promoApplied
-                                    ? SeColors.ink700
-                                    : Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildTotalCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            if (_discount > 0) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Original Total',
-                      style: SeType.body.copyWith(color: SeColors.ink400)),
-                  Text(Money.format(_total),
-                      style: SeType.tabular(SeType.body).copyWith(
-                          color: SeColors.ink400,
-                          decoration: TextDecoration.lineThrough)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(SeIcons.tag,
-                          size: 14, color: SeColors.success),
-                      const SizedBox(width: 5),
-                      Text('Promo Discount',
-                          style:
-                              SeType.body.copyWith(color: SeColors.success)),
-                    ],
-                  ),
-                  Text('- ${Money.format(_discount)}',
-                      style: SeType.tabular(SeType.body)
-                          .copyWith(color: SeColors.success)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: SeColors.ink100),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Total to Pay', style: SeType.h3),
-                Text(Money.format(_finalTotal),
-                    style: SeType.tabular(SeType.h3)
-                        .copyWith(color: SeColors.red600)),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildPlaceOrderButton() => SeButton(
-        label: 'Place Order · ${Money.format(_finalTotal)}',
-        icon: SeIcons.lock,
-        loading: _placingOrder,
-        onPressed: _placingOrder ? null : _placeOrder,
-      );
 
   Future<void> _placeOrder() async {
     if (_placingOrder) return;
@@ -668,12 +585,4 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
   }
-
-  Widget _coHead(String title) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Text(title, style: SeType.title),
-      );
 }

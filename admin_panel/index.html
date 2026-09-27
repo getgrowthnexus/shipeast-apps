@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta name="theme-color" content="#C8102E"/>
+<meta name="theme-color" content="#E30D3B"/>
 <!-- Canonical host. Firebase serves this panel on two permanent default domains
      (…web.app / …firebaseapp.com) that cannot be removed. Bounce ONLY those two
      exact hosts to the branded domain, preserving path/query/hash. Matched by
@@ -37,9 +37,21 @@
 <link rel="manifest" href="site.webmanifest"/>
 <meta name="apple-mobile-web-app-title" content="ShipEast Admin"/>
 <link rel="preload" href="assets/brand/shipeast-logo.png" as="image"/>
-<link rel="preload" href="assets/fonts/jakarta-latin.woff2" as="font" type="font/woff2" crossorigin/>
-<link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin/>
-<link rel="stylesheet" href="styles.css"/>
+<!-- One face, one preload. The Inter Tight pair that used to sit beside this
+     is gone: the panel is set entirely in Figtree now, so the second 44 KB
+     was blocking first paint for a font nothing asks for. -->
+<link rel="preload" href="assets/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin/>
+<!-- Stylesheet, split by domain. The order below IS the cascade order: a media
+     query adds no specificity, so responsive.css must load last, and everything
+     resolves against the custom properties in tokens.css, so that loads first.
+     Firebase Hosting serves HTTP/2, so five requests multiplex on one
+     connection — the split costs nothing at runtime and lets each file be
+     owned and reviewed on its own. -->
+<link rel="stylesheet" href="css/tokens.css"/>
+<link rel="stylesheet" href="css/shell.css"/>
+<link rel="stylesheet" href="css/components.css"/>
+<link rel="stylesheet" href="css/pages.css"/>
+<link rel="stylesheet" href="css/responsive.css"/>
 </head>
 <body>
 
@@ -77,8 +89,9 @@
 <symbol id="i-moon" viewBox="0 0 256 256"><path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z"/></symbol>
 <symbol id="i-sun" viewBox="0 0 256 256"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></symbol>
 <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+<symbol id="i-caret-down" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+<symbol id="i-funnel" viewBox="0 0 256 256"><path d="M230.6,49.53A15.81,15.81,0,0,0,216,40H40A16,16,0,0,0,28.19,66.76l.08.09L96,139.17V216a16,16,0,0,0,24.87,13.32l32-21.34A16,16,0,0,0,160,194.66V139.17l67.74-72.32.08-.09A15.8,15.8,0,0,0,230.6,49.53ZM146.18,130.58A8,8,0,0,0,144,136v58.66L112,216V136a8,8,0,0,0-2.16-5.47L40,56H216Z"/></symbol>
 <symbol id="i-arrow-right" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
-<symbol id="i-envelope" viewBox="0 0 256 256"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48Zm-96,85.15L52.57,64H203.43ZM98.71,128,40,181.81V74.19Zm11.84,10.85,12,11.05a8,8,0,0,0,10.82,0l12-11.05,58,53.15H52.57ZM157.29,128,216,74.18V181.82Z"/></symbol>
 <symbol id="i-lock" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Zm-68-56a12,12,0,1,1-12-12A12,12,0,0,1,140,152Z"/></symbol>
 <!-- Eye with a strike-through, rather than Phosphor's eye-slash: the slash is
      drawn as its own filled bar so the glyph stays legible at the 18px the
@@ -96,46 +109,80 @@
 <symbol id="i-users" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"/></symbol>
 <symbol id="i-receipt" viewBox="0 0 256 256"><path d="M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28.42,14.21a8,8,0,0,1-7.16,0L128,200.94,99.58,215.15a8,8,0,0,1-7.16,0L64,200.94,35.58,215.15A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V195.06l20.42-10.22a8,8,0,0,1,7.16,0L96,199.06l28.42-14.22a8,8,0,0,1,7.16,0L160,199.06l28.42-14.22a8,8,0,0,1,7.16,0L216,195.06Z"/></symbol>
 <symbol id="i-bolt" viewBox="0 0 256 256"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"/></symbol>
+<!-- A phone number and a street address are the two facts a merchant card
+     carries that a column header used to name. On a card there is no header
+     row, so the glyph IS the label — which is the only reason these two are
+     here rather than a pair of uppercase captions eating a line each. -->
+<symbol id="i-phone" viewBox="0 0 256 256"><path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"/></symbol>
+<symbol id="i-map-pin" viewBox="0 0 256 256"><path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"/></symbol>
 </svg>
 
 <!-- ══ TOASTS ══ -->
 <div id="toast-host" aria-live="polite" aria-atomic="false"></div>
 
-<!-- ══ LOGIN ══ -->
+<!-- ══ LOGIN ══
+     TWO PANELS, not a card floating on a field of colour. The old screen was
+     a 444px white box centred in a full viewport of --red-900 — a maroon that
+     appears nowhere else in the product, so the first thing anyone saw
+     announced a different colour from the rail they meet three seconds later.
+     This is the DASHBOARD'S OWN COMPOSITION: brand red down the left, the
+     content surface on the right, everything in it left-aligned. Nothing here
+     is a login-only shape.
+
+     #login-page is shown with style.display='flex' from app.js, so the layout
+     has to be flex — these two panels are its flex children. -->
 <div id="login-page">
-  <div class="lc">
-    <!-- The real brand lockup. It is single-colour #FF0043 drawn for white
-         stock, which is why the card is authored white in both themes (see
-         styles.css §LOGIN) instead of following --card into the dark theme. -->
-    <img class="lc-mark" src="assets/brand/shipeast-logo.png" width="700" height="328"
-         alt="ShipEast Couriers &amp; Bearer Service"/>
-    <div class="lc-eyebrow"><span>Admin Portal</span></div>
-    <h1 class="lc-title">Welcome back</h1>
-    <p class="lc-lede">Sign in to manage orders, drivers and merchants.</p>
-    <div class="lf">
-      <label for="l-email">Email Address</label>
-      <div class="lf-box">
-        <svg class="ic lf-ic" aria-hidden="true"><use href="#i-envelope"/></svg>
-        <input type="email" id="l-email" autocomplete="username" spellcheck="false" placeholder="you@shipeastja.com"/>
+  <aside class="lb">
+    <!-- Three zones on space-between, so the mass is distributed top-to-bottom
+         instead of pooling in the centre and leaving the upper field bare: a
+         wordmark eyebrow up top, the lockup + line centred, a quiet footer at
+         the base. All three ride the same rail ink as the sidebar. -->
+    <div class="lb-eyebrow">ShipEast Admin</div>
+    <!-- The real lockup, and it can finally sit ON the brand. The artwork is
+         single-colour #FF0043 on transparency, so `brightness(0) invert(1)`
+         knocks it out to white without needing a second asset — the same
+         white-on-red the sidebar mark is. It is also SMALLER relative to its
+         panel than it was on the card: it now reads as placed rather than as
+         the page's subject. -->
+    <div class="lb-body">
+      <img class="lb-mark" src="assets/brand/shipeast-logo.png" width="700" height="328"
+           alt="ShipEast Couriers &amp; Bearer Service"/>
+      <p class="lb-copy">Orders, drivers, merchants and analytics &mdash; the whole operation on one screen.</p>
+    </div>
+    <div class="lb-foot">admin.shipeastja.com</div>
+  </aside>
+  <main class="ls">
+    <div class="lc">
+      <div class="lc-eyebrow">Admin Portal</div>
+      <h1 class="lc-title">Welcome back</h1>
+      <p class="lc-lede">Sign in to continue.</p>
+      <!-- The leading envelope/lock glyphs are gone. Nothing else in the panel
+           puts an icon inside a field, so they were the detail that made these
+           two inputs read as belonging to a different product; the reveal
+           toggle stays because it does something. -->
+      <div class="lf">
+        <label for="l-email">Email Address</label>
+        <div class="lf-box">
+          <input type="email" id="l-email" autocomplete="username" spellcheck="false" placeholder="you@shipeastja.com"/>
+        </div>
+      </div>
+      <div class="lf">
+        <label for="l-pass">Password</label>
+        <div class="lf-box">
+          <input type="password" id="l-pass" autocomplete="current-password" placeholder="••••••••"/>
+          <button type="button" class="lf-eye" id="l-eye" aria-label="Show password" aria-pressed="false" tabindex="0">
+            <svg class="ic" aria-hidden="true"><use href="#i-view"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="l-err" role="alert"></div>
+      <button class="btn btn-primary lc-cta" id="login-btn">Sign In<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+      <div class="l-foot">
+        <svg class="ic ic-xs" aria-hidden="true"><use href="#i-lock"/></svg>
+        <span>ShipEast Couriers &amp; Bearer Services Ltd · Jamaica</span>
       </div>
     </div>
-    <div class="lf">
-      <label for="l-pass">Password</label>
-      <div class="lf-box">
-        <svg class="ic lf-ic" aria-hidden="true"><use href="#i-lock"/></svg>
-        <input type="password" id="l-pass" autocomplete="current-password" placeholder="••••••••"/>
-        <button type="button" class="lf-eye" id="l-eye" aria-label="Show password" aria-pressed="false" tabindex="0">
-          <svg class="ic" aria-hidden="true"><use href="#i-view"/></svg>
-        </button>
-      </div>
-    </div>
-    <div id="l-err" role="alert"></div>
-    <button class="btn btn-primary lc-cta" id="login-btn">Sign In<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
-    <div class="l-foot">
-      <svg class="ic ic-xs" aria-hidden="true"><use href="#i-lock"/></svg>
-      <span>ShipEast Couriers &amp; Bearer Services Ltd · Jamaica</span>
-    </div>
-  </div>
+  </main>
 </div>
 
 <!-- ══ APP ══ -->
@@ -144,8 +191,8 @@
     <div class="sb-logo">
       <div class="sb-mark" aria-hidden="true">SE</div>
       <div class="sb-word">
-        <div class="slt">Ship<span>East</span></div>
-        <div class="sls">Couriers &amp; Bearer Service</div>
+        <div class="slt">ShipEast</div>
+        <div class="sls">Admin Portal</div>
       </div>
     </div>
     <nav class="sb-nav" aria-label="Main">
@@ -281,18 +328,18 @@
             <div class="sc-sub">Placed today</div>
             <div id="spark-orders"></div>
           </div>
-          <div class="sc ac-gold">
+          <div class="sc ac-warning">
             <div class="sc-top">
               <div><div class="sc-lbl">Revenue Today</div><div class="sc-val sm num" id="stat-revenue">J$0</div></div>
-              <div class="sc-chip c-gold"><svg class="ic" aria-hidden="true"><use href="#i-revenue"/></svg></div>
+              <div class="sc-chip c-warning"><svg class="ic" aria-hidden="true"><use href="#i-revenue"/></svg></div>
             </div>
             <div class="sc-sub">From Completed Orders</div>
             <div id="spark-revenue"></div>
           </div>
-          <div class="sc ac-ocean">
+          <div class="sc ac-info">
             <div class="sc-top">
               <div><div class="sc-lbl">Pending Orders</div><div class="sc-val num" id="stat-pending">0</div></div>
-              <div class="sc-chip c-ocean"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></div>
+              <div class="sc-chip c-info"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></div>
             </div>
             <div class="sc-sub">Awaiting a driver</div>
           </div>
@@ -334,8 +381,15 @@
         </div>
         <div class="card">
           <div class="card-title">Recent Orders</div>
+          <!-- Every table declares its columns. See the .tc-* vocabulary in
+               components.css: the class names a ROLE, the role fixes the width,
+               and the width is the same on every page that shows that role. -->
           <div class="tbl-wrap"><table>
-            <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Destination</th><th>Driver</th><th class="right">Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <colgroup>
+              <col class="tc-ref-type"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-name"/>
+              <col class="tc-money"/><col class="tc-badge"/><col class="tc-act1"/>
+            </colgroup>
+            <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Destination</th><th>Driver</th><th class="right">Amount</th><th>Status</th><th>View</th></tr></thead>
             <tbody id="dash-tbody"></tbody>
           </table></div>
         </div>
@@ -344,7 +398,12 @@
       <!-- ── ORDERS ── -->
       <section class="page" id="page-orders">
         <div class="pg-hdr"><h1 class="pg-title">Orders</h1></div>
-        <div class="tabs" id="orders-tabs" role="tablist"></div>
+        <div class="filterbar">
+          <div class="tabs" id="orders-tabs" role="tablist"></div>
+          <button type="button" class="fbtn" data-fbtn aria-expanded="false" aria-label="Filter orders">
+            <svg class="ic" aria-hidden="true"><use href="#i-funnel"/></svg><span>Filter</span>
+          </button>
+        </div>
         <div class="srch">
           <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
           <input id="orders-search" placeholder="Search order ID, customer, merchant…" aria-label="Search orders"/>
@@ -382,8 +441,12 @@
           </select>
           <button class="btn btn-ghost btn-sm" id="of-clear" type="button" hidden>Clear filters</button>
         </div>
-        <div class="card"><div class="tbl-wrap"><table>
-          <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Driver</th><th class="right">Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table class="t-wide">
+          <colgroup>
+            <col class="tc-ref-type"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-flex"/>
+            <col class="tc-money"/><col class="tc-chip"/><col class="tc-badge"/><col class="tc-date"/><col class="tc-act1"/>
+          </colgroup>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Driver</th><th class="right">Total</th><th>Payment</th><th>Status</th><th>Time</th><th>View</th></tr></thead>
           <tbody id="orders-tbody"></tbody>
         </table></div></div>
       </section>
@@ -427,10 +490,30 @@
         </div>
         <p class="pg-note">Turn a merchant off to temporarily remove it from the app.</p>
         <div class="sg g3" id="merchants-stats"></div>
-        <div class="card"><div class="tbl-wrap"><table>
-          <thead><tr><th>Merchant</th><th>Category</th><th>Phone</th><th>Address</th><th class="right">Orders Today</th><th>Rating</th><th>Status</th><th>Open</th><th>Actions</th></tr></thead>
-          <tbody id="merchants-tbody"></tbody>
-        </table></div></div>
+        <!-- The grid used to begin the moment the three summary boxes ended, so
+             a page that is really two things — a summary, then a directory —
+             read as one long fall of tiles. This band names the second thing and
+             puts real air above it. -->
+        <div class="sec-hdr">
+          <div class="sec-hdr-txt">
+            <h2 class="sec-title">All Merchants</h2>
+            <p class="sec-sub">Every store customers can order from. A card's switch takes it off the app immediately.</p>
+          </div>
+          <span class="sec-count num" id="merchants-count"></span>
+        </div>
+        <!-- A GRID OF CARDS, NOT A TABLE.
+             A merchant is the one record in this panel that is mostly not
+             text: it has a cover photo, a category, a rating and a switch
+             that changes what customers see right now. Nine columns turned
+             all of that into a row where the photo was a 42px chip and the
+             address had to be clamped to two lines to stop it pushing the
+             actions off-screen.
+
+             There is no .card wrapper here — each merchant IS a card, and a
+             grid of cards inside a card is a box in a box. The grid also
+             carries its own loading and empty states (renderMerchants), so
+             nothing depends on the table plumbing any more. -->
+        <div class="mgrid" id="merchants-grid"></div>
       </section>
 
       <!-- ── CUSTOMERS (P5-05) ── -->
@@ -443,7 +526,11 @@
         </div>
         <div id="customers-cap"></div>
         <div class="card"><div class="tbl-wrap"><table>
-          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="right">Orders</th><th>Last order</th><th class="right">Lifetime Value</th><th>Tags</th><th>Status</th><th>Actions</th></tr></thead>
+          <colgroup>
+            <col class="tc-flex"/><col class="tc-flex"/><col class="tc-phone"/><col class="tc-num"/>
+            <col class="tc-date"/><col class="tc-money"/><col class="tc-flex"/><col class="tc-badge"/><col class="tc-act1"/>
+          </colgroup>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="right">Orders</th><th>Last order</th><th class="right">Lifetime Value</th><th>Tags</th><th>Status</th><th>View</th></tr></thead>
           <tbody id="customers-tbody"></tbody>
         </table></div></div>
       </section>
@@ -452,13 +539,25 @@
       <section class="page" id="page-overseas">
         <div class="pg-hdr"><h1 class="pg-title">Shop &amp; Deliver Requests</h1></div>
         <div class="sg g3" id="overseas-stats"></div>
-        <div class="tabs" id="overseas-tabs" role="tablist"></div>
+        <div class="filterbar">
+          <div class="tabs" id="overseas-tabs" role="tablist"></div>
+          <button type="button" class="fbtn" data-fbtn aria-expanded="false" aria-label="Filter requests">
+            <svg class="ic" aria-hidden="true"><use href="#i-funnel"/></svg><span>Filter</span>
+          </button>
+        </div>
         <div class="srch">
           <svg class="ic ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
           <input id="overseas-search" placeholder="Search customer, recipient, parish, shopping list…" aria-label="Search shop-and-deliver requests"/>
         </div>
-        <div class="card"><div class="tbl-wrap"><table>
-          <thead><tr><th>Ref</th><th>Customer</th><th>Deliver to</th><th>Parish</th><th>Shopping list</th><th class="right">Budget</th><th>Status</th><th>Received</th><th>Actions</th></tr></thead>
+        <div class="card"><div class="tbl-wrap"><table class="t-wide">
+          <!-- The shopping list is the only .tc-flex here on purpose: it is the
+               one column whose content has no natural length, so it takes
+               whatever the named columns either side of it do not need. -->
+          <colgroup>
+            <col class="tc-ref"/><col class="tc-name"/><col class="tc-name"/><col class="tc-chip"/>
+            <col class="tc-flex"/><col class="tc-money"/><col class="tc-badge"/><col class="tc-date"/><col class="tc-act1"/>
+          </colgroup>
+          <thead><tr><th>Ref</th><th>Customer</th><th>Deliver to</th><th>Parish</th><th>Shopping list</th><th class="right">Budget</th><th>Status</th><th>Received</th><th>View</th></tr></thead>
           <tbody id="overseas-tbody"></tbody>
         </table></div></div>
       </section>
@@ -578,7 +677,7 @@
             <div class="card">
               <div class="card-title">Create Promo Code</div>
               <div class="mg">
-                <div class="fr"><label for="pc-code">Code</label><input id="pc-code" placeholder="SUMMER25" style="text-transform:uppercase"/></div>
+                <div class="fr"><label for="pc-code">Code</label><input id="pc-code" placeholder="SUMMER25" class="pc-code-input"/></div>
                 <div class="fr"><label for="pc-type">Type</label>
                   <select id="pc-type"><option value="percent">Percentage (%)</option><option value="fixed">Fixed Amount (J$)</option></select>
                 </div>
@@ -651,7 +750,11 @@
             </div>
             <div class="card">
               <div class="card-title">Active Promo Codes</div>
-              <div class="tbl-wrap"><table>
+              <div class="tbl-wrap"><table class="t-narrow">
+                <colgroup>
+                  <col class="tc-ref"/><col class="tc-flex"/><col class="tc-usage"/><col class="tc-num"/>
+                  <col class="tc-date"/><col class="tc-badge"/><col class="tc-acts"/>
+                </colgroup>
                 <thead><tr><th>Code</th><th>Discount</th><th class="right">Used</th><th class="right">Max</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody id="promos-tbody"></tbody>
               </table></div>
@@ -701,10 +804,11 @@
           </div>
           <div class="card">
             <div class="card-title">Top Merchants</div>
-            <table>
+            <div class="tbl-wrap"><table class="t-narrow">
+              <colgroup><col class="tc-flex"/><col class="tc-num"/><col class="tc-money"/></colgroup>
               <thead><tr><th>Merchant</th><th class="right">Orders</th><th class="right">Revenue</th></tr></thead>
               <tbody id="top-merch"></tbody>
-            </table>
+            </table></div>
           </div>
           <div class="card">
             <!-- "Payment Split" read as a typo to the people using this page.
@@ -724,7 +828,7 @@
             <div class="card-title">Package Delivery
               <span class="card-note">Weight bands, in J$</span>
             </div>
-            <p class="empty-copy" style="max-width:none;margin-bottom:12px">
+            <p class="prose">
               Until this table is saved, the Packages category in the customer app
               declines to quote and takes no requests. That is deliberate — a price
               nobody chose is worse than an unavailable feature.
@@ -735,7 +839,7 @@
               <textarea id="pr-bands" rows="6" spellcheck="false"
                 placeholder="2 = 600&#10;5 = 900&#10;10 = 1400&#10;+ = 2200"></textarea>
             </div>
-            <div id="pr-preview" class="empty-copy" style="max-width:none"></div>
+            <div id="pr-preview" class="prose"></div>
             <div class="mg">
               <div class="fr">
                 <label for="pr-overage">Per extra kg above the last band</label>
@@ -768,7 +872,7 @@
             <div class="card-title">
               <span class="dz-label"><svg class="ic" aria-hidden="true"><use href="#i-warning"/></svg>Danger Zone</span>
             </div>
-            <p class="empty-copy" style="max-width:none;margin-bottom:14px">
+            <p class="prose">
               <b>Erase all data</b> permanently deletes every customer, driver, order,
               saved address, notification and overseas enquiry — across all three apps.
               Restaurants, menus, promo codes and pricing settings are kept.
@@ -826,12 +930,12 @@
       This permanently deletes every customer, driver, order, saved address,
       notification and overseas enquiry. Restaurants, menus, promo codes and
       pricing settings are kept. <b>This cannot be undone.</b>
-      <div class="fr" style="margin-top:14px;text-align:left">
+      <div class="fr fr-standalone">
         <label for="wipe-phrase">Type <code>ERASE ALL DATA</code> to enable the button.</label>
         <input id="wipe-phrase" type="text" autocomplete="off" autocapitalize="characters"
           spellcheck="false" placeholder="ERASE ALL DATA"/>
       </div>
-      <div id="wipe-progress" class="empty-copy" style="max-width:none;margin-top:10px"></div>
+      <div id="wipe-progress" class="prose"></div>
     </div>
     <div class="m-actions">
       <button class="btn btn-outline" id="wipe-cancel" data-close="modal-wipe">Cancel</button>
@@ -895,11 +999,11 @@
       </div>
       <div class="fr" id="drv-reset-row" hidden>
         <label>Password</label>
-        <div class="fr-hint" style="margin-top:0">
+        <div class="fr-hint fr-hint-tight">
           A password can only be changed by the person who owns it. Send a reset
           link and the driver sets a new one from their own inbox.
         </div>
-        <button type="button" class="btn btn-outline btn-sm" data-action="reset-driver-pass" style="margin-top:10px">
+        <button type="button" class="btn btn-outline btn-sm drv-reset-btn" data-action="reset-driver-pass">
           <svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Send password reset link
         </button>
       </div>

@@ -1,0 +1,710 @@
+/* ═══════════════════════════════════════════════════════════════
+   ShipEast Design System (SEDS) — Admin Panel
+   tokens.css
+
+   Tokens, fonts, reset & type scale. Loaded first — everything below
+   resolves against these custom properties.
+
+   Values come from DESIGN-SPEC.md §2 and are measured, not chosen by eye.
+   Every contrast figure in the comments is computed; the verifier lives in
+   DESIGN-SPEC.md §9. Do not adjust a value here without re-running it.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────── FONT (self-hosted, variable) ───────────────
+   ONE FACE. FIGTREE, 300–900, and nothing else but the mono fallback.
+
+   This panel has now been through three pairings — Plus Jakarta + Inter,
+   then Figtree + Inter Tight — and the second one failed for a subtler
+   reason than the first. Jakarta was simply the wrong tool: it stops at 700,
+   so the panel physically could not shout. Figtree + Inter Tight had no such
+   fault; each face was right for its job. What it had was a SEAM. A page
+   title in Figtree over a table in Inter Tight is two different ideas of
+   what a letter is — one geometric and round, one grotesque and narrow —
+   and the eye reads that as two products glued together, which is exactly
+   the "nothing feels connected" complaint.
+
+   Figtree alone carries both jobs. It is a warm geometric sans whose heavy
+   weights hold their counters at 38px (what makes a big number look designed
+   rather than merely bold) and whose 400 is quiet enough for a nine-column
+   roster. The hierarchy that used to be carried by SWAPPING FACES is now
+   carried by weight, size and tracking — see §5, which is the whole system.
+
+   The cost is honest and small: at 400 Figtree sets about 4% wider than
+   Inter Tight, so a dense table cell gains a few pixels. At 600 and 700 the
+   two are within a hair of each other, and every heading, label and button
+   in the panel is 600 or above. Against that, one face means one voice, one
+   preload, and 134 KB of woff2 deleted from the bundle.
+
+   Do not add a second family. If something needs to feel different, change
+   its WEIGHT.                                                              */
+@font-face{font-family:'Figtree';font-style:normal;font-weight:300 900;font-display:swap;
+  src:url('../assets/fonts/figtree-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:300 900;font-display:swap;
+  src:url('../assets/fonts/figtree-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+
+:root{
+
+/* ═══ 1. RED RAMP ═══════════════════════════════════════════════
+   Anchored to the real brand artwork, not to a value someone liked.
+   --red-500 is the app-icon red (hsl 349,94%,57%) to within one HSL point;
+   the logo lockup is hsl(344,100%,50%).
+
+   THE TWO-TIER RULE. Neither true brand red carries white text at AA —
+   #FF0043 is 3.94:1 and #F82C53 is 3.83:1. Darkening until it passes is
+   what lost the brand last time (the panel shipped #C8102E, fifteen
+   lightness points adrift). So the identity red and the action red are
+   two different steps of one ramp:
+
+     --red-500  IDENTITY. Large fills, icon plates, accent rails, focus
+                rings, chart fills, the sidebar mark. Never small white text.
+     --red-600  ACTION. Primary buttons, links, active states — anything
+                with white on it. 4.79:1.
+     --red-700  Red TEXT sitting on a red tint. 5.84:1 on --red-50.       */
+  --red-50:#FFE8EE;    /* deepened — see §4, the wash has to be VISIBLE */
+  --red-100:#FFD8E1;
+  --red-200:#FEC3CF;
+  --red-300:#FC92A6;
+  --red-400:#FA5775;   /* dark-theme brand text — 5.37:1 on --card */
+  --red-500:#F72B54;   /* identity */
+  --red-600:#E30D3B;   /* action — white 4.79:1 */
+  --red-700:#B60C31;   /* text on tint */
+  --red-800:#890B28;
+  /* The ramp's floor. Nothing reads it since the login stopped painting its
+     canvas in it — that maroon was the one red in the file with no counterpart
+     anywhere in the app, which is exactly why the pre-auth screen looked like
+     a different product. Kept as a ramp step, not resurrected as a surface. */
+  --red-900:#5C0A1F;
+
+/* ═══ 2. NEUTRALS ═══════════════════════════════════════════════
+   Rose-tinted slate, and this pass tints them for real.
+
+   THE DIAGNOSIS THIS RAMP ANSWERS. The dark theme was judged right and the
+   light theme wrong, and the difference was never the layout — it was
+   chroma. On dark, EVERY surface carries the brand hue (#221B1F, #140F12,
+   #2D2529 are all plum) so red sits inside a coloured world. On light,
+   --surface was #FFFFFF and the ground was 1.05× white, so red appeared in
+   maybe 2% of the pixels and the honest reading of the screen was "a white
+   app with red bits". Hence: white is the primary colour.
+
+   So the light neutrals are now genuinely pink. Not pastel — the hue is the
+   brand's, the saturation is 3–6%, and the LUMINANCE is held where the
+   contrast maths already passed. You read it as "warm", not as "coloured",
+   and the red finally belongs to the same family as its background.       */
+  /* Pure white. It survives as --surface-raised (a focused field, the phone
+     row-cards), the sidebar mark, and the selected nav pill — i.e. things
+     lifted OFF a surface. It is no longer a login-only value: the login has
+     no white card. */
+  --n-0:#FFFFFF;
+  /* CARD surface. A blush white rather than #FFFFFF. This is the single
+     highest-leverage value in the file: it is the largest painted area in
+     the panel, so 9 points of red over blue here is what stops the whole
+     screen reading as white. --n-800 is 13.21:1 on it, --n-500 is 4.97:1. */
+  --n-25:#FFF6F8;
+  /* The PAGE ground. Same luminance as the flat-grey ground it replaces
+     (0.862 vs 0.867 — the ink maths is untouched at 12.19:1 / 4.58:1) but
+     twelve points of red over green instead of six. Deeper is not available:
+     --ink-3 hits the 4.5:1 floor at about L=0.846. */
+  --n-50:#F8ECF0;
+  /* A tint applied ON a card — table headers, form fields, tracks, segmented
+     rails, grouped fieldsets. Still lighter than the ground, because these are
+     two different jobs and not one ramp, but this pass DEEPENS it: at #FDF2F6
+     it was 1.03× the card, so a "banded" table header was the same colour as
+     the card it sat on and every field read as a white hole. At #FBEFF4 the
+     step is roughly three times larger and the tone is unmistakably rose,
+     while the ink maths still clears the gate (12.52:1 / 4.71:1). Deeper is
+     not available: --n-800 hits the 12.5:1 floor at about L=0.885. */
+  --n-100:#FBEFF4;
+  --n-200:#F0E4E9;
+  --n-300:#D9CDD3;
+  --n-400:#9C8B93;   /* disabled            3.22:1 */
+  --n-500:#79676F;   /* tertiary ink        5.27:1 card · 4.82:1 band */
+  --n-600:#5C4D54;   /* secondary ink       7.94:1 card · 7.22:1 band */
+  --n-700:#463940;
+  --n-800:#33292E;   /* primary ink        14.02:1 card · 12.83:1 band */
+  --n-900:#1F191C;
+  --n-950:#140F12;
+
+/* ═══ 3. SEMANTICS ══════════════════════════════════════════════
+   --danger is deliberately a deep desaturated maroon, 19 lightness points
+   below --red-500. In a panel whose brand IS red, a destructive action
+   cannot also be brand red — the shipped #D92D20 sat only ~17° away, so
+   "Erase all data" and "Save" were the same colour. Separation is by
+   lightness, not hue: this reads grave, not primary.
+
+   WARNING NEVER TAKES WHITE TEXT. No usable amber reaches 4.5:1 against
+   white. Use tint + --warning-ink, or a solid fill with --warning-on.   */
+  --success:#1C8252;      --success-tint:#E4F6EC;   --success-ink:#196B45;
+  --warning:#D37A0D;      --warning-tint:#FCEFDC;   --warning-ink:#AD640B;
+  --warning-on:#3D2A05;   /* dark ink for a solid --warning fill — 4.28:1 */
+  --danger:#A51D2F;       --danger-tint:#FCE6E9;    --danger-ink:#821725;
+  --info:#1F6BC1;         --info-tint:#E6F0FB;      --info-ink:#1A579E;
+  --star:#E8A317;         /* ratings only — the one surviving gold */
+
+  /* ── SOFT TONES ────────────────────────────────────────────────
+     A second, much quieter step of each semantic hue. The *-tint values
+     above are sized for a BADGE — a 20px pill where the colour has to carry
+     across a table at a glance. Painting a whole stat card or a whole helper
+     panel in one turns the screen into a set of highlighter pens.
+
+     These are the same hues at roughly a third of the saturation, cut so
+     that primary ink still clears 12.5:1 and tertiary ink 4.7:1 on every one
+     of them — i.e. a soft tone is a legitimate SURFACE, not a decoration you
+     have to remember not to put text on. That is what lets the panel use the
+     whole palette without going loud: colour arrives as large calm fields
+     and stays out of the type.                                            */
+  --brand-soft:#FFF0F4;   --success-soft:#EFF8F2;   --warning-soft:#FDF4E7;
+  --info-soft:#EFF4FC;    --danger-soft:#FDEFF1;
+
+  /* Edge definition for a soft-toned surface. Translucent rather than a
+     literal, so one ring works on the card, on the ground and inside a modal
+     without a per-context value — and so the hue is FELT at the boundary
+     without a hard line being drawn. */
+  --ring-brand:0 0 0 1px rgba(227,13,59,.14);
+  --ring-success:0 0 0 1px rgba(28,130,82,.18);
+  --ring-warning:0 0 0 1px rgba(211,122,13,.20);
+  --ring-info:0 0 0 1px rgba(31,107,193,.18);
+  --ring-danger:0 0 0 1px rgba(165,29,47,.18);
+
+/* ═══ 4. THEMED ROLES (light) ═══════════════════════════════════ */
+  --surface:var(--n-25);         /* cards, sheets, raised pills */
+  --surface-raised:var(--n-0);   /* something lifted OFF a card */
+  --ground:var(--n-50);          /* page background */
+  --sunken:var(--n-100);         /* bands, tracks, table headers */
+  /* FORM FIELDS. Split out of --surface-raised this pass. A white input on a
+     blush card is the single most repeated white rectangle in the panel —
+     eight of them in the driver modal alone — and collectively they were most
+     of what still read as "a white app". A field is a well you type INTO, so
+     it takes the sunken tone and lifts to --surface-raised on focus; the
+     movement is now a real change of surface rather than a border recolour. */
+  --field:var(--n-100);
+  /* Alternating table rows. Translucent, not a literal: rows sit on --surface
+     in a card, on --surface-raised in the mobile row-cards, and inside a
+     modal — one rgba composites correctly on all three, where a hex would
+     have to be re-declared per context. Kept below 4% so the stripe orders
+     the eye without turning the table into ruled paper. */
+  --zebra:rgba(137,11,40,.035);
+  --line:var(--n-200);
+  --line-strong:var(--n-300);
+  --ink:var(--n-800);
+  --ink-2:var(--n-600);
+  --ink-3:var(--n-500);
+  --ink-4:var(--n-400);
+  --accent:var(--red-600);       /* action red, themed */
+  --accent-quiet:var(--red-500); /* identity red, themed */
+  --accent-ink:var(--red-700);   /* red text on a red tint, themed */
+  /* The wash was --red-50 at #FFF0F3 — 1.02× white, so on a white card it was
+     invisible, and every place that leans on it (the active nav pill, the
+     table row hover, the stat chips, the brand badge) was spending brand red
+     and getting grey. At #FFE8EE it is a tint you can actually see, and
+     --accent-ink still reads 5.84:1 on it. */
+  --accent-wash:var(--red-50);
+
+/* ── THE RAIL ────────────────────────────────────────────────────
+   Brand red, in both themes, and it is the biggest single move in this
+   pass. A white sidebar next to white cards on a near-white page is why
+   the answer to "what colour is this product?" was "white". The rail is
+   ~250px × full height of permanently-visible pixels: painting it in the
+   brand is what makes red the primary colour rather than an accent that
+   turns up on buttons.
+
+   ONE step, not three. The previous pass built the rail as a lit object —
+   a bloom of --shell-hi from the top-left, --shell-lo pooling into the
+   bottom-right, and a light-to-dark wash over both. It read as dimensional
+   and it also read as DIRTY: the foot of the column went to near-black, so
+   the bottom third of the nav sat on a colour that was no longer the brand,
+   and the rail disagreed with itself from top to bottom.
+
+   So the rail is now a single flat brand red, and the value chosen is the
+   old bloom's — the BRIGHTEST point the gradient ever reached. That matters
+   for more than looks: every label was already worst-cased against that
+   value, so flattening to it changes no contrast figure anywhere on the
+   column while removing the dark end entirely. Depth is carried by the
+   three inset hairlines on .sidebar and by the cast shadow, which are edges
+   rather than fills and cost nothing in legibility.                       */
+  --shell:#B00D33;       /* rail — white 7.12:1 */
+  /* The lockup's accent word. Authored once for BOTH themes on purpose: the
+     --red-100/200 steps are re-cut dark further down, so anything on the rail
+     that used them would invert and disappear. 4.94:1 on the light rail,
+     7.63:1 on the dark one. */
+  --shell-mark:#FFC9D6;
+  /* ── Rail ink: a WARM white, not a cold one ──────────────────────────
+     The rail's text was pure #FFF at three opacities. On a saturated red
+     ground that is the harshest combination available: the two colours are
+     at opposite ends of the spectrum with nothing shared between them, so
+     the edge of every stem shimmers (chromatic aberration — the eye cannot
+     focus red and white in the same plane). It reads as glare, and "glare"
+     is what "harsh on the eyes" describes.
+
+     The fix is to give the white a trace of the rail's own hue. #FFF4F7 is
+     white with about 4% of the brand in it — nobody would call it pink, but
+     the red/white edge stops vibrating because the two colours now agree
+     about where they are on the wheel.
+
+     Contrast is NOT reduced to achieve this. Softening a label by dimming
+     it is the lazy version and it costs legibility; every figure below is
+     at or above what the pure-white stack measured — light 5.52 → 5.56 and
+     4.56 → 4.79, dark 8.04 → 8.14 and 5.40 → 5.84. The softening
+     is done by hue here and by WEIGHT in shell.css, where the nav labels
+     drop 600 → 500. See --tr-rail for the third piece.                    */
+  --shell-ink-hi:#FFF4F7;   /* lockup, hover, drawer title — 6.62:1 on the rail */
+  /* Resting nav label. Not the full tone: at 100% every item shouts as
+     loudly as the selected one. .90 is 5.56:1 (was 5.52 at pure white .86). */
+  --shell-ink:rgba(255,244,247,.90);
+  /* Section headings and the lockup sub-label. These are 11px uppercase, so
+     "non-essential" is not a licence to drop them under AA — .82 is 4.79:1,
+     a real step up from the 4.56 the old value scraped by on, and still a
+     clear step below --shell-ink at reading distance. */
+  --shell-ink-dim:rgba(255,244,247,.82);
+  --shell-line:rgba(255,255,255,.14);
+  --shell-hover:rgba(255,255,255,.12);
+  --veil:rgba(31,25,28,.5);      /* modal/drawer scrim */
+  --focus-ring:0 0 0 3px rgba(227,13,59,.20);
+
+  /* Frosted chrome — the topbar sits ON the ground rather than in a bordered
+     bar of its own, so it needs a translucent tint of the ground to blur
+     through. Must stay in sync with --ground. */
+  --glass:rgba(248,236,240,.76);
+  /* The top-edge highlight that makes a surface read as a lifted, slightly
+     soft object rather than a printed rectangle. This is the whole of the
+     "light clay" idea: one hairline of light, not a puffy pastel blob. */
+  --lip:inset 0 1px 0 rgba(255,255,255,.92);
+  /* Edge definition folded into the shadow stack instead of a `border`. A 1px
+     border eats a pixel of the box and hard-stops the corner radius; a spread
+     ring does neither and reads softer at the same contrast. */
+  --ring:0 0 0 1px rgba(110,26,48,.06);
+  --ring-strong:0 0 0 1px rgba(110,26,48,.12);
+
+/* ═══ 5. TYPE ═══════════════════════════════════════════════════
+   ONE FACE, so the whole hierarchy is carried by three axes: SIZE, WEIGHT
+   and TRACKING. That makes the weight ladder a real part of the system
+   rather than an afterthought, and it is worth writing down, because the
+   panel's last type problem was not the scale — it was that 700 had become
+   the default for everything with any emphasis at all (44 declarations
+   against 16 at 600), so nothing was emphatic and every label shouted.
+
+     800  page titles, big figures, the lockup, the coupon code — the
+          things allowed to be loud. Nothing else.
+     700  card / modal / drawer / section titles, --fs-title and up. A
+          heading, and the heaviest a heading ever gets.
+     600  ALL emphasis at --fs-body-lg and below: buttons, tabs, table
+          headers, form labels, badges, strong cells, uppercase eyebrows.
+          This is the workhorse and it is where most of this pass landed.
+     500  nav labels on the red rail (see --shell-ink) and secondary
+          values — the one step BELOW normal emphasis.
+     400  body, table cells, descriptions, help text.
+
+   The rule that keeps it honest: nothing below --fs-title is heavier than
+   600, and nothing at --fs-title or above is lighter than 700. The two
+   ranges do not overlap, so "how big" and "how heavy" cannot disagree about
+   how important something is.
+
+   THE EXCEPTIONS, named rather than left to be discovered — three roles set
+   a heavy weight at a small size on purpose, and all three are a mark
+   centred in a shape rather than a word in a line: avatar initials (.av,
+   .sp-avatar), the sidebar lockup tile (.sb-mark), and count badges
+   (.ni-badge). A glyph standing alone in a circle has no neighbours to
+   shout over, and if it is going to be read at 32px across it needs the
+   stem weight. Anything that is a WORD follows the ladder.                */
+  --ff:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ff-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --fs-micro:11px;     --lh-micro:1.27;     /* uppercase labels, badges */
+  --fs-caption:12px;   --lh-caption:1.33;   /* meta, hints */
+  --fs-dense:13px;     --lh-dense:1.45;     /* table cells, panel rows */
+  --fs-body:14px;      --lh-body:1.5;       /* base */
+  --fs-body-lg:15px;   --lh-body-lg:1.5;
+  --fs-title:17px;     --lh-title:1.3;      /* card titles */
+  --fs-h3:20px;        --lh-h3:1.25;        /* section heads, modal titles */
+  --fs-h2:24px;        --lh-h2:1.2;         /* page titles */
+  --fs-h1:30px;        --lh-h1:1.15;        /* display */
+  /* The panel's voice. Figtree at 800 holds its counters here where Jakarta
+     at 700 went soft, so these can be genuinely large without turning to
+     mush — which is the whole reason the typeface changed. */
+  --fs-hero:38px;      --lh-hero:1.05;      /* page titles */
+  --fs-stat:34px;      --lh-stat:1;         /* stat values */
+  /* Long-form measure: the modal body, .prose, an empty state's description.
+     1.5 is right for a UI line and a shade tight for a paragraph someone
+     actually reads, and these were previously four hardcoded values
+     (1.4/1.45/1.5/1.55) scattered across three files. */
+  --lh-prose:1.55;
+
+  /* Tracking. Display type TIGHTENS as it grows — at 38px the -.022em that
+     suits a 24px title leaves the letters visibly loose — and small type
+     OPENS UP, which is the half of the idea the panel was missing. Nine
+     values, and after this pass there is no raw letter-spacing left in any
+     consumer file. */
+  --tr-hero:-.035em;
+  --tr-display:-.022em; --tr-h3:-.016em; --tr-title:-.011em;
+  --tr-body:0;
+  /* .06em, up from .05em. Every uppercase micro-label in the panel dropped
+     from 700 to 600 this pass; a lighter stem needs slightly more air
+     between the letters or the word closes up into a grey bar. */
+  --tr-micro:.06em;
+  /* Nav labels on the red rail. Light type on a saturated ground blooms
+     into its background (irradiation), which closes the counters — a hair
+     of positive tracking is the standard correction, and it is the same
+     reason those labels sit at 500 rather than 600. */
+  --tr-rail:.01em;
+  /* The two deliberately-spaced roles on the coupon artwork, which is the
+     only place in the panel where letter-spacing is decoration rather than
+     correction: the code itself, and the caps around it. */
+  --tr-code:.08em;      --tr-wide:.12em;
+
+/* ═══ 6. SPACING ════════════════════════════════════════════════
+   Strict 4pt. The old file declared a 4pt grid and then broke it about a
+   hundred times (10px×16, 5px×15, 14px×15, 13px×11, plus stray 3/7/9/11/
+   15/18px), which is why spacing felt arbitrary.
+
+   Prefer the SEMANTIC tokens below the scale — they are what keeps five
+   parallel authors consistent without anyone picking a number.          */
+  --sp-half:2px;   /* hairline optical nudges ONLY */
+  --sp-1:4px;  --sp-2:8px;  --sp-3:12px; --sp-4:16px; --sp-5:20px;
+  --sp-6:24px; --sp-7:32px; --sp-8:40px; --sp-9:48px; --sp-10:64px;
+
+  --pad-page-y:var(--sp-6);
+  --pad-page-x:var(--sp-5);
+  --pad-card:var(--sp-5);
+  --pad-cell-x:var(--sp-3);
+  /* Both vertical paddings are 10px so a button and the input beside it come out
+     the same height. With --fs-body at line-height 1.2/1.3 plus a 1px border the
+     box lands a shade under 40px and --h-control pins it there exactly, which is
+     what makes `.inline-field` (Generate beside the password) line up.
+     The horizontal padding is wider than it was: a pill needs more shoulder
+     than a rounded rectangle or the label sits on the curve. */
+  --pad-btn-y:10px;
+  --pad-btn-x:var(--sp-5);
+  --pad-input-y:10px;
+  --pad-input-x:var(--sp-4);
+
+  --gap-section:var(--sp-6);   /* between cards / major blocks */
+  --gap-field:var(--sp-4);     /* between form rows */
+  --gap-inline:var(--sp-2);    /* icon ↔ label, button clusters */
+  --gap-tight:var(--sp-1);
+
+/* ═══ 7. SIZING ═════════════════════════════════════════════════ */
+  --h-control:40px;
+  --h-control-lg:48px;
+  --h-topbar:72px;
+  --sidebar-w:256px;
+  /* Was --sidebar-gap, the inset around a floating rail. The rail is flush to
+     the viewport now, so the only thing still inset is the .spanel drawer on
+     the opposite edge — and a value named for the sidebar would have sent the
+     next person looking for a gap that no longer exists. */
+  --drawer-gap:var(--sp-3);
+  --page-max:1440px;
+
+/* ═══ 8. RADIUS ═════════════════════════════════════════════════
+   The scale stops short of pill-everything, but BUTTONS are now pills. A
+   12px-radius rectangle is what a button looked like when the alternative
+   was a 3D bevel; every consumer brand this panel is measured against has
+   been fully rounded for years, and next to a pill badge, a pill tab and a
+   pill toggle, a chamfered button was simply the odd one out.            */
+  --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:22px; --r-xl:28px; --r-full:999px;
+
+/* ═══ 9. ELEVATION — "light clay" ═══════════════════════════════
+   The brief: soft and tactile, but nowhere near real claymorphism. Real
+   clay is a puffy pastel blob with a double inner shadow; what actually
+   reads as premium is the restrained half of that idea —
+
+     · shadows in ROSE-BLACK, not neutral black. rgba(0,0,0,.1) over a
+       pink ground turns the shade grey and fights the palette; the tint
+       moved further toward the brand this pass, with the neutrals.
+     · TWO offsets per level, a tight contact shadow plus a wide soft
+       pool, so the surface has a footprint as well as a glow.
+     · negative spread on the wide pool, which keeps it under the card
+       instead of haloing out sideways.
+     · --lip on top (§4) for the single hairline of light on the upper
+       edge. That one line is what makes it feel soft.                    */
+  --e1:0 1px 2px rgba(110,26,48,.05), 0 2px 6px -2px rgba(110,26,48,.07);
+  --e2:0 1px 2px rgba(110,26,48,.05), 0 6px 12px -3px rgba(110,26,48,.08),
+       0 14px 28px -10px rgba(110,26,48,.09);
+  --e3:0 2px 4px rgba(110,26,48,.06), 0 12px 24px -6px rgba(110,26,48,.11),
+       0 28px 56px -18px rgba(110,26,48,.15);
+  --e4:0 4px 8px rgba(110,26,48,.07), 0 20px 40px -8px rgba(110,26,48,.15),
+       0 48px 88px -28px rgba(110,26,48,.24);
+  /* The rail casts in its OWN colour. A neutral shadow under a saturated red
+     object is the giveaway that the colour was dropped in late; a red object
+     bounces red onto what is beneath it. */
+  --e-shell:0 2px 6px rgba(92,10,31,.16), 0 16px 32px -8px rgba(92,10,31,.22),
+            0 40px 72px -24px rgba(92,10,31,.28);
+
+/* ── PLATES: the icon tile ───────────────────────────────────────
+   Every coloured square behind a glyph — stat chips, category icons, the
+   modal icon, the sidebar mark, the notification-history tile.
+
+   These used to carry a diagonal white sheen (--plate-lit) on top of their
+   tint. It is gone, along with every other gradient in the panel: a sheen
+   is a light source, and once one surface has one, every surface that does
+   not have one looks unfinished — which is how the panel ended up with
+   gradients on the rail, the drawer head, the buttons, the avatars and the
+   coupon, all lit from slightly different directions.
+
+   What is left is EDGES, which is the honest way to make a flat tile read
+   as an object:
+     --plate-bevel  a top-edge highlight and an inner shade rising from the
+                    bottom (that pair is what curves the face), plus a real
+                    cast shadow underneath.
+     --emboss       the glyph's own raised-relief pass — see .ic-3d.
+
+   Both are box-shadow/filter, so they compose over ANY tint. That is what
+   lets a tile be brand, success, warning, info or danger without a single
+   extra token, and it is why the soft-tone palette above could be added
+   without touching this block.                                            */
+  --plate-bevel:inset 0 1px 0 rgba(255,255,255,.92),
+                inset 0 -10px 14px -10px rgba(74,20,38,.2),
+                0 1px 2px rgba(110,26,48,.1),0 6px 12px -4px rgba(110,26,48,.16);
+  --emboss:drop-shadow(0 1px 0 rgba(255,255,255,.55))
+           drop-shadow(0 1px 2px rgba(74,20,38,.24));
+  /* The same idea for a SOLID FILL THAT CARRIES TEXT — the primary button,
+     the avatar, the selected period. These previously took --dome, a
+     darkening wash, specifically because a LIGHTENING one would have dropped
+     white type on --accent to 4.06:1. With the wash gone the fill is simply
+     flat, and the one hairline of light sits in the box-shadow at the very
+     edge, where no glyph can be sitting on it. */
+  --fill-lip:inset 0 1px 0 rgba(255,255,255,.3);
+
+/* ═══ 10. MOTION ════════════════════════════════════════════════ */
+  --d-instant:100ms; --d-fast:180ms; --d-base:240ms; --d-slow:360ms; --d-deliberate:520ms;
+  --ease:cubic-bezier(.2,0,0,1);
+  --ease-in:cubic-bezier(0,0,0,1);
+  --ease-out:cubic-bezier(.4,0,1,1);
+}
+
+/* ═══ DARK THEME ════════════════════════════════════════════════
+   Left largely alone on purpose — this theme was judged to already have the
+   feel the light one was missing, and the reason is §2: every surface here
+   already carries the brand hue. What it gains in this pass is the same red
+   rail and the same type, so the two themes are one design rather than two.
+
+   The brand LIFTS on dark, it does not darken. --red-500 reaches only
+   4.36:1 on the dark card, so red TEXT uses --red-400 (5.37:1) while
+   red FILLS stay --red-600, which keeps white at 4.79:1 either way.     */
+[data-theme="dark"]{
+  --surface:#241C21;
+  --surface-raised:#2F272B;
+  --ground:var(--n-950);
+  --sunken:#2F272B;
+  /* On dark the relationship inverts: a well is DARKER than the card it is
+     cut into, not lighter, so --field cannot alias --sunken the way it does
+     on light. #1C1619 sits a step under --surface and keeps --ink at 15.49:1
+     with the placeholder tone at 5.54:1. */
+  --field:#1C1619;
+  --zebra:rgba(255,255,255,.03);
+  --line:#3C3237;
+  --line-strong:#4D4046;
+  --ink:var(--n-50);        /* 15.5:1 */
+  --ink-2:var(--n-300);     /* 10.2:1 */
+  --ink-3:var(--n-400);     /*  5.0:1 */
+  --ink-4:var(--n-500);
+  --accent:var(--red-600);
+  --accent-quiet:var(--red-500);
+  --accent-ink:var(--red-400);
+  --accent-wash:#38151D;
+  /* Flat, like light, and again pinned to what used to be the bloom's peak —
+     so the dark rail keeps the brightness the labels were already measured
+     against while losing the near-black foot. White is 10.99:1 on it. */
+  --shell:#7A0C28;
+  /* Same warm white as light, re-cut for the darker rail. The alphas rise
+     rather than fall: a deeper ground needs MORE ink to hold the same
+     apparent weight, and the nav labels are a step lighter (500) now.
+     8.14:1 and 5.84:1 — both up from the pure-white values they replace
+     (8.04 and 5.40), and the lockup tone is 10.22:1. */
+  --shell-ink-hi:#FFF4F7;
+  --shell-ink:rgba(255,244,247,.88);
+  /* .58 landed at 4.46:1 — a rounding error under AA. .72 clears it with
+     room (5.50:1), which the lighter stem weight now needs. */
+  --shell-ink-dim:rgba(255,244,247,.72);
+  --shell-line:rgba(255,255,255,.11);
+  --shell-hover:rgba(255,255,255,.10);
+  --veil:rgba(0,0,0,.64);
+  --focus-ring:0 0 0 3px rgba(250,87,117,.24);
+
+  --glass:rgba(20,15,18,.78);
+  /* A quarter of the light-theme lip. On a dark surface the same 90% white
+     hairline reads as a lit filament rather than an edge. */
+  --lip:inset 0 1px 0 rgba(255,255,255,.06);
+  --ring:0 0 0 1px rgba(255,255,255,.06);
+  --ring-strong:0 0 0 1px rgba(255,255,255,.10);
+
+  --red-50:#38151D;
+  --red-100:#4A1825;
+  --red-200:#5C0A1F;
+
+  --success-tint:#10281C;  --success-ink:#4ADE80;
+  --warning-tint:#2C2010;  --warning-ink:#FBBF24;
+  --danger-tint:#2E1418;   --danger-ink:#FA5775;
+  --info-tint:#10243A;     --info-ink:#7FB4EE;
+
+  /* The soft tones, re-cut UP rather than down. On light a soft tone is a
+     pale wash below its badge tint; on dark it has to sit just ABOVE
+     --surface, or a "tinted" card is darker than the card beside it and
+     reads as a hole. Each keeps --ink above 13.7:1 and --ink-3 above 4.9:1. */
+  --brand-soft:#2A1A20;    --success-soft:#182521;   --warning-soft:#282016;
+  --info-soft:#18222E;     --danger-soft:#2A181C;
+  /* Doubled alpha: a 14%-opacity hue that reads as a coloured edge on a pale
+     card is invisible on a dark one. */
+  --ring-brand:0 0 0 1px rgba(250,87,117,.28);
+  --ring-success:0 0 0 1px rgba(74,222,128,.24);
+  --ring-warning:0 0 0 1px rgba(251,191,36,.24);
+  --ring-info:0 0 0 1px rgba(127,180,238,.24);
+  --ring-danger:0 0 0 1px rgba(250,87,117,.26);
+
+  /* Dark surfaces cannot be lifted by shadow — there is nothing darker to cast
+     onto. So the depth cue swaps: the shadow only anchors the contact edge and
+     --lip above does the lifting. Pushing these any harder just paints black
+     mud around every card. */
+  --e1:0 1px 2px rgba(0,0,0,.42);
+  --e2:0 2px 4px rgba(0,0,0,.44), 0 8px 20px -6px rgba(0,0,0,.44);
+  --e3:0 4px 8px rgba(0,0,0,.44), 0 16px 36px -10px rgba(0,0,0,.56);
+  --e4:0 8px 16px rgba(0,0,0,.5), 0 32px 64px -20px rgba(0,0,0,.7);
+  --e-shell:0 2px 6px rgba(0,0,0,.5), 0 16px 32px -8px rgba(0,0,0,.55),
+            0 40px 72px -24px rgba(0,0,0,.6);
+
+  /* Same edges, a fifth of the strength. A white hairline that reads as "lit"
+     on a pale tint reads as blown out on a dark one, and the cast shadow has
+     to go black rather than rose because there is no light in the scene for a
+     coloured bounce to come from. */
+  --fill-lip:inset 0 1px 0 rgba(255,255,255,.16);
+  --plate-bevel:inset 0 1px 0 rgba(255,255,255,.13),
+                inset 0 -10px 14px -10px rgba(0,0,0,.42),
+                0 1px 2px rgba(0,0,0,.4),0 6px 12px -4px rgba(0,0,0,.44);
+  --emboss:drop-shadow(0 1px 0 rgba(255,255,255,.1))
+           drop-shadow(0 1px 2px rgba(0,0,0,.5));
+}
+
+/* ─────────────── BASE ─────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* The `hidden` attribute only hides an element because the UA stylesheet says
+   `[hidden]{display:none}` — and that is a *type* selector, so ANY class rule
+   with its own `display` silently beats it. That is not a theoretical hazard
+   here: `.bell-badge{display:inline-flex}` and `.up-preview{display:flex}` both
+   won, which is why the notification bell showed a red "0" that JS had already
+   set `hidden` on, and why a merchant form opened showing the previously-viewed
+   restaurant's photo. Every element the panel hides is hidden through this
+   attribute, so one authoritative rule fixes the whole class of bug. */
+[hidden]{display:none!important;}
+
+html{-webkit-text-size-adjust:100%;}
+/* Hard guard against page-level horizontal scroll: nothing in-flow may push the
+   document sideways. `clip` (not `hidden`) avoids creating a scroll container,
+   so the sticky topbar and position:fixed sidebar/modals are unaffected. */
+html,body{overflow-x:clip;max-width:100%;}
+/* 14px base, down from 15px. Table cells were already 13px, so a 15px body was
+   an unowned mismatch; 14/13 is the standard admin density. */
+/* The ONE font-family declaration in the panel that names a face. Everything
+   else inherits from here — which is what makes "one typography system" a
+   property of the code and not just of the screenshots. The only other
+   font-family allowed anywhere is var(--ff-mono), on the two elements that
+   are genuinely monospaced (inline <code> and a handed-over password); the
+   verifier enforces exactly that. */
+body{
+  font-family:var(--ff);
+  background:var(--ground);color:var(--ink);
+  font-size:var(--fs-body);line-height:var(--lh-body);
+  font-weight:400;min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  transition:background var(--d-base) var(--ease),color var(--d-base) var(--ease);
+}
+h1,h2,h3{text-wrap:balance;}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-xs);}
+
+/* Inline code — previously unstyled entirely, so the `kg = price` and
+   `ERASE ALL DATA` literals in Settings rendered as plain body text. */
+code{
+  font-family:var(--ff-mono);font-size:.86em;
+  background:var(--sunken);color:var(--ink-2);
+  padding:var(--sp-half) var(--sp-2);border-radius:var(--r-xs);
+}
+
+/* Long-form explanatory copy inside a card. Replaces four inline
+   `style="max-width:none"` overrides on Settings and the wipe dialog, which were
+   reaching for `.empty-copy` — a centred empty-state class with a 320px measure,
+   entirely the wrong role for a paragraph of body text.
+   The gap is guarded on :empty because two of the four (#pr-preview and
+   #wipe-progress) are filled by JS and sit empty most of the time. */
+.prose{font-size:var(--fs-body);line-height:var(--lh-prose);color:var(--ink-2);max-width:none;}
+.prose:not(:empty){margin-bottom:var(--gap-field);}
+.prose b{font-weight:600;color:var(--ink);}
+
+/* ─────────────── SCROLLBARS ───────────────
+   Thin, inset and themed. `scrollbar-width`/`scrollbar-color` cover Firefox;
+   the ::-webkit rules cover Chromium and Safari, which ignore them. The track
+   is transparent on purpose — a painted trough inside a rounded card cuts a
+   grey rectangle through its corner. */
+*{scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{
+  background:var(--line-strong);border-radius:var(--r-full);
+  border:3px solid transparent;background-clip:content-box;
+}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-4);background-clip:content-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+
+/* ─────────────── TYPE UTILITIES ───────────────
+   There used to be ten of these — .t-display through .t-eyebrow, plus
+   .font-display — carrying a comment claiming "the old names survive because
+   markup and app.js reference them". They did not. Every one of them was
+   referenced exactly zero times in index.html and zero times in app.js.
+
+   That made them worse than dead weight: a SECOND type ladder sitting beside
+   the real one, mapping the same ten steps to slightly different weights
+   (.t-eyebrow at 700 where every real eyebrow is 600, .t-h1 at --fs-h2), and
+   the first thing anyone would have copied when adding a heading. A panel
+   cannot be on one typography system while shipping two descriptions of it.
+
+   What survives is the one utility that is actually used — 43 times, by
+   app.js, on every figure it prints. */
+.num{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1;}
+
+/* ─────────────── ICONS ───────────────
+   "The icons look old" was a fair reading of a flat silhouette in a single
+   flat colour, which is what a sprite of currentColor paths is. Two things
+   fix that without swapping in a set of raster 3D renders — which would be
+   ~40 opaque PNGs that cannot follow the theme, cannot take a semantic
+   colour, and turn to mush at the 16–20px most of these are drawn at.
+
+   1. THE PLATE does the depth. See --plate-bevel below: every tile a glyph
+      sits on becomes a bevelled, cast-shadowed object.
+   2. THE GLYPH gets a bevel. --emboss is a white shadow one pixel BELOW the
+      shape plus a soft dark one under that, which is the classic two-pass
+      raised-relief trick; on a tinted plate it reads as carved rather than
+      printed. Applied only where a glyph is large enough to show it — 40
+      drop-shadows in a table row is compositing cost for nothing.
+
+   Contrast is untouched: both are shadows around the shape, not changes to
+   its colour, and no icon here is the sole carrier of meaning anyway. */
+.ic{width:24px;height:24px;flex-shrink:0;fill:currentColor;display:block;}
+.ic-sm{width:20px;height:20px;}
+.ic-xs{width:16px;height:16px;}
+.ic-lg{width:28px;height:28px;}
+.ic-3d{filter:var(--emboss);}
+
+/* ─────────────── ANIMATIONS ─────────────── */
+/* The loading placeholder used to sweep a white gradient across itself. With
+   gradients out of the panel the same "this is not real content yet" signal is
+   carried by breathing the block's own opacity — cheaper to composite, and it
+   works on a tinted placeholder in either theme without a second rule. */
+@keyframes skpulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+@keyframes fadeThrough{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.985);}to{opacity:1;transform:none;}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:none;}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
+@keyframes shake{10%,90%{transform:translateX(-2px);}30%,70%{transform:translateX(3px);}50%{transform:translateX(-3px);}}
+/* Teal was retired, so the status-flow pulse rides on --success now. */
+@keyframes pulse{0%,100%{box-shadow:0 0 0 1px var(--success),0 0 0 0 rgba(28,130,82,.42);}
+  50%{box-shadow:0 0 0 1px var(--success),0 0 0 7px rgba(28,130,82,0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+
+.stagger>*{animation:fadeThrough var(--d-base) var(--ease-in) both;}
+.stagger>*:nth-child(1){animation-delay:0ms;}
+.stagger>*:nth-child(2){animation-delay:40ms;}
+.stagger>*:nth-child(3){animation-delay:80ms;}
+.stagger>*:nth-child(4){animation-delay:120ms;}

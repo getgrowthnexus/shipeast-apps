@@ -17,6 +17,7 @@ import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_empty_state.dart';
 import '../widgets/se_online_toggle.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_stat_tile.dart';
 import '../widgets/se_toast.dart';
 import 'new_order_screen.dart';
@@ -541,141 +542,135 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      showBack: false,
+      capTitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                  SeSpacing.gutter, SeSpacing.x5, SeSpacing.gutter, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Hero presence control ─────────────────────────────
-                  SeOnlineToggle(
-                    presence: _presence,
-                    busy: _togglingPresence,
-                    onChanged: _setOnline,
-                  ),
-                  const SizedBox(height: SeSpacing.x5),
-
-                  // ── Today's stats ─────────────────────────────────────
-                  Text('TODAY', style: SeType.eyebrow),
-                  const SizedBox(height: SeSpacing.x3),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SeStatTile(
-                          icon: SeIcons.wallet,
-                          label: 'Earned today',
-                          value: _todayEarnings,
-                          prefix: Money.symbol,
-                        ),
-                      ),
-                      const SizedBox(width: SeSpacing.x3),
-                      Expanded(
-                        child: SeStatTile(
-                          icon: SeIcons.bike,
-                          label: 'Deliveries',
-                          value: _todayDeliveries,
-                          hue: SeColors.ocean500,
-                          tint: SeColors.oceanTint,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: SeSpacing.x6),
-
-                  Text('CURRENT JOB', style: SeType.eyebrow),
-                  const SizedBox(height: SeSpacing.x3),
-                  AnimatedSwitcher(
-                    duration: SeMotion.reduced(context)
-                        ? Duration.zero
-                        : SeMotion.base,
-                    child: _activeOrder != null
-                        ? _activeOrderCard(_activeOrder!)
-                        : isOnline
-                            ? _readyCard()
-                            : _offlineCard(),
-                  ),
-                  const SizedBox(height: SeSpacing.x6),
-
-                  Text('QUICK ACTIONS', style: SeType.eyebrow),
-                  const SizedBox(height: SeSpacing.x3),
-                  _quickAction(SeIcons.wallet, 'View Earnings',
-                      'Deliveries, earnings & payouts', SeColors.red500,
-                      SeColors.red50, () => widget.onTabSwitch(2)),
-                  const SizedBox(height: SeSpacing.x3),
-                  _quickAction(SeIcons.history, 'Delivery History',
-                      'View your completed deliveries', SeColors.success,
-                      SeColors.successTint, () => widget.onTabSwitch(1)),
-                  const SizedBox(height: SeSpacing.x3),
-                  _quickAction(SeIcons.user, 'My Profile',
-                      'Vehicle, licence and rating', SeColors.ocean500,
-                      SeColors.oceanTint, () => widget.onTabSwitch(3)),
-                  const SizedBox(height: SeSpacing.x3),
-                  _quickAction(SeIcons.chat, 'Help & Support',
-                      'Reach the dispatch desk', SeColors.gold500,
-                      SeColors.goldTint, _showHelpSheet),
-                ],
-              ),
+          Text(
+            _greeting,
+            style: SeType.bodyS.copyWith(
+                color: SeColors.shellInk.withValues(alpha: 0.80)),
+          ),
+          const SizedBox(height: 2),
+          ValueListenableBuilder<String>(
+            valueListenable: widget.driverNameNotifier,
+            builder: (_, name, _) => Text(
+              // Greeting uses the first name only (client request):
+              // "Good afternoon Touseef", not the full name.
+              name.trim().split(RegExp(r'\s+')).first,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SeType.h1.copyWith(color: SeColors.shellInk, height: 1.15),
             ),
           ),
         ],
       ),
-    );
-  }
+      trailing: Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.14),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(SeIcons.userFill, color: SeColors.shellInk, size: 24),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, SeSpacing.x5, SeSpacing.gutter, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Hero presence control ───────────────────────────────────────
+            SeOnlineToggle(
+              presence: _presence,
+              busy: _togglingPresence,
+              onChanged: _setOnline,
+            ),
+            const SizedBox(height: SeSpacing.x6),
 
-  Widget _header() => Container(
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, SeSpacing.x3,
-                SeSpacing.gutter, SeSpacing.x5),
-            child: Row(
+            // ── Today's stats ───────────────────────────────────────────────
+            const SeSectionTitle(title: 'Today'),
+            const SizedBox(height: SeSpacing.x3),
+            Row(
               children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    shape: BoxShape.circle,
+                Expanded(
+                  child: SeStatTile(
+                    icon: SeIcons.wallet,
+                    label: 'Earned today',
+                    value: _todayEarnings,
+                    prefix: Money.symbol,
                   ),
-                  child: const Icon(SeIcons.userFill,
-                      color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: SeSpacing.x3),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _greeting,
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.80)),
-                      ),
-                      ValueListenableBuilder<String>(
-                        valueListenable: widget.driverNameNotifier,
-                        builder: (_, name, _) => Text(
-                          // Greeting uses the first name only (client request):
-                          // "Good afternoon Touseef", not the full name.
-                          name.trim().split(RegExp(r'\s+')).first,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: SeType.h2.copyWith(color: Colors.white),
-                        ),
-                      ),
-                    ],
+                  child: SeStatTile(
+                    icon: SeIcons.bike,
+                    label: 'Deliveries',
+                    value: _todayDeliveries,
+                    hue: SeColors.info,
+                    tint: SeColors.infoSoft,
                   ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: SeSpacing.x6),
+
+            const SeSectionTitle(title: 'Current job'),
+            const SizedBox(height: SeSpacing.x3),
+            AnimatedSwitcher(
+              duration:
+                  SeMotion.reduced(context) ? Duration.zero : SeMotion.base,
+              child: _activeOrder != null
+                  ? _activeOrderCard(_activeOrder!)
+                  : isOnline
+                      ? _readyCard()
+                      : _offlineCard(),
+            ),
+            const SizedBox(height: SeSpacing.x6),
+
+            // Four destinations as ONE hairlined surface, not four separately
+            // shadowed cards — the same shape the profile menu uses, so the
+            // two lists in this app read as the same kind of thing.
+            const SeSectionTitle(title: 'Quick actions'),
+            const SizedBox(height: SeSpacing.x3),
+            SeRowGroup(
+              children: [
+                SeRow(
+                  icon: SeIcons.wallet,
+                  label: 'View earnings',
+                  subtitle: 'Deliveries, earnings & payouts',
+                  onTap: () => widget.onTabSwitch(2),
+                ),
+                SeRow(
+                  icon: SeIcons.history,
+                  label: 'Delivery history',
+                  subtitle: 'View your completed deliveries',
+                  hue: SeColors.success,
+                  onTap: () => widget.onTabSwitch(1),
+                ),
+                SeRow(
+                  icon: SeIcons.user,
+                  label: 'My profile',
+                  subtitle: 'Vehicle, licence and rating',
+                  hue: SeColors.info,
+                  onTap: () => widget.onTabSwitch(3),
+                ),
+                SeRow(
+                  icon: SeIcons.chat,
+                  label: 'Help & support',
+                  subtitle: 'Reach the dispatch desk',
+                  hue: SeColors.warning,
+                  onTap: _showHelpSheet,
+                ),
+              ],
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _offlineCard() => SeCard(
         key: const ValueKey('offline'),
@@ -729,7 +724,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _readyCard() => SeCard(
         key: const ValueKey('ready'),
         padding: const EdgeInsets.all(SeSpacing.x5),
-        shadow: SeElevation.e1,
         child: Column(
           children: [
             Row(
@@ -817,7 +811,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       key: const ValueKey('active'),
       onTap: _continueActiveOrder,
       padding: const EdgeInsets.all(SeSpacing.x5),
-      shadow: SeElevation.e2,
+      // The one live job on the page, so it carries a brand hairline rather
+      // than a shadow — it sits on the sheet, which is already lifted.
+      border: Border.all(
+          color: SeColors.brand.withValues(alpha: 0.40), width: 1.5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -826,9 +823,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
-                  color: SeColors.red50,
-                  shape: BoxShape.circle,
+                decoration: BoxDecoration(
+                  color: SeColors.brandSoft,
+                  borderRadius: SeRadius.all(SeRadius.xs),
                 ),
                 child: Icon(
                     isPickup
@@ -836,7 +833,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         : isReadyToDepart
                             ? SeIcons.box
                             : SeIcons.bike,
-                    color: SeColors.red700,
+                    color: SeColors.brandInk,
                     size: 20),
               ),
               const SizedBox(width: SeSpacing.x3),
@@ -908,10 +905,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: SeSpacing.x3),
-            decoration: BoxDecoration(
-              gradient: SeColors.emberGradient,
-              borderRadius: SeRadius.all(SeRadius.sm),
-              boxShadow: SeElevation.glow,
+            decoration: const BoxDecoration(
+              color: SeColors.brandAction,
+              borderRadius: SeRadius.pill,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -932,35 +928,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _quickAction(IconData icon, String title, String subtitle, Color hue,
-          Color tint, VoidCallback onTap) =>
-      SeCard(
-        onTap: onTap,
-        padding: const EdgeInsets.all(SeSpacing.x4),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-              child: Icon(icon, color: hue, size: 21),
-            ),
-            const SizedBox(width: SeSpacing.x4),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: SeType.title),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-                ],
-              ),
-            ),
-            const Icon(SeIcons.caretRight, size: 20, color: SeColors.ink300),
-          ],
-        ),
-      );
 }
 
 /// Pickup → dropoff route with a connecting rail, so the job reads as a
@@ -993,7 +960,7 @@ class _RouteLine extends StatelessWidget {
                 width: 11,
                 height: 11,
                 decoration: BoxDecoration(
-                  color: atPickup ? SeColors.red500 : SeColors.success,
+                  color: atPickup ? SeColors.brandAction : SeColors.success,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -1007,7 +974,7 @@ class _RouteLine extends StatelessWidget {
                 width: 11,
                 height: 11,
                 decoration: BoxDecoration(
-                  color: atPickup ? SeColors.ink300 : SeColors.red500,
+                  color: atPickup ? SeColors.ink300 : SeColors.brandAction,
                   shape: BoxShape.circle,
                 ),
               ),

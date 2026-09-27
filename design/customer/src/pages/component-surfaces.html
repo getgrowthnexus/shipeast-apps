@@ -1,0 +1,149 @@
+<!-- card: Surfaces & rows | group: Components | desc: Panels, row groups, section titles, notices and money lines -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Surfaces &amp; rows</h1>
+    <p>Everything inside the sheet is <b>flat and hairlined</b>. The sheet is
+      already a lifted surface, and stacking shadowed cards on a lifted surface
+      is what made the old screens look like a pile of receipts.
+      From <code>lib/widgets/se_page.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Panel — the plain content card</h2>
+    <div style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div class="panel" style="max-width:372px">
+        <div class="hstack g12">
+          <div style="width:44px;height:44px;border-radius:12px;background:#FFF0F4;display:grid;place-items:center;color:#F72B54">
+            <svg class="i" style="width:22px;height:22px"><use href="#i-plane"/></svg>
+          </div>
+          <div class="grow">
+            <div class="t-title">Send to family back home</div>
+            <div class="t-bodyS mt2">We shop in Jamaica and deliver to them.</div>
+          </div>
+          <svg class="i ink-300" style="width:20px;height:20px"><use href="#i-caretRight"/></svg>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:12px">
+      <tr><td>Fill</td><td><code>surface0</code> #FFF6F8 on the <code>surface50</code> ground</td></tr>
+      <tr><td>Edge</td><td>1px <code>ink200</code> hairline. No shadow, ever</td></tr>
+      <tr><td>Radius / padding</td><td><code>md</code> 16px · 14px</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Row group — a list of related rows as ONE surface</h2>
+    <div style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div class="row-group" style="max-width:372px">
+        <div class="row">
+          <div class="plate"><svg class="i"><use href="#i-addresses"/></svg></div>
+          <div class="rbody"><div class="rlabel">Saved addresses</div><div class="rsub">3 saved</div></div>
+          <svg class="i caret"><use href="#i-caretRight"/></svg>
+        </div>
+        <div class="row">
+          <div class="plate"><svg class="i"><use href="#i-orders"/></svg></div>
+          <div class="rbody"><div class="rlabel">Order history</div></div>
+          <span class="rval">12 orders</span>
+          <svg class="i caret"><use href="#i-caretRight"/></svg>
+        </div>
+        <div class="row">
+          <div class="plate"><svg class="i"><use href="#i-shield"/></svg></div>
+          <div class="rbody"><div class="rlabel">Privacy &amp; security</div><div class="rsub">Password, data, deletion</div></div>
+          <svg class="i caret"><use href="#i-caretRight"/></svg>
+        </div>
+        <div class="row row--danger">
+          <div class="plate"><svg class="i"><use href="#i-signOut"/></svg></div>
+          <div class="rbody"><div class="rlabel">Sign out</div></div>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:12px">
+      <tr><td>Divider</td><td>1px <code>ink100</code>, inset 54px so the glyphs form a clean column</td></tr>
+      <tr><td>Plate</td><td>34px, <code>xs</code> radius, the row's hue at 10%</td></tr>
+      <tr><td>Label / subtitle</td><td>15px weight 700 · 13px <code>ink400</code>. The subtitle says what the row
+        <b>does</b>, never restates it</td></tr>
+      <tr><td>Destructive</td><td>Danger hue on both plate and label — no separate treatment needed</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Section title</h2>
+    <div style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div class="section-title" style="max-width:372px">
+        <h2>Popular near you</h2>
+        <a>See all<svg class="i"><use href="#i-caretRight"/></svg></a>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      The action is <b>text</b>, never a second button. A screen gets one filled
+      pill and the rest of its affordances are words.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Money lines — one shape for every total in the app</h2>
+    <div style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div class="panel" style="max-width:372px">
+        <div class="money"><span class="lbl">Subtotal</span><span class="amt">$3,850</span></div>
+        <div class="money"><span class="lbl">Delivery fee</span><span class="amt">$350</span></div>
+        <div class="money"><span class="lbl">Service fee</span><span class="amt">$385</span></div>
+        <div class="money"><span class="lbl">Discount</span><span class="amt c-success">−$0</span></div>
+        <div style="height:1px;background:#E6DAE0;margin:9px 0"></div>
+        <div class="money money--strong"><span class="lbl">Total</span><span class="amt">$4,585</span></div>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      Shared by the cart, checkout and the receipt, so a subtotal looks the same
+      in all three. Amounts are tabular. Jamaican dollars are whole integers —
+      displayed and charged from one field, never a float.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Notices — the one shape for "read this before you continue"</h2>
+    <div class="stack g10" style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div class="notice" style="max-width:372px">
+        <svg class="i"><use href="#i-info"/></svg>
+        <p>We shop for everyday supermarket and hardware goods. Alcohol, tobacco
+          and prescription medicine are the exceptions.</p>
+      </div>
+      <div class="notice notice--warning" style="max-width:372px">
+        <svg class="i"><use href="#i-warning"/></svg>
+        <p>This merchant closes at 9:00 pm. Orders placed after that arrive tomorrow.</p>
+      </div>
+      <div class="notice notice--danger" style="max-width:372px">
+        <svg class="i"><use href="#i-warningCircle"/></svg>
+        <p>Deleting your account removes every order and address permanently.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Stats</h2>
+    <div class="hstack g10" style="background:#F8ECF0;padding:20px;border-radius:12px;max-width:412px">
+      <div class="stat"><div class="c-brand"><svg class="i"><use href="#i-orders"/></svg></div><div class="v">12</div><div class="l">Orders</div></div>
+      <div class="stat"><div class="c-success"><svg class="i"><use href="#i-checkCircle"/></svg></div><div class="v">11</div><div class="l">Delivered</div></div>
+      <div class="stat"><div class="c-star"><svg class="i"><use href="#i-star"/></svg></div><div class="v">4.8</div><div class="l">Your rating</div></div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      Glyph, figure, label. Three fit a phone row; the figures are tabular so they
+      line up down a column.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The docked bar</h2>
+    <div style="background:#F8ECF0;padding:0;border-radius:12px;overflow:hidden;max-width:412px">
+      <div style="padding:20px;font-size:13px;color:#8A7A81">…scrolling content ends here</div>
+      <div class="bottom-bar" style="padding-bottom:14px">
+        <div class="between" style="margin-bottom:12px">
+          <span class="t-bodyS">Total</span>
+          <span class="tnum" style="font-size:20px;font-weight:800;letter-spacing:-.5px">$4,585</span>
+        </div>
+        <button class="btn btn--primary">Place order</button>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      The bar carries its own top hairline, so every screen's docked action
+      detaches from the scrolling content in the same way. It also paints the
+      gesture inset below itself in <b>its own</b> colour — a bar sitting on a
+      stripe of slightly different pink reads as a rendering fault.</p>
+  </div>
+</div>

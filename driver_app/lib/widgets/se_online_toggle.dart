@@ -10,13 +10,18 @@ import '../theme/se_typography.dart';
 /// order exists) and is not directly togglable.
 enum DriverPresence { offline, online, delivering }
 
-/// Hero online/offline control (PLAN §3.2 — Dashboard).
+/// Hero online/offline control — the dashboard's one hero action.
 ///
 /// The single most-used control in the app, so it earns real weight: a large
-/// tappable slab whose ground shifts ink → Ember → Sunset as presence changes,
-/// with a spring-settled knob, haptic confirmation and a status word that
-/// morphs OFFLINE ↔ ONLINE ↔ DELIVERING. Reduced-motion collapses the spring
-/// to a cross-fade.
+/// tappable slab with a spring-settled knob, haptic confirmation and a status
+/// word that morphs OFFLINE ↔ ONLINE ↔ DELIVERING. Reduced-motion collapses
+/// the spring to a cross-fade.
+///
+/// 2026 restyle: the ground is a FLAT fill, not a gradient, and the three
+/// states are told apart by which flat red they land on — ink when offline,
+/// the deep [SeColors.shell] when online, the brighter [SeColors.brandAction]
+/// while delivering. Brightness climbing with activity is the whole signal;
+/// a gradient was carrying no information the colour did not already carry.
 class SeOnlineToggle extends StatefulWidget {
   final DriverPresence presence;
 
@@ -78,29 +83,22 @@ class _SeOnlineToggleState extends State<SeOnlineToggle>
     super.dispose();
   }
 
-  ({String word, String hint, Gradient ground, Color glow}) get _spec =>
+  ({String word, String hint, Color ground}) get _spec =>
       switch (widget.presence) {
         DriverPresence.offline => (
             word: 'OFFLINE',
             hint: 'Go online to start receiving delivery requests',
-            ground: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [SeColors.ink700, SeColors.ink900],
-            ),
-            glow: SeColors.ink900,
+            ground: SeColors.ink900,
           ),
         DriverPresence.online => (
             word: 'ONLINE',
             hint: 'You are visible to dispatch',
-            ground: SeColors.emberGradient,
-            glow: SeColors.red500,
+            ground: SeColors.shell,
           ),
         DriverPresence.delivering => (
             word: 'DELIVERING',
             hint: 'Finish your active order to go idle',
-            ground: SeColors.sunsetGradient,
-            glow: SeColors.sunset.first,
+            ground: SeColors.brandAction,
           ),
       };
 
@@ -130,11 +128,14 @@ class _SeOnlineToggleState extends State<SeOnlineToggle>
           curve: SeMotion.emphasized,
           padding: const EdgeInsets.all(SeSpacing.x5),
           decoration: BoxDecoration(
-            gradient: s.ground,
+            color: s.ground,
             borderRadius: SeRadius.all(SeRadius.lg),
+            // A restrained lift in the slab's own tone. The old 24%-opacity
+            // halo under a gradient was the loudest "generated UI" tell on the
+            // dashboard; this reads as a card off the page, not a neon sign.
             boxShadow: _down
                 ? SeElevation.e0
-                : SeElevation.glowColor(s.glow, opacity: 0.24),
+                : SeElevation.glowColor(s.ground, opacity: 0.18),
           ),
           child: Row(
             children: [
@@ -145,7 +146,7 @@ class _SeOnlineToggleState extends State<SeOnlineToggle>
                   children: [
                     Text('DRIVER STATUS',
                         style: SeType.eyebrow.copyWith(
-                            color: Colors.white.withValues(alpha: 0.72))),
+                            color: SeColors.shellInk.withValues(alpha: 0.72))),
                     const SizedBox(height: SeSpacing.x2),
                     // The status word morphs rather than hard-cuts.
                     AnimatedSwitcher(
@@ -166,7 +167,7 @@ class _SeOnlineToggleState extends State<SeOnlineToggle>
                         s.word,
                         key: ValueKey(s.word),
                         style: SeType.h1.copyWith(
-                          color: Colors.white,
+                          color: SeColors.shellInk,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -175,7 +176,7 @@ class _SeOnlineToggleState extends State<SeOnlineToggle>
                     Text(
                       s.hint,
                       style: SeType.bodyS
-                          .copyWith(color: Colors.white.withValues(alpha: 0.82)),
+                          .copyWith(color: SeColors.shellInk.withValues(alpha: 0.82)),
                     ),
                   ],
                 ),
@@ -242,14 +243,14 @@ class _Knob extends StatelessWidget {
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
                             valueColor:
-                                AlwaysStoppedAnimation(SeColors.red500),
+                                AlwaysStoppedAnimation(SeColors.brandAction),
                           ),
                         )
                       : Icon(
                           locked ? SeIcons.bike : SeIcons.power,
                           size: 18,
                           color: Color.lerp(
-                              SeColors.ink400, SeColors.red500, t),
+                              SeColors.ink400, SeColors.brandAction, t),
                         ),
                 ),
               ),

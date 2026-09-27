@@ -1,0 +1,79 @@
+<!-- card: Search | group: Screens · Main tabs | desc: Live field and category filters on the cap, rows in the sheet -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Search</h1>
+    <p>Tab 2. The query and its filters stay on the cap while the results scroll
+      under them, so you can always see what you asked for.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-bottom">
+        <div class="cap-row"><div class="cap-title">Search</div></div>
+        <div class="mt16">
+          <div class="shell-field"><svg class="i"><use href="#i-search"/></svg><span>Restaurants, shops, items…</span></div>
+          <div class="hstack g8 mt12">
+            <span class="shell-chip on"><svg class="i"><use href="#i-food"/></svg>Food</span>
+            <span class="shell-chip"><svg class="i"><use href="#i-grocery"/></svg>Grocery</span>
+            <span class="shell-chip"><svg class="i"><use href="#i-pharmacy"/></svg>Pharmacy</span>
+            <span class="shell-chip"><svg class="i"><use href="#i-packages"/></svg>Pack…</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad" style="padding-top:18px;padding-bottom:110px">
+          <div class="section-title" style="margin-bottom:14px"><h2>3 results</h2></div>
+          <div class="stack g10">
+            <div class="mrow-card">
+              <div class="thumb"><svg class="i"><use href="#i-food"/></svg></div>
+              <div class="body">
+                <div class="nm"><b>Island Grill Morant Bay</b></div>
+                <div class="facts"><svg class="i"><use href="#i-star"/></svg><span class="ell">4.8 · 25–35 min · $350</span></div>
+              </div>
+              <svg class="i caret"><use href="#i-caretRight"/></svg>
+            </div>
+            <div class="mrow-card">
+              <div class="thumb"><svg class="i"><use href="#i-food"/></svg></div>
+              <div class="body">
+                <div class="nm"><b>Juici Patties</b></div>
+                <div class="facts"><svg class="i"><use href="#i-star"/></svg><span class="ell">4.6 · 15–25 min · Free</span></div>
+              </div>
+              <svg class="i caret"><use href="#i-caretRight"/></svg>
+            </div>
+            <div class="mrow-card">
+              <div class="thumb"><svg class="i"><use href="#i-food"/></svg></div>
+              <div class="body">
+                <div class="nm"><b>The Blue Mountain…</b><span class="t-bodyS c-danger">· Closed</span></div>
+                <div class="facts"><svg class="i"><use href="#i-star"/></svg><span class="ell">4.9 · 40–55 min · $500</span></div>
+              </div>
+              <svg class="i caret"><use href="#i-caretRight"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="navbar">
+          <div><svg class="i"><use href="#i-home"/></svg><span>Home</span></div>
+          <div class="on"><svg class="i"><use href="#i-searchFill"/></svg><span>Search</span></div>
+          <div><svg class="i"><use href="#i-orders"/></svg><span>Orders</span></div>
+          <div><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span><span>Alerts</span></div>
+          <div><svg class="i"><use href="#i-user"/></svg><span>Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>The row, not the card</td><td>Results use <code>SeMerchantRow</code>. A 16:9 card per result turns eight
+        results into eight screens of scrolling</td></tr>
+      <tr><td>Filters</td><td>Shell chips, horizontally scrollable, one selected at a time. They sit on the cap so they
+        never scroll away from the query they modify</td></tr>
+      <tr><td>Result count</td><td>A section title, so the answer to "did it find anything" is the first thing in the
+        sheet</td></tr>
+      <tr><td>Empty</td><td>Falls back to <code>SeEmptyState</code> with the storefront glyph and the query echoed
+        back</td></tr>
+    </table>
+  </div>
+</div>

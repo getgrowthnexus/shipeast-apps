@@ -17,15 +17,15 @@ class SeCountdownRing extends StatefulWidget {
   final int total;
   final double size;
 
-  /// On the Sunset gradient the track needs to be light; on a card, dark.
-  final bool onGradient;
+  /// On the brand shell the track has to be light; on a sheet card, dark.
+  final bool onShell;
 
   const SeCountdownRing({
     super.key,
     required this.remaining,
     this.total = 60,
     this.size = 168,
-    this.onGradient = true,
+    this.onShell = true,
   });
 
   @override
@@ -71,9 +71,9 @@ class _SeCountdownRingState extends State<SeCountdownRing>
 
         // Colour travels with urgency, not with the brand.
         final Color arc = progress > 0.5
-            ? Colors.white
+            ? SeColors.shellInk
             : progress > 0.25
-                ? Color.lerp(SeColors.warning, Colors.white,
+                ? Color.lerp(SeColors.warning, SeColors.shellInk,
                     (progress - 0.25) / 0.25)!
                 : Color.lerp(SeColors.danger, SeColors.warning,
                     progress / 0.25)!;
@@ -85,7 +85,7 @@ class _SeCountdownRingState extends State<SeCountdownRing>
             painter: _RingPainter(
               progress: progress,
               arc: arc,
-              track: widget.onGradient
+              track: widget.onShell
                   ? Colors.white.withValues(alpha: 0.22)
                   : SeColors.ink200,
             ),
@@ -96,7 +96,7 @@ class _SeCountdownRingState extends State<SeCountdownRing>
                   Text(
                     '${widget.remaining}',
                     style: SeType.tabular(SeType.display).copyWith(
-                      color: widget.onGradient ? Colors.white : SeColors.ink900,
+                      color: widget.onShell ? SeColors.shellInk : SeColors.ink900,
                       fontSize: widget.size * 0.30,
                       height: 1.05,
                     ),
@@ -104,8 +104,8 @@ class _SeCountdownRingState extends State<SeCountdownRing>
                   Text(
                     'SECONDS',
                     style: SeType.eyebrow.copyWith(
-                      color: widget.onGradient
-                          ? Colors.white.withValues(alpha: 0.78)
+                      color: widget.onShell
+                          ? SeColors.shellInk.withValues(alpha: 0.78)
                           : SeColors.ink500,
                     ),
                   ),

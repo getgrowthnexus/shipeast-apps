@@ -103,13 +103,13 @@ class _SeToastWidgetState extends State<_SeToastWidget>
             icon: SeIcons.warningCircle
           ),
         SeToastKind.info => (
-            color: SeColors.ocean500,
-            tint: SeColors.oceanTint,
+            color: SeColors.info,
+            tint: SeColors.infoTint,
             icon: SeIcons.info
           ),
         SeToastKind.brand => (
-            color: SeColors.red500,
-            tint: SeColors.red50,
+            color: SeColors.brand,
+            tint: SeColors.brandSoft,
             icon: SeIcons.info
           ),
       };

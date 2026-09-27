@@ -1,0 +1,533 @@
+/* ═══════════════════════════════════════════════════════════════
+   ShipEast Design System (SEDS) — Admin Panel
+   pages.css
+
+   Page-specific furniture: category chips, notification preview,
+   promo card, charts, menu-item cards, usage bars.
+
+   Values come from DESIGN-SPEC.md §2. Nothing here invents a colour, a
+   size or a spacing value.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────── CATEGORY / MEDIA CHIPS ─────────────── */
+/* The same plate build as .sc-chip — these are the merchant/category glyphs
+   that appear down every list on Merchants and Shop & Deliver, so they are the
+   second most-repeated icon tile in the panel. Tint by class, depth by token. */
+.cat-ico{width:42px;height:42px;border-radius:var(--r-md);display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;box-shadow:var(--plate-bevel);}
+.cat-ico .ic{width:20px;height:20px;filter:var(--emboss);}
+.cat-ico.lg{width:56px;height:56px;border-radius:var(--r-md);}
+.cat-ico.lg .ic{width:28px;height:28px;}
+/* Each category gets a verified tint + deep-ink pair rather than a hand-mixed
+   hex. Food is the brand tint because food IS the core of the business; the
+   other three borrow the semantic hues, which is why the set no longer needs a
+   gold and a teal accent of its own. */
+.c-food{background-color:var(--accent-wash);color:var(--accent-ink);}
+.c-grocery{background-color:var(--success-tint);color:var(--success-ink);}
+.c-pharmacy{background-color:var(--info-tint);color:var(--info-ink);}
+.c-packages{background-color:var(--warning-tint);color:var(--warning-ink);}
+.c-other{background-color:var(--sunken);color:var(--ink-2);}
+.thumb{width:42px;height:42px;border-radius:var(--r-md);object-fit:cover;flex-shrink:0;
+  background:var(--sunken);box-shadow:var(--ring),var(--e1);}
+.thumb.lg{width:56px;height:56px;border-radius:var(--r-md);}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);
+  flex-shrink:0;display:inline-block;}
+.dot.on{background:var(--success);box-shadow:0 0 0 3px var(--success-tint);}
+
+/* ─────────────── MERCHANT CARDS ───────────────
+   Merchants was a nine-column table, and it was the wrong instrument for the
+   record: a merchant is mostly not text. It has a cover photo, a category, a
+   rating and a switch that changes what customers see the moment it moves —
+   and in a row all of that competed for width with a street address, which is
+   the one field that will happily run to sixty characters.
+
+   The card gives each fact a place instead of a column: media, then identity,
+   then contact, then the two numbers, then the controls. Four bands, in the
+   order you would ask about them.
+
+   FOUR UP on the desktop. At 1440 that is a 264px card and at 1281 (the
+   narrowest width that still gets four) it is 210px — which is what every
+   metric below is sized against, not the comfortable case. */
+/* ── The band that separates the summary from the directory ──
+   Not a .card — it sits on the page ground between two blocks and its whole
+   job is to say "the tiles below are a different thing from the tiles above".
+   A rule under it does that with less furniture than a box would. */
+.sec-hdr{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:var(--sp-4);
+  margin:var(--sp-7) 0 var(--sp-5);padding-bottom:var(--sp-3);
+  border-bottom:1px solid var(--line);
+}
+.sec-hdr-txt{min-width:0;}
+.sec-title{font-size:var(--fs-h3);line-height:var(--lh-h3);font-weight:700;
+  letter-spacing:var(--tr-h3);color:var(--ink);}
+.sec-sub{font-size:var(--fs-caption);line-height:var(--lh-body);color:var(--ink-3);
+  margin-top:var(--sp-half);}
+/* The count is a readout, not a filter — it takes the quiet chip treatment so
+   it never reads as something to press. */
+.sec-count{
+  flex-shrink:0;padding:var(--sp-1) var(--sp-3);border-radius:var(--r-full);
+  background:var(--sunken);box-shadow:var(--ring);
+  font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  letter-spacing:var(--tr-micro);color:var(--ink-2);text-transform:uppercase;
+}
+
+.mgrid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:var(--sp-5);margin-bottom:var(--gap-section);
+  /* Every card is the same height whatever is in it (see .mcd below), so the
+     row does not need to stretch to its tallest member — and when one card is
+     expanded, `start` is what stops the other three in its row from growing a
+     matching column of empty space underneath their footers. */
+  align-items:start;
+}
+/* The loading and empty states are grid children like any other, so they say
+   so rather than being positioned out of the flow. */
+.mgrid-full{grid-column:1/-1;margin-bottom:0;}
+
+/* Same build as .card and .sc — ring, --e2, lit top edge, and a lift on hover,
+   because a card that reacts feels like an object. overflow:hidden is what
+   lets the cover run flush to the top corners without repeating the radius. */
+.mcd{
+  display:flex;flex-direction:column;min-width:0;
+  background:var(--surface);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--ring),var(--e2),var(--lip);
+  transition:box-shadow var(--d-base) var(--ease),transform var(--d-base) var(--ease);
+}
+.mcd:hover{box-shadow:var(--ring-strong),var(--e3),var(--lip);transform:translateY(-3px);}
+
+/* ── PER-CATEGORY IDENTITY ──
+   Each merchant TYPE gets its own tint so a full grid reads as a set of kinds
+   at a glance — but the tint is a whisper, not a fill: a few percent of the
+   category's own hue mixed into the surface, so every card is unmistakably the
+   same white card, only warmed one way or another. color-mix keeps the shift
+   proportional to whatever --surface is, so it survives the theme flip: the
+   same 6% lands as a soft light wash on white and a faint warm cast on the dark
+   ground. The category badge takes the SOLID tint of the same hue, so it reads
+   as a chip standing on the wash rather than a second, arguing colour. */
+.mc-food{background:color-mix(in srgb,var(--accent) 6%,var(--surface));}
+.mc-grocery{background:color-mix(in srgb,var(--success) 6%,var(--surface));}
+.mc-pharmacy{background:color-mix(in srgb,var(--info) 6%,var(--surface));}
+.mc-packages{background:color-mix(in srgb,var(--warning) 7%,var(--surface));}
+.mc-other{background:var(--surface);}
+.mc-food .mcd-cat{background:var(--accent-wash);color:var(--accent-ink);}
+.mc-grocery .mcd-cat{background:var(--success-tint);color:var(--success-ink);}
+.mc-pharmacy .mcd-cat{background:var(--info-tint);color:var(--info-ink);}
+.mc-packages .mcd-cat{background:var(--warning-tint);color:var(--warning-ink);}
+.mc-other .mcd-cat{background:var(--sunken);color:var(--ink-2);}
+
+/* ONE frame, at ONE ratio, for every card. 2:1 is the shape the uploader
+   actually stores (1000×500), so the frame agrees with the pipeline that fills
+   it. aspect-ratio fixes the frame's HEIGHT to the card's width, and every card
+   in the grid is the same width — so the band is identical on all of them
+   whatever anybody uploaded. object-fit:cover is what makes that safe: a
+   portrait photo, a square logo and a wide storefront all fill the same box and
+   are cropped to it rather than stretching it.
+
+   The image is also the reason the card can be a fixed height at all. Everything
+   below it is one line or a switch; this is the only part that could have had an
+   opinion, and it no longer does. */
+.mcd-cover{position:relative;aspect-ratio:2/1;background:var(--sunken);flex-shrink:0;
+  overflow:hidden;}
+.mcd-img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;}
+/* No photo: the band takes the category's own tint and glyph (.c-food and
+   friends above), so the card still says what KIND of merchant this is rather
+   than leaving a grey hole in the grid. */
+.mcd-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.mcd-fb .ic{width:40px;height:40px;filter:var(--emboss);}
+.mcd-cover>.sk{width:100%;height:100%;border-radius:0;}
+/* Open/closed rides on the cover rather than in the body: it is the fact you
+   scan a grid FOR, and up here it is in the same place on all four cards in a
+   row whatever the names below them did. The badge tints are opaque, so this
+   is a chip ON the photo, never text over it — the shadow is only there to
+   stop it merging with the category tint on a card that has no cover. */
+.mcd-state{position:absolute;top:var(--sp-2);right:var(--sp-2);}
+.mcd-state .bdg{box-shadow:var(--e2);}
+
+/* ── THE COLLAPSED CARD IS A FIXED HEIGHT, BY CONSTRUCTION ──
+   Not a magic number on .mcd — every part of the default card is individually
+   incapable of changing height, so the sum cannot change either. The name is
+   always exactly two lines whether it needs one or three; the category is a
+   badge; the phone is one line that ellipsises; the switch row has the switch's
+   own height as its floor. Nothing here can be pushed by data.
+
+   That is what the earlier build got wrong. It showed the address (one line for
+   some merchants, two for others), the rating (a star row, or the words "No
+   ratings yet") and a count — three variable-height facts in a 210px column —
+   and then leaned on flexbox stretching to hide the difference. Stretching only
+   equalises cards WITHIN a row, so the grid came out as bands of different
+   heights, and every card was ~500px tall to boot. Those three facts live
+   behind the button now (.mcd-more). */
+.mcd-body{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-4);}
+.mcd-id{display:flex;flex-direction:column;align-items:flex-start;
+  gap:var(--gap-tight);min-width:0;}
+/* --fs-title/700 is the card-title role, one step below the 20px a full-width
+   .card-title takes. Two lines ALWAYS — the height is set, not clamped, so
+   "Scotchies" reserves the same space "Tastee Patties Constant Spring" needs.
+   That one declaration is what keeps every card in the grid the same size. */
+.mcd-name{
+  font-size:var(--fs-title);line-height:var(--lh-title);font-weight:700;
+  letter-spacing:var(--tr-title);color:var(--ink);
+  height:calc(var(--fs-title) * var(--lh-title) * 2);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+
+/* Glyph-led rather than labelled. A card has no column header to name its
+   values, and two uppercase captions here would cost two more lines to say
+   what a phone and a pin say instantly. */
+/* One text line's worth of height whatever is in it — which is what lets the
+   loading skeleton be exactly as tall as the card it stands in for, rather than
+   11px shorter per line and jumping when the data lands. */
+.mcd-line{display:flex;align-items:flex-start;gap:var(--gap-inline);min-width:0;
+  min-height:calc(var(--fs-caption) * var(--lh-body));
+  font-size:var(--fs-caption);line-height:var(--lh-body);color:var(--ink-2);}
+/* Same reason: a badge's height is otherwise whatever its padding and font
+   happen to add up to, and the skeleton has neither. */
+.mcd-cat{height:24px;}
+.mcd-line .ic{color:var(--ink-4);flex-shrink:0;margin-top:1px;}
+/* The phone is in the default half of the card, so it is the one meta line that
+   must never take a second row. */
+.mcd-line.one{white-space:nowrap;overflow:hidden;}
+.mcd-line.one>span{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.mcd-addr{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;}
+
+/* The label→value row, which is the same .sp-row shape the side panel already
+   uses for exactly this kind of pair. Two columns side by side was the obvious
+   first move and it was wrong: at the narrow four-up width each column is ~90px,
+   "ORDERS TODAY" is ~100px at 11px with micro tracking, and a wrapped label
+   pushed its value a line below the one beside it. A full-width row cannot have
+   that argument. */
+.mcd-stats{display:flex;flex-direction:column;gap:var(--gap-tight);
+  padding-top:var(--sp-3);border-top:1px solid var(--line);}
+/* min-height:24px is the toggle's own height — it keeps the switch row the
+   same height as the readout rows, so the band stays a band. */
+.mcd-row{display:flex;align-items:center;justify-content:space-between;
+  gap:var(--sp-3);min-height:24px;min-width:0;}
+.mcd-k{font-size:var(--fs-micro);line-height:var(--lh-micro);
+  font-weight:600;text-transform:uppercase;letter-spacing:var(--tr-micro);
+  color:var(--ink-3);white-space:nowrap;flex-shrink:0;}
+/* nowrap because the value is a rating: five stars and a figure that must stay
+   on one line or the glyphs break away from the number they belong to. */
+.mcd-v{font-size:var(--fs-dense);line-height:var(--lh-dense);font-weight:600;
+  color:var(--ink);text-align:right;white-space:nowrap;}
+/* "No ratings yet" is prose, not a figure — it must not inherit the value's
+   weight, or an unrated merchant reads louder than a rated one. */
+.mcd-v .cell-mute{font-size:var(--fs-caption);font-weight:400;}
+
+/* ── THE SECOND HALF ──
+   The address, the two figures and the three actions. Everything here is
+   either variable in height or rarely needed while scanning a directory, which
+   is the same test: if it cannot be relied on to be one line, it does not get
+   to decide how tall the card is.
+
+   display:none rather than height:0 — a collapsed card must not hand its
+   buttons to the keyboard or its text to a screen reader, and the ARIA state on
+   the button below says so out loud. */
+.mcd-more{display:none;padding:0 var(--sp-4) var(--sp-4);}
+.mcd.open .mcd-more{display:flex;flex-direction:column;gap:var(--sp-3);}
+/* The actions land at the bottom of the revealed half, over their own rule, so
+   the reveal reads as "detail, then what you can do about it". */
+.mcd-acts{display:flex;gap:var(--gap-tight);flex-shrink:0;
+  padding-top:var(--sp-3);border-top:1px solid var(--line);}
+
+/* The disclosure, and the last thing in the card. It is not a call to action,
+   so it is not a button-shaped button — it is the whole footer row as the
+   target: a quiet label on the left, and the chevron riding in its own soft
+   chip on the right. That chip is the whole trick. A bare caret reads as
+   decoration; a caret in a tactile disc reads as a control you press, and it is
+   what lets the interaction feel considered rather than generic. margin-top:auto
+   pins the row to the bottom edge when some OTHER card in the row is open. */
+.mcd-foot{margin-top:auto;padding:var(--sp-2) var(--sp-3);border-top:1px solid var(--line);}
+.mcd-exp{
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);
+  width:100%;padding:var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  background:transparent;border:0;border-radius:var(--r-md);cursor:pointer;
+  font-size:var(--fs-caption);line-height:1.2;font-weight:600;
+  letter-spacing:var(--tr-body);color:var(--ink-2);
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease);
+}
+.mcd-exp-t{transition:color var(--d-fast) var(--ease);}
+/* The tactile disc. It carries its own ring and shadow so it lifts a hair off
+   the card even at rest, tints to the brand on hover, and the chevron flips
+   through it — down to open, up once open — on the panel's own easing. */
+.mcd-exp-ic{
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:30px;height:30px;border-radius:var(--r-full);
+  background:var(--sunken);color:var(--ink-3);box-shadow:var(--ring),var(--e1);
+  transition:background var(--d-base) var(--ease),color var(--d-base) var(--ease),
+             box-shadow var(--d-base) var(--ease);
+}
+.mcd-exp-ic .ic{width:16px;height:16px;transition:transform var(--d-base) var(--ease);}
+.mcd.open .mcd-exp-ic .ic{transform:rotate(180deg);}
+.mcd-exp:hover{background:var(--sunken);color:var(--ink);}
+.mcd-exp:hover .mcd-exp-ic{
+  background:var(--accent-wash);color:var(--accent);box-shadow:var(--ring),var(--e2);}
+.mcd-exp:active{transform:scale(.99);}
+.mcd-exp:active .mcd-exp-ic{box-shadow:var(--ring);}
+
+/* A skeleton card must not lift, and must not offer a hover target for a
+   record that is not there yet. */
+.mcd-sk{pointer-events:none;}
+/* The two placeholders that stand in for a control rather than for text, at the
+   control's own size — a 44px switch and a full-width small button. */
+.mcd-sk-cat{width:38%;height:24px;}
+.mcd-sk-tgl{width:44px;height:24px;flex-shrink:0;}
+.mcd-sk-btn{width:100%;height:32px;border-radius:var(--r-md);}
+
+/* ─────────────── NOTIFICATIONS PAGE ─────────────── */
+.nl,.pl{display:grid;grid-template-columns:minmax(0,1fr) 300px;
+  gap:var(--gap-section);align-items:start;}
+
+/* ── The phone mock ──
+   Deliberately theme-INDEPENDENT. It depicts a customer's handset, which does
+   not follow the admin's light/dark preference — an admin on the dark theme
+   still needs to see what the notification will actually look like. So these
+   are fixed values, drawn from the same palette as everything else but never
+   swapped by [data-theme]. */
+.phone-mock{background:#140F12;border-radius:36px;padding:var(--sp-3);box-shadow:var(--e4);}
+.ph-notch{width:72px;height:5px;background:rgba(255,255,255,.22);border-radius:3px;
+  margin:0 auto var(--sp-2);}
+.ph-screen{background:#FBF9F9;border-radius:24px;overflow:hidden;min-height:400px;}
+.ph-bar{background:#0E0A0C;height:28px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 var(--sp-4);}
+.ph-bar span{color:#FBF9F9;font-size:var(--fs-micro);font-weight:600;}
+.ph-ni{padding:var(--sp-3) var(--sp-4);background:#FFFFFF;border-bottom:1px solid #EBE5E7;
+  display:flex;gap:var(--gap-inline);align-items:flex-start;}
+.ph-badge{width:28px;height:28px;border-radius:var(--r-xs);background:#E30D3B;
+  color:#fff;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3);}
+.ph-badge .ic{width:16px;height:16px;}
+.ph-app{font-size:var(--fs-micro);font-weight:600;color:#B60C31;
+  text-transform:uppercase;letter-spacing:var(--tr-micro);}
+.ph-title{font-size:var(--fs-dense);font-weight:600;
+  color:#33292E;margin-top:var(--sp-half);}
+.ph-msg{font-size:var(--fs-caption);color:#5C4D54;margin-top:var(--sp-half);
+  line-height:var(--lh-dense);}
+.ph-filler{padding:var(--sp-3);border-bottom:1px solid #EBE5E7;}
+.ph-filler div{height:9px;background:#EBE5E7;border-radius:4px;margin-bottom:var(--gap-tight);}
+.ph-filler div:last-child{margin-bottom:0;}
+
+/* ── Sent-notification history ── */
+.nh-item{display:flex;gap:var(--sp-3);padding:var(--sp-3) 0;
+  border-bottom:1px solid var(--line);}
+.nh-item:last-child{border-bottom:none;}
+.nh-ico{width:42px;height:42px;border-radius:var(--r-md);
+  background:var(--accent-wash);
+  color:var(--accent-ink);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;box-shadow:var(--plate-bevel);}
+.nh-ico .ic{filter:var(--emboss);}
+.nh-title{font-size:var(--fs-dense);font-weight:600;color:var(--ink);}
+.nh-meta{font-size:var(--fs-caption);color:var(--ink-3);margin-top:var(--sp-half);}
+.nh-stamp{font-size:var(--fs-micro);line-height:var(--lh-micro);color:var(--ink-3);}
+
+/* An inline caution — the compose form's "this sends a real push" warning and
+   the customer-cap notice. --warning-ink rather than a hand-mixed brown: at
+   4.15:1 on the tint it is the deepest amber that still reads as amber. */
+.notice{
+  display:flex;gap:var(--gap-inline);align-items:flex-start;background:var(--warning-tint);
+  border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);
+  box-shadow:var(--ring-warning);
+  font-size:var(--fs-caption);line-height:var(--lh-body);
+  color:var(--warning-ink);margin-bottom:var(--gap-field);
+}
+.notice .ic{width:18px;height:18px;flex-shrink:0;color:var(--warning);margin-top:1px;}
+
+/* ─────────────── PROMO PREVIEW ─────────────── */
+/* This was the last gradient in the panel and it was defended on the grounds
+   that a coupon is artwork rather than UI. It still is — but a coupon that is
+   a different red from the rail, the buttons and the drawer head is artwork
+   for a different brand, and the three-stop ramp was doing exactly that.
+   Flat --accent, with the depth carried by the two translucent discs below:
+   a white one bleeding off the top-right corner and a darker one off the
+   bottom-left, which give the card the same lit-from-above read the gradient
+   was after without inventing a second brand colour. */
+.pc-prev{background:var(--accent);
+  border-radius:var(--r-lg);padding:var(--sp-6);
+  color:#fff;margin-bottom:var(--gap-field);box-shadow:var(--e3);
+  position:relative;overflow:hidden;isolation:isolate;}
+.pc-prev::before,.pc-prev::after{content:'';position:absolute;border-radius:50%;z-index:-1;}
+.pc-prev::after{right:-40px;top:-40px;width:150px;height:150px;
+  background:rgba(255,255,255,.12);}
+.pc-prev::before{left:-48px;bottom:-64px;width:180px;height:180px;
+  background:rgba(92,10,31,.18);}
+/* Explicit rgba rather than a stack of `opacity` values — four different
+   opacities on white text is four unnamed greys nobody can reason about. */
+.pc-brand{font-size:var(--fs-micro);font-weight:600;letter-spacing:var(--tr-wide);
+  color:rgba(255,255,255,.78);text-transform:uppercase;}
+/* The preview column is ~200px of usable width, and at 30px/4px tracking an
+   ordinary eight-character code (SUMMER25) overflowed it — `overflow-wrap`
+   then split it across two lines mid-word, which is the one thing a coupon
+   code must never do. 24px at 2px tracking carries codes up to ~11 characters
+   on one line; `anywhere` stays as the last resort for longer ones. */
+.pc-code{font-size:var(--fs-h2);font-weight:800;
+  letter-spacing:var(--tr-code);margin:var(--sp-2) 0 var(--gap-tight);overflow-wrap:anywhere;}
+.pc-disc{font-size:var(--fs-body-lg);font-weight:600;color:rgba(255,255,255,.95);}
+.pc-valid{font-size:var(--fs-micro);color:rgba(255,255,255,.72);
+  margin-top:var(--sp-3);font-variant-numeric:tabular-nums;}
+.pc-foot{margin-top:var(--sp-4);font-size:var(--fs-micro);
+  color:rgba(255,255,255,.56);letter-spacing:var(--tr-wide);}
+/* The promo code is typed in lowercase and stored uppercase, so the field shows
+   what will actually be saved. */
+.pc-code-input{text-transform:uppercase;}
+
+/* Explanatory panels are INFORMATION, so they take the information hue. This
+   is the panel's quietest use of a semantic colour and one of the most useful:
+   a helper block used to be the same tone as a form field, a tab track and a
+   fieldset, so nothing on the page distinguished "type here" from "read this".
+   The tone is the soft step, not the badge tint — --ink-2 reads 7.19:1 on it. */
+.helper{background:var(--info-soft);border-radius:var(--r-sm);box-shadow:var(--ring-info);
+  padding:var(--sp-3) var(--sp-4);font-size:var(--fs-caption);color:var(--ink-2);
+  line-height:var(--lh-body);}
+.helper b{display:block;margin-bottom:var(--gap-tight);font-size:var(--fs-micro);
+  text-transform:uppercase;letter-spacing:var(--tr-micro);color:var(--info-ink);font-weight:600;}
+
+/* ─────────────── CHARTS ─────────────── */
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-field);}
+.ag .card{margin-bottom:0;}
+.chart{position:relative;height:192px;}
+.chart svg{width:100%;height:100%;overflow:visible;display:block;}
+.chart .grid-line{stroke:var(--line);stroke-width:1;}
+/* Flat fills. The bars used to reference two SVG gradient defs; at the width a
+   24-hour histogram gives each bar, the ramp was invisible and all it did was
+   make the colour ambiguous against the legend. --accent-quiet is the identity
+   red, and the tallest bar takes the deeper action red so the peak reads without
+   needing a second hue. */
+.chart .bar{fill:var(--accent-quiet);rx:6;transition:opacity var(--d-fast) var(--ease);}
+.chart .bar.max{fill:var(--accent);}
+.chart .bar.zero{fill:var(--line);}
+.chart .bar.zero+.bar-val{fill:var(--ink-3);font-weight:400;}
+.chart .bar-hit{fill:transparent;cursor:pointer;}
+.chart .bar-lbl{font-size:var(--fs-micro);fill:var(--ink-3);text-anchor:middle;}
+.chart .bar-val{font-size:var(--fs-micro);font-weight:600;fill:var(--ink);text-anchor:middle;
+  font-variant-numeric:tabular-nums;}
+/* Hovering the chart dims every bar and the hovered group restores itself, so a
+   single bar is isolated without needing a legend or a crosshair. */
+.chart:hover .bar{opacity:.45;}
+.chart .bar-g:hover .bar{opacity:1;}
+.chart-tip{position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-118%);
+  background:var(--n-900);color:var(--n-50);font-size:var(--fs-caption);font-weight:600;
+  padding:var(--gap-tight) var(--sp-2);
+  border-radius:var(--r-sm);white-space:nowrap;box-shadow:var(--e3);
+  transition:opacity var(--d-fast) var(--ease);font-variant-numeric:tabular-nums;}
+.chart-tip.show{opacity:1;}
+[data-theme="dark"] .chart-tip{background:var(--n-700);}
+
+/* Deliveries by zone. */
+.zr{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-3);}
+.zn{font-size:var(--fs-dense);width:112px;font-weight:400;flex-shrink:0;color:var(--ink);}
+.zt{flex:1;height:10px;background:var(--line);border-radius:var(--r-full);overflow:hidden;}
+.zf{height:100%;border-radius:var(--r-full);background:var(--accent-quiet);width:0;
+  transition:width var(--d-deliberate) var(--ease);}
+.zv{font-size:var(--fs-dense);font-weight:600;width:40px;text-align:right;flex-shrink:0;
+  font-variant-numeric:tabular-nums;color:var(--ink);}
+
+/* Payment breakdown. */
+.prow{display:flex;align-items:center;margin-bottom:var(--sp-3);}
+.prow-lbl{font-size:var(--fs-dense);font-weight:500;width:132px;flex-shrink:0;color:var(--ink);}
+.ptrack{flex:1;height:12px;background:var(--line);border-radius:var(--r-full);
+  overflow:hidden;margin:0 var(--sp-3);}
+.pfill{height:100%;border-radius:var(--r-full);width:0;
+  transition:width var(--d-deliberate) var(--ease);}
+.pfill.brand{background:var(--accent-quiet);}
+.pfill.gold{background:var(--warning);}
+.prow-pct{font-size:var(--fs-dense);font-weight:600;width:40px;text-align:right;
+  font-variant-numeric:tabular-nums;color:var(--ink);}
+
+/* ─────────────── MENU ITEM CARDS (side panel) ─────────────── */
+/* Banded header, matching .card-title and .fset-title — the menu form sits in
+   the side panel beside a Details tab with banded sections, and a bare bold line
+   was the odd one out. */
+/* --surface with a ring, matching .fset — the fields inside are painted in
+   --sunken now, so a --sunken container would swallow them. */
+.mi-form{background:var(--surface);border-radius:var(--r-md);box-shadow:var(--ring-strong);
+  padding:var(--sp-4);margin-bottom:var(--gap-field);}
+.mi-form-title{
+  font-size:var(--fs-micro);font-weight:600;
+  text-transform:uppercase;letter-spacing:var(--tr-micro);color:var(--ink-3);
+  margin:calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-4);
+  padding:var(--sp-2) var(--sp-4);
+  background:var(--sunken);border-bottom:1px solid var(--line);
+  border-radius:calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0 0;
+}
+.mi-card{background:var(--surface-raised);border-radius:var(--r-md);
+  padding:var(--sp-3);margin-bottom:var(--sp-2);box-shadow:var(--ring),var(--e1),var(--lip);
+  display:flex;align-items:center;gap:var(--gap-inline);
+  transition:box-shadow var(--d-fast) var(--ease);}
+.mi-card:hover{box-shadow:var(--e2);}
+.mi-name{font-weight:600;font-size:var(--fs-dense);color:var(--ink);}
+.mi-desc{font-size:var(--fs-caption);color:var(--ink-3);margin:var(--sp-half) 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* 700, not 800. This is a 13px figure — at 800 Figtree closes the counters
+   on the digits and "J$1,850" turns into a smear. 800 belongs to the sizes
+   that can carry it (see §5). */
+.mi-price{font-size:var(--fs-dense);font-weight:700;
+  color:var(--accent);font-variant-numeric:tabular-nums;}
+
+/* ── Promo usage bar (P3-03) ──
+   `usedCount` is server-incremented at redemption, so this reflects reality;
+   before, every code read 0 uses forever. */
+.usage-track{
+  display:inline-block; width:52px; height:5px; margin-left:var(--gap-inline);
+  vertical-align:middle; border-radius:var(--r-full); overflow:hidden;
+  background:var(--line);
+}
+.usage-fill{ display:block; height:100%; border-radius:var(--r-full); }
+.usage-fill.u-ok{ background:var(--success); }
+.usage-fill.u-warning{ background:var(--warning); }
+.usage-fill.u-danger{ background:var(--danger); }
+
+/* ─────────────── Client review round (Sep 2026) ───────────────
+   Ported from the pre-redesign styles.css onto this token system. */
+
+/* Explanatory line under a page heading (e.g. Merchants). Pulled up so it
+   reads as part of the header group rather than floating above the stats. */
+.pg-note{font-size:13px;line-height:1.45;color:var(--ink-3);
+  margin:calc(var(--sp-4) * -1) 0 var(--sp-5);max-width:60ch;}
+
+/* DB-7: dashboard quick-action shortcut row. */
+.qa-row{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-4);}
+
+/* DB-3: a stat card that carries three named counts rather than one number. */
+.sc-triple{display:flex;flex-direction:column;gap:3px;margin-top:2px;}
+.sc-triple span{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--ink-3);}
+.sc-triple b{font-family:var(--ff);font-size:17px;font-weight:800;
+  letter-spacing:-.3px;color:var(--ink);min-width:1.4ch;}
+
+/* ── Driver roster cards (DV-1 … DV-8) ────────────────────────────────
+   A grid of status cards. Each one answers "what state is this driver in,
+   and what are their numbers" without a click. */
+.dcard-grid{display:grid;gap:var(--sp-4);grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
+.dcard-empty{grid-column:1/-1;}
+.dcard{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:var(--sp-4) var(--sp-5);box-shadow:var(--e1);
+  display:flex;flex-direction:column;gap:7px;min-width:0;
+}
+.dc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dc-name{font-family:var(--ff);font-size:15px;font-weight:800;
+  letter-spacing:-.2px;color:var(--ink);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dc-badges{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.dc-line{font-size:13px;color:var(--ink-2);min-width:0;}
+.dc-stats{display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums;}
+.dc-star{width:15px;height:15px;color:var(--star);}
+.dc-avail{font-weight:600;color:var(--success);}
+.dc-avail.muted{color:var(--ink-3);font-weight:500;}
+.dc-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+/* the online toggle sitting next to the status badge on a card */
+.dc-badges .tgl{transform:scale(.85);transform-origin:right center;}
+/* status dot variants */
+.dot.busy{background:var(--warning);}
+.dot.warn{background:var(--star);}
+.dot.off{background:var(--ink-3);}
+
+/* DV-5 document review — image thumbnails in the side panel */
+.doc-view{margin-top:10px;}
+.doc-view-lbl{font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:4px;}
+.doc-view img{width:100%;max-height:220px;object-fit:contain;border:1px solid var(--line);
+  border-radius:var(--r-sm);background:var(--sunken);}
+
+/* Promo preview card: the max-uses line (PR-*). */
+.pc-max{font-size:12px;opacity:.9;margin-top:2px;font-variant-numeric:tabular-nums;}
+.pc-max:empty{display:none;}

@@ -17,7 +17,7 @@ class SeChip extends StatelessWidget {
     required this.label,
     this.icon,
     this.fg = SeColors.ink700,
-    this.bg = SeColors.surface0,
+    this.bg = SeColors.surfaceRaised,
     this.selected = false,
     this.onTap,
   });
@@ -38,7 +38,7 @@ class SeChip extends StatelessWidget {
         color: bg,
         borderRadius: SeRadius.pill,
         border: selected
-            ? Border.all(color: SeColors.red500, width: 1.5)
+            ? Border.all(color: SeColors.brand, width: 1.5)
             : null,
       ),
       child: Row(
@@ -79,45 +79,47 @@ class SeCategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Squircle tile, not a bare floating circle: an unselected tile carries a
+    // soft tint fill + hairline so it reads as a *surface* sitting on the page,
+    // and the selected tile fills with its hue and lifts a touch. This is the
+    // difference between "icons dropped on a blank page" and a real storefront.
+    // The label is the widest part of this tile, not the plate, so the tile
+    // must be laid out in an equal-width slot (an `Expanded` per tile) and the
+    // label clamped to it. Sized to its own content in a `spaceBetween` row,
+    // "Pharmacy" simply ran off the right edge of a 320dp screen.
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Squircle tile, not a bare floating circle: an unselected tile
-          // carries a soft tint fill + hairline so it reads as a *surface*
-          // sitting on the page, and the selected tile fills with its hue and
-          // lifts a touch — the difference between "icons dropped on a blank
-          // page" and a real product surface.
           AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
-            width: 60,
-            height: 60,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
-              gradient: selected
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color.lerp(hue, Colors.white, 0.18)!, hue],
-                    )
-                  : null,
-              color: selected ? null : tint,
-              borderRadius: BorderRadius.circular(12),
+              // Flat, no gradient: a selected tile fills with its hue and lifts
+              // a touch; an unselected tile is a soft tint surface + hairline.
+              color: selected ? hue : tint,
+              borderRadius: BorderRadius.circular(SeRadius.md),
               border: selected
                   ? null
                   : Border.all(color: hue.withValues(alpha: 0.14), width: 1),
               boxShadow: selected
-                  ? SeElevation.glowColor(hue, opacity: 0.24)
+                  ? SeElevation.glowColor(hue, opacity: 0.20)
                   : SeElevation.e0,
             ),
-            child: Icon(icon, size: 27, color: selected ? Colors.white : hue),
+            child: Icon(icon, size: 26, color: selected ? Colors.white : hue),
           ),
           const SizedBox(height: 8),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: SeType.label.copyWith(
+              fontSize: 11.5,
               color: selected ? SeColors.ink900 : SeColors.ink500,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
             ),

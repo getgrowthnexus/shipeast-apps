@@ -1,0 +1,118 @@
+<!-- card: Orders | group: Screens · Main tabs | desc: Order history with the segmented status filter -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Orders</h1>
+    <p>Tab 3, and route <code>/order-history</code>. One card per order, filtered
+      by a segmented control on the cap.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-bottom">
+        <div class="cap-row">
+          <div>
+            <div class="cap-title">Orders</div>
+            <div class="cap-sub">1 in progress</div>
+          </div>
+        </div>
+        <div class="mt16">
+          <div class="shell-tabs">
+            <div class="on">All</div><div>Active</div><div>Completed</div><div>Cancelled</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad" style="padding-bottom:110px">
+          <div class="stack g12">
+            <div class="panel">
+              <div class="hstack g12" style="align-items:flex-start">
+                <div style="width:40px;height:40px;border-radius:var(--r-sm);background:var(--brand-soft);color:var(--brand-ink);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:20px;height:20px"><use href="#i-bike"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="t-title ell">Island Grill Morant Bay</div>
+                  <div class="t-label tnum mt2 ink-400">#SE-4821</div>
+                </div>
+                <span class="chip chip--brand">On the way</span>
+              </div>
+              <div class="t-bodyS ell" style="margin-top:11px">Curry Goat with Rice &amp; Peas, Festival, Ting</div>
+              <div style="height:1px;background:var(--ink-100);margin:12px 0 11px"></div>
+              <div class="hstack g12">
+                <span class="grow t-label ink-400 ell">Today, 6:42 PM</span>
+                <span class="tnum t-title">$3,450</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="hstack g12" style="align-items:flex-start">
+                <div style="width:40px;height:40px;border-radius:var(--r-sm);background:var(--success-soft);color:var(--success-ink);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:20px;height:20px"><use href="#i-checkCircle"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="t-title ell">Juici Patties</div>
+                  <div class="t-label tnum mt2 ink-400">#SE-4790</div>
+                </div>
+                <span class="chip chip--success">Delivered</span>
+              </div>
+              <div class="t-bodyS ell" style="margin-top:11px">Beef patty × 2, Cocoa bread</div>
+              <div style="height:1px;background:var(--ink-100);margin:12px 0 11px"></div>
+              <div class="hstack g12">
+                <span class="grow t-label ink-400 ell">Yesterday, 1:15 PM</span>
+                <span class="tnum t-title">$1,200</span>
+                <span class="hstack g4 t-label" style="color:var(--brand-action);font-weight:600">
+                  <svg class="i" style="width:15px;height:15px"><use href="#i-refresh"/></svg>Reorder
+                </span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="hstack g12" style="align-items:flex-start">
+                <div style="width:40px;height:40px;border-radius:var(--r-sm);background:var(--danger-soft);color:var(--danger-ink);display:grid;place-items:center;flex:none">
+                  <svg class="i" style="width:20px;height:20px"><use href="#i-close"/></svg>
+                </div>
+                <div class="grow">
+                  <div class="t-title ell">Fontana Pharmacy</div>
+                  <div class="t-label tnum mt2 ink-400">#SE-4788</div>
+                </div>
+                <span class="chip chip--danger">Cancelled</span>
+              </div>
+              <div class="t-bodyS ell" style="margin-top:11px">Panadol Extra</div>
+              <div style="height:1px;background:var(--ink-100);margin:12px 0 11px"></div>
+              <div class="hstack g12">
+                <span class="grow t-label ink-400 ell">28 Jul, 11:03 AM</span>
+                <span class="tnum t-title">$890</span>
+                <span class="hstack g4 t-label" style="color:var(--brand-action);font-weight:600">
+                  <svg class="i" style="width:15px;height:15px"><use href="#i-refresh"/></svg>Reorder
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="navbar">
+          <div><svg class="i"><use href="#i-home"/></svg><span>Home</span></div>
+          <div><svg class="i"><use href="#i-search"/></svg><span>Search</span></div>
+          <div class="on"><svg class="i"><use href="#i-ordersFill"/></svg><span>Orders</span></div>
+          <div><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span><span>Alerts</span></div>
+          <div><svg class="i"><use href="#i-user"/></svg><span>Profile</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Status tone</td><td>Keyed off the canonical <b>sets</b>, not individual statuses, so a status added
+        later inherits a sensible colour instead of falling through to grey. Active → brand, delivered → success,
+        cancelled → danger</td></tr>
+      <tr><td>Status label</td><td>Names the actual state ("Order Picked Up"), never the coarse bucket and never the
+        raw database value</td></tr>
+      <tr><td>Reorder</td><td>Text plus glyph, and only on finished orders. It is the second action on the card, so it
+        is words rather than a button</td></tr>
+      <tr><td>Card anatomy</td><td>40px status plate · name · reference in tabular label · status chip · one clamped
+        line of items · hairline · date, total, reorder</td></tr>
+    </table>
+  </div>
+</div>

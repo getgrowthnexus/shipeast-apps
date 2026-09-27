@@ -168,7 +168,7 @@ class _MainShellState extends State<MainShell> {
             width: 58,
             height: 58,
             decoration: const BoxDecoration(
-              gradient: SeColors.emberGradient,
+              color: SeColors.brandAction,
               shape: BoxShape.circle,
               boxShadow: SeElevation.glow,
             ),
@@ -187,13 +187,14 @@ class _MainShellState extends State<MainShell> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: SeColors.red500, width: 1.5),
+                      border:
+                          Border.all(color: SeColors.brandAction, width: 1.5),
                     ),
                     child: Text(
                       cart.cartCount > 9 ? '9+' : '${cart.cartCount}',
                       textAlign: TextAlign.center,
                       style: SeType.tabular(SeType.inter(9, FontWeight.w800,
-                          color: SeColors.red500)),
+                          color: SeColors.brandAction)),
                     ),
                   ),
                 ),
@@ -235,8 +236,10 @@ class _MainShellState extends State<MainShell> {
                 final isAlerts = _navItems[i]['label'] == 'Alerts';
                 final showBadge =
                     isAlerts && _unreadNotifications > 0 && !active;
+                // The action red, not the identity red: this is a control, and
+                // the two tones are not interchangeable (see SeColors).
                 final color =
-                    active ? SeColors.red500 : SeColors.ink400;
+                    active ? SeColors.brandAction : SeColors.ink400;
                 return Expanded(
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedIndex = i),
@@ -254,7 +257,7 @@ class _MainShellState extends State<MainShell> {
                                   horizontal: 16, vertical: 4),
                               decoration: BoxDecoration(
                                 color: active
-                                    ? SeColors.red50
+                                    ? SeColors.brandSoft
                                     : Colors.transparent,
                                 borderRadius: SeRadius.pill,
                               ),
@@ -273,7 +276,7 @@ class _MainShellState extends State<MainShell> {
                                 child: Container(
                                   padding: const EdgeInsets.all(2),
                                   decoration: BoxDecoration(
-                                    color: SeColors.red500,
+                                    color: SeColors.brandAction,
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                         color: SeColors.surface0, width: 1.5),

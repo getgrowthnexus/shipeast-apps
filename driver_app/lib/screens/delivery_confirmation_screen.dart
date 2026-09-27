@@ -11,7 +11,7 @@ import '../theme/se_icons.dart';
 import '../theme/se_motion.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_app_bar.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_button.dart';
 import '../widgets/se_card.dart';
@@ -220,10 +220,9 @@ class _DeliveryConfirmationScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      appBar: const SeTopBar(title: 'Delivery'),
-      body: SingleChildScrollView(
+    return SePageScaffold(
+      title: 'Delivery',
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
             SeSpacing.gutter, SeSpacing.x2, SeSpacing.gutter, SeSpacing.x8),
         child: Column(
@@ -377,7 +376,7 @@ class _DeliverySuccessSheet extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        gradient: SeColors.sunsetGradient,
+        color: SeColors.shell,
         borderRadius: SeRadius.sheetTop,
       ),
       child: SafeArea(
@@ -392,28 +391,28 @@ class _DeliverySuccessSheet extends StatelessWidget {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.20),
+                  color: SeColors.shellInk.withValues(alpha: 0.20),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(SeIcons.checkCircle,
-                    color: Colors.white, size: 42),
+                    color: SeColors.shellInk, size: 42),
               ),
               const SizedBox(height: SeSpacing.x5),
               Text('Delivery complete',
-                  style: SeType.h1.copyWith(color: Colors.white)),
+                  style: SeType.h1.copyWith(color: SeColors.shellInk)),
               const SizedBox(height: SeSpacing.x2),
               Text(
                 'Handed off to $customerName. Nice work.',
                 textAlign: TextAlign.center,
                 style: SeType.body
-                    .copyWith(color: Colors.white.withValues(alpha: 0.88)),
+                    .copyWith(color: SeColors.shellInk.withValues(alpha: 0.88)),
               ),
               const SizedBox(height: SeSpacing.x6),
 
               // Count-up earnings — the reward beat.
               Text('YOU EARNED',
                   style: SeType.eyebrow
-                      .copyWith(color: Colors.white.withValues(alpha: 0.80))),
+                      .copyWith(color: SeColors.shellInk.withValues(alpha: 0.80))),
               const SizedBox(height: SeSpacing.x1),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0, end: commission),
@@ -424,13 +423,13 @@ class _DeliverySuccessSheet extends StatelessWidget {
                 builder: (context, value, _) => Text(
                   Money.format(value),
                   style: SeType.tabular(SeType.display)
-                      .copyWith(color: Colors.white, fontSize: 40),
+                      .copyWith(color: SeColors.shellInk, fontSize: 40),
                 ),
               ),
               Text(
                 '${DriverPay.commissionLabel} of ${Money.format(orderTotal)}',
                 style: SeType.bodyS
-                    .copyWith(color: Colors.white.withValues(alpha: 0.78)),
+                    .copyWith(color: SeColors.shellInk.withValues(alpha: 0.78)),
               ),
 
               if (collectCash) ...[
@@ -438,18 +437,18 @@ class _DeliverySuccessSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(SeSpacing.x4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
+                    color: SeColors.shellInk.withValues(alpha: 0.18),
                     borderRadius: SeRadius.all(SeRadius.sm),
                   ),
                   child: Row(
                     children: [
-                      const Icon(SeIcons.cash, color: Colors.white, size: 20),
+                      const Icon(SeIcons.cash, color: SeColors.shellInk, size: 20),
                       const SizedBox(width: SeSpacing.x3),
                       Expanded(
                         child: Text(
                           'Remember to remit the ${Money.format(orderTotal)} cash you collected.',
                           style:
-                              SeType.bodyS.copyWith(color: Colors.white),
+                              SeType.bodyS.copyWith(color: SeColors.shellInk),
                         ),
                       ),
                     ],
@@ -464,15 +463,14 @@ class _DeliverySuccessSheet extends StatelessWidget {
                   width: double.infinity,
                   height: 54,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: SeRadius.all(SeRadius.md),
-                    boxShadow: SeElevation.e2,
+                  decoration: const BoxDecoration(
+                    color: SeColors.shellInk,
+                    borderRadius: SeRadius.pill,
                   ),
                   child: Text(
-                    'Back to Dashboard',
-                    style: SeType.jakarta(16, FontWeight.w700,
-                        color: SeColors.red600),
+                    'Back to dashboard',
+                    style: SeType.jakarta(16, FontWeight.w600,
+                        color: SeColors.shell),
                   ),
                 ),
               ),

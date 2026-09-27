@@ -3,7 +3,13 @@ import 'package:flutter/services.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_motion.dart';
 
-/// Elevation-aware card (SEDS §1.4). Optional press feedback when [onTap] is set.
+/// A content card. Optional press feedback when [onTap] is set.
+///
+/// 2026 restyle: the default tier is now **flat + hairline**, not a drop
+/// shadow. Every card in this app sits inside the lifted blush sheet, and
+/// stacking shadows on a surface that is already raised is what made the old
+/// screens read as a pile of receipts. Pass an explicit [shadow] for the rare
+/// thing that genuinely floats (a docked bar, a sheet).
 class SeCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -20,7 +26,7 @@ class SeCard extends StatefulWidget {
     required this.child,
     this.padding = const EdgeInsets.all(SeSpacing.cardPad),
     this.margin,
-    this.shadow = SeElevation.e1,
+    this.shadow = SeElevation.e0,
     this.radius = SeRadius.md,
     this.color,
     this.border,

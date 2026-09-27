@@ -1,0 +1,131 @@
+<!-- card: States & feedback | group: Components | desc: Empty states, skeletons, toasts and the tracking spine -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>States &amp; feedback</h1>
+    <p>A screen is not designed until its empty, loading and error faces are
+      designed too. These are the shapes that carry them.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Empty states</h2>
+    <div class="wrap g20" style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div style="width:372px">
+        <div class="empty">
+          <div class="medal"><div><svg class="i"><use href="#i-cart"/></svg></div></div>
+          <h3>Your cart is empty</h3>
+          <p>Browse merchants near you and add a few things — we will bring them over.</p>
+          <button class="btn btn--primary btn--md btn--auto">Browse merchants</button>
+        </div>
+      </div>
+      <div style="width:372px">
+        <div class="empty">
+          <div class="medal"><div><svg class="i"><use href="#i-storefront"/></svg></div></div>
+          <h3>No merchants yet</h3>
+          <p>We are onboarding Pharmacy partners near you — check back soon.</p>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>The medallion</td><td>116px <code>red50</code> disc holding a 74px disc of the hue at 14%, holding a
+        38px glyph. Layered for depth — not a flat grey icon on a blank page</td></tr>
+      <tr><td>Copy</td><td><code>h3</code> title, then <code>body</code> at <code>ink500</code>. The message says
+        what to do next, not that something is missing</td></tr>
+      <tr><td>CTA</td><td>Optional, and <b>medium, auto-width</b> — an empty state is not the place for a
+        full-bleed hero button</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Skeletons</h2>
+    <div class="stack g10 shimmer" style="background:#F8ECF0;padding:20px;border-radius:12px;max-width:412px">
+      <div style="background:#FFF6F8;border:1px solid #E6DAE0;border-radius:16px;padding:12px" class="hstack g12">
+        <div class="skel" style="width:56px;height:56px;border-radius:12px"></div>
+        <div class="grow">
+          <div class="skel" style="width:150px;height:14px;border-radius:6px"></div>
+          <div class="skel mt8" style="width:200px;height:11px;border-radius:5px"></div>
+        </div>
+      </div>
+      <div style="background:#FFF6F8;border:1px solid #E6DAE0;border-radius:16px;padding:12px" class="hstack g12">
+        <div class="skel" style="width:56px;height:56px;border-radius:12px"></div>
+        <div class="grow">
+          <div class="skel" style="width:150px;height:14px;border-radius:6px"></div>
+          <div class="skel mt8" style="width:200px;height:11px;border-radius:5px"></div>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Block colour</td><td><code>ink200</code> — a step above the card, so it reads on either surface</td></tr>
+      <tr><td>The animation</td><td>The <b>whole subtree</b> breathes opacity 1 → 0.5 → 1 over 1200ms, in unison.
+        Not a travelling sheen: a sweep across a list of eight rows is eight competing highlights</td></tr>
+      <tr><td>Shape</td><td>The skeleton copies the real row's geometry. A generic grey block that turns
+        into a different layout is worse than a spinner</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Toasts — the app's whole feedback vocabulary</h2>
+    <div class="stack g12" style="background:#F8ECF0;padding:20px;border-radius:12px;max-width:412px">
+      <div class="toast">
+        <div class="bar"></div>
+        <div class="badge"><svg class="i"><use href="#i-checkCircle"/></svg></div>
+        <p>Address saved</p>
+      </div>
+      <div class="toast toast--error">
+        <div class="bar"></div>
+        <div class="badge"><svg class="i"><use href="#i-warningCircle"/></svg></div>
+        <p>Please fill in both fields</p>
+      </div>
+      <div class="toast toast--info">
+        <div class="bar"></div>
+        <div class="badge"><svg class="i"><use href="#i-info"/></svg></div>
+        <p>Your driver is 5 minutes away</p>
+      </div>
+      <div class="toast toast--brand">
+        <div class="bar"></div>
+        <div class="badge"><svg class="i"><use href="#i-info"/></svg></div>
+        <p>Promo code ISLAND20 applied</p>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Position</td><td>Docked under the status bar, 10px below the safe inset, gutter-wide</td></tr>
+      <tr><td>Anatomy</td><td>A 5px tone bar, a 34px tinted badge, then the message at weight 500</td></tr>
+      <tr><td>Elevation</td><td><code>e3</code> — a toast floats over everything, so it is one of the few
+        surfaces allowed a real shadow</td></tr>
+      <tr><td>Dismissal</td><td>Tap, or it fades and slides out on its own</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The tracking spine</h2>
+    <div style="background:#F8ECF0;padding:20px;border-radius:12px;max-width:412px">
+      <div class="panel">
+        <div class="spine">
+          <div class="step done">
+            <div class="dot"><svg class="i"><use href="#i-check"/></svg></div>
+            <div class="ttl">Order placed</div>
+            <div class="sub">7:04 pm · Island Grill Morant Bay</div>
+          </div>
+          <div class="step done">
+            <div class="dot"><svg class="i"><use href="#i-check"/></svg></div>
+            <div class="ttl">Merchant accepted</div>
+            <div class="sub">7:06 pm</div>
+          </div>
+          <div class="step now">
+            <div class="dot"><svg class="i"><use href="#i-bike"/></svg></div>
+            <div class="ttl">On the way</div>
+            <div class="sub">Andre is 5 minutes away</div>
+          </div>
+          <div class="step">
+            <div class="dot"></div>
+            <div class="ttl ink-400">Delivered</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Done</td><td>Success fill, a check glyph, and the connector below it turns success too</td></tr>
+      <tr><td>Current</td><td>Action red with a 5px ring at 14% — the one live element on the screen</td></tr>
+      <tr><td>Pending</td><td><code>ink200</code> dot, <code>ink400</code> label. Present, but plainly not yet</td></tr>
+    </table>
+  </div>
+</div>

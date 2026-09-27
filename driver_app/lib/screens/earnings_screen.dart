@@ -11,6 +11,7 @@ import '../theme/se_typography.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_earnings_chart.dart';
 import '../widgets/se_empty_state.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_skeleton.dart';
 import '../widgets/se_stat_tile.dart';
 
@@ -84,14 +85,18 @@ class _EarningsScreenState extends State<EarningsScreen> {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          _header(),
-          _periodTabs(),
-          Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
+    return SePageScaffold(
+      showBack: false,
+      title: 'Earnings',
+      subtitle: 'Your earnings, delivery by delivery',
+      // The period scopes every figure below it, so it rides the cap rather
+      // than scrolling away from the numbers it governs.
+      capBottom: SeShellTabs(
+        tabs: _periods,
+        selected: _selectedPeriod,
+        onSelect: (i) => setState(() => _selectedPeriod = i),
+      ),
+      child: StreamBuilder<List<Map<String, dynamic>>>(
               stream: DriverFirestoreService.driverOrderHistoryStream(uid),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -138,8 +143,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
                               icon: SeIcons.bike,
                               label: 'Deliveries',
                               value: periodOrders.length,
-                              hue: SeColors.ocean500,
-                              tint: SeColors.oceanTint,
+                              hue: SeColors.info,
+                              tint: SeColors.infoSoft,
                             ),
                           ),
                         ],
@@ -163,7 +168,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       ),
                       const SizedBox(height: SeSpacing.x5),
 
-                      Text('RECENT DELIVERIES', style: SeType.eyebrow),
+                      const SeSectionTitle(title: 'Recent deliveries'),
                       const SizedBox(height: SeSpacing.x3),
                       _recentTrips(periodOrders),
                       const SizedBox(height: SeSpacing.x5),
@@ -172,94 +177,10 @@ class _EarningsScreenState extends State<EarningsScreen> {
                     ],
                   ),
                 );
-              },
-            ),
-          ),
-        ],
+        },
       ),
     );
   }
-
-  Widget _header() => Container(
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, SeSpacing.x4,
-                SeSpacing.gutter, SeSpacing.x5),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(SeIcons.walletFill,
-                      color: Colors.white, size: 22),
-                ),
-                const SizedBox(width: SeSpacing.x3),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Earnings',
-                        style: SeType.h2.copyWith(color: Colors.white)),
-                    Text('Your earnings, delivery by delivery',
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.82))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-
-  // Calm segmented control on a single track (no glow / gradient / shadow
-  // animation) — matches the History tabs and never flashes on tap.
-  Widget _periodTabs() => Container(
-        color: SeColors.surface0,
-        padding: const EdgeInsets.symmetric(
-            horizontal: SeSpacing.gutter, vertical: SeSpacing.x3),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: SeColors.surface50,
-            borderRadius: SeRadius.all(SeRadius.full),
-            border: Border.all(color: SeColors.ink200, width: 1),
-          ),
-          child: Row(
-            children: List.generate(_periods.length, (i) {
-              final selected = _selectedPeriod == i;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedPeriod = i),
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 140),
-                    curve: Curves.easeOut,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected ? SeColors.red500 : Colors.transparent,
-                      borderRadius: SeRadius.all(SeRadius.full),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _periods[i],
-                        style: SeType.label.copyWith(
-                          color: selected ? Colors.white : SeColors.ink500,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      );
 
   Widget _skeleton() => SeShimmer(
         child: Padding(
@@ -329,11 +250,11 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       width: 38,
                       height: 38,
                       decoration: const BoxDecoration(
-                        color: SeColors.red50,
+                        color: SeColors.brandSoft,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(SeIcons.bike,
-                          color: SeColors.red700, size: 18),
+                          color: SeColors.brandInk, size: 18),
                     ),
                     const SizedBox(width: SeSpacing.x3),
                     Expanded(
@@ -380,9 +301,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
   Widget _payoutCard(double total) => Container(
         padding: const EdgeInsets.all(SeSpacing.x5),
         decoration: BoxDecoration(
-          gradient: SeColors.emberGradient,
+          color: SeColors.shell,
           borderRadius: SeRadius.all(SeRadius.lg),
-          boxShadow: SeElevation.glow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,11 +313,11 @@ class _EarningsScreenState extends State<EarningsScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.20),
+                    color: SeColors.shellInk.withValues(alpha: 0.20),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(SeIcons.receipt,
-                      color: Colors.white, size: 20),
+                      color: SeColors.shellInk, size: 20),
                 ),
                 const SizedBox(width: SeSpacing.x3),
                 Expanded(
@@ -407,22 +327,22 @@ class _EarningsScreenState extends State<EarningsScreen> {
                       Text('EARNINGS DUE',
                           style: SeType.eyebrow.copyWith(
                               color:
-                                  Colors.white.withValues(alpha: 0.82))),
+                                  SeColors.shellInk.withValues(alpha: 0.82))),
                       Text(_periods[_selectedPeriod],
-                          style: SeType.title.copyWith(color: Colors.white)),
+                          style: SeType.title.copyWith(color: SeColors.shellInk)),
                     ],
                   ),
                 ),
                 Text(Money.format(total),
                     style: SeType.tabular(SeType.h2)
-                        .copyWith(color: Colors.white)),
+                        .copyWith(color: SeColors.shellInk)),
               ],
             ),
             const SizedBox(height: SeSpacing.x3),
             Text(
               'Payouts are arranged by the ShipEast office — check with dispatch for your schedule.',
               style: SeType.bodyS
-                  .copyWith(color: Colors.white.withValues(alpha: 0.80)),
+                  .copyWith(color: SeColors.shellInk.withValues(alpha: 0.80)),
             ),
           ],
         ),

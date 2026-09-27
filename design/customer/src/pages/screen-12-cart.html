@@ -1,0 +1,122 @@
+<!-- card: Cart | group: Screens · Ordering | desc: Line items with steppers, instructions, and the totals block -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Cart</h1>
+    <p>Route <code>/cart</code>. Editing quantities is the whole job here, so the
+      stepper runs at its larger size.</p>
+  </div>
+
+  <div class="ds-grid">
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Your cart</div><div class="cap-sub">6 items from Island Grill Morant Bay</div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-body pad">
+              <div class="stack g10">
+                <div class="panel" style="padding:12px">
+                  <div class="hstack g12">
+                    <div style="width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-50);display:grid;place-items:center;color:var(--ink-300);flex:none"><svg class="i"><use href="#i-food"/></svg></div>
+                    <div class="grow">
+                      <div class="t-title">Curry Goat with Rice &amp; Peas</div>
+                      <div class="t-bodyS tnum mt2">$2900   ·   $1450 each</div>
+                    </div>
+                    <div class="qty">
+                      <button class="qty-btn qty-btn--sub" style="width:32px;height:32px"><svg class="i"><use href="#i-minus"/></svg></button>
+                      <span class="n">2</span>
+                      <button class="qty-btn qty-btn--add" style="width:32px;height:32px"><svg class="i"><use href="#i-plus"/></svg></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="panel" style="padding:12px">
+                  <div class="hstack g12">
+                    <div style="width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-50);display:grid;place-items:center;color:var(--ink-300);flex:none"><svg class="i"><use href="#i-food"/></svg></div>
+                    <div class="grow">
+                      <div class="t-title">Festival (2 pcs)</div>
+                      <div class="t-bodyS tnum mt2">$300</div>
+                    </div>
+                    <div class="qty">
+                      <button class="qty-btn qty-btn--sub" style="width:32px;height:32px"><svg class="i"><use href="#i-minus"/></svg></button>
+                      <span class="n">1</span>
+                      <button class="qty-btn qty-btn--add" style="width:32px;height:32px"><svg class="i"><use href="#i-plus"/></svg></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="panel" style="padding:12px">
+                  <div class="hstack g12">
+                    <div style="width:56px;height:56px;border-radius:var(--r-sm);background:var(--surface-50);display:grid;place-items:center;color:var(--ink-300);flex:none"><svg class="i"><use href="#i-food"/></svg></div>
+                    <div class="grow">
+                      <div class="t-title">Ting</div>
+                      <div class="t-bodyS tnum mt2">$750   ·   $250 each</div>
+                    </div>
+                    <div class="qty">
+                      <button class="qty-btn qty-btn--sub" style="width:32px;height:32px"><svg class="i"><use href="#i-minus"/></svg></button>
+                      <span class="n">3</span>
+                      <button class="qty-btn qty-btn--add" style="width:32px;height:32px"><svg class="i"><use href="#i-plus"/></svg></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="center mt12"><button class="btn btn--ghost btn--md btn--auto"><svg class="i"><use href="#i-plus"/></svg>Add more items</button></div>
+
+              <div class="panel mt20">
+                <div class="t-eyebrow">SPECIAL INSTRUCTIONS</div>
+                <div class="t-body ink-400 mt6">e.g. extra spicy, no onions…</div>
+              </div>
+
+              <div class="panel mt14" style="padding:16px">
+                <div class="money"><span class="lbl">Subtotal</span><span class="amt">$3,850</span></div>
+                <div class="money"><span class="lbl">Delivery fee</span><span class="amt">$350</span></div>
+                <div class="money"><span class="lbl">Service fee</span><span class="amt">$385</span></div>
+                <div style="height:1px;background:var(--ink-200);margin:10px 0"></div>
+                <div class="money money--strong"><span class="lbl">Total</span><span class="amt">$4,585</span></div>
+              </div>
+            </div>
+            <div class="bottom-bar"><button class="btn btn--primary">Checkout · $4,585</button></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">With items</div>
+    </div>
+
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Your cart</div><div class="cap-sub">Nothing here yet</div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-body" style="display:grid;place-items:center">
+              <div class="empty">
+                <div class="medal"><div><svg class="i"><use href="#i-cart"/></svg></div></div>
+                <h3>Your cart is empty</h3>
+                <p>Browse merchants near you and add a few things — we will bring them over.</p>
+                <button class="btn btn--primary btn--md btn--auto">Browse merchants</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">Empty — no docked bar, because there is nothing to check out</div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Line price</td><td>Line total first, unit price second, separated by a wide middle dot. Tabular, so the
+        column does not jitter as quantities change</td></tr>
+      <tr><td>Stepper</td><td>The <code>large</code> variant — 32px buttons. Editing is the job of this screen</td></tr>
+      <tr><td>Add more</td><td>A ghost, auto-width, centred. It is a way back to the menu, not the screen's action</td></tr>
+      <tr><td>Docked bar</td><td>Carries the total in the label, so the number is on the button you are about to
+        press. It disappears entirely when the cart is empty</td></tr>
+      <tr><td>Money</td><td>Whole Jamaican dollars, integer, from one field. Displayed and charged from the same
+        value — never a float</td></tr>
+    </table>
+  </div>
+</div>

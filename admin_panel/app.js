@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    ShipEast Admin Portal — application logic
-   Firebase 10.x modular SDK. Styled through SEDS tokens (styles.css).
+   Firebase 10.x modular SDK. Styled through SEDS tokens (css/tokens.css).
    ═══════════════════════════════════════════════════════════════ */
 
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -211,32 +211,35 @@ function skeletonRows(cols,rows){
   return out;
 }
 
-// ── Empty-state illustrations (2-tone: coral/red + warm cream) ──
+// ── Empty-state illustrations ──
+// Flat 2D, four tones off the red ramp. The tones are CLASSES, not literals, so
+// the art re-tints with the theme (see the `.empty svg .a-*` block in
+// components.css). Never hard-code a colour here.
 var ART={
-  box:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<path d="M100 46 40 76v56l60 30 60-30V76z" fill="#F7B9C2"/>'+
-      '<path d="M100 46 40 76l60 30 60-30z" fill="#E1495F"/>'+
-      '<path d="M100 106v56l60-30V76z" fill="#C8102E"/>'+
-      '<path d="M70 61l60 30v22" stroke="#FFF1F3" stroke-width="6" fill="none" stroke-linecap="round"/>',
-  search:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<circle cx="90" cy="94" r="34" fill="none" stroke="#E1495F" stroke-width="10"/>'+
-      '<circle cx="90" cy="94" r="22" fill="#FFE0E5"/>'+
-      '<path d="M116 120l26 26" stroke="#C8102E" stroke-width="12" stroke-linecap="round"/>',
-  bell:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<path d="M100 56a30 30 0 0 1 30 30v26l12 16H58l12-16V86a30 30 0 0 1 30-30z" fill="#E1495F"/>'+
-      '<path d="M86 136a14 14 0 0 0 28 0z" fill="#C8102E"/>'+
-      '<circle cx="100" cy="50" r="7" fill="#C8102E"/>',
-  ticket:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<path d="M46 82h108v18a12 12 0 0 0 0 24v18H46v-18a12 12 0 0 0 0-24z" fill="#E1495F"/>'+
-      '<path d="M100 82v60" stroke="#FFF1F3" stroke-width="5" stroke-dasharray="8 8"/>'+
-      '<circle cx="72" cy="112" r="10" fill="#FFE0E5"/>',
-  users:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<circle cx="100" cy="88" r="24" fill="#E1495F"/>'+
-      '<path d="M56 152a44 44 0 0 1 88 0z" fill="#C8102E"/>',
-  store:'<circle cx="100" cy="104" r="66" fill="#FFF1F3"/>'+
-      '<path d="M56 88h88v62H56z" fill="#F7B9C2"/>'+
-      '<path d="M50 66h100l10 22H40z" fill="#E1495F"/>'+
-      '<path d="M86 150v-32h28v32z" fill="#C8102E"/>'
+  box:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<path d="M100 46 40 76v56l60 30 60-30V76z" class="a-soft"/>'+
+      '<path d="M100 46 40 76l60 30 60-30z" class="a-mid"/>'+
+      '<path d="M100 106v56l60-30V76z" class="a-deep"/>'+
+      '<path d="M70 61l60 30v22" class="a-sbg" stroke-width="6" fill="none" stroke-linecap="round"/>',
+  search:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<circle cx="90" cy="94" r="34" fill="none" class="a-smid" stroke-width="10"/>'+
+      '<circle cx="90" cy="94" r="22" class="a-pale"/>'+
+      '<path d="M116 120l26 26" class="a-sdeep" stroke-width="12" stroke-linecap="round"/>',
+  bell:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<path d="M100 56a30 30 0 0 1 30 30v26l12 16H58l12-16V86a30 30 0 0 1 30-30z" class="a-mid"/>'+
+      '<path d="M86 136a14 14 0 0 0 28 0z" class="a-deep"/>'+
+      '<circle cx="100" cy="50" r="7" class="a-deep"/>',
+  ticket:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<path d="M46 82h108v18a12 12 0 0 0 0 24v18H46v-18a12 12 0 0 0 0-24z" class="a-mid"/>'+
+      '<path d="M100 82v60" class="a-sbg" stroke-width="5" stroke-dasharray="8 8"/>'+
+      '<circle cx="72" cy="112" r="10" class="a-pale"/>',
+  users:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<circle cx="100" cy="88" r="24" class="a-mid"/>'+
+      '<path d="M56 152a44 44 0 0 1 88 0z" class="a-deep"/>',
+  store:'<circle cx="100" cy="104" r="66" class="a-bg"/>'+
+      '<path d="M56 88h88v62H56z" class="a-soft"/>'+
+      '<path d="M50 66h100l10 22H40z" class="a-mid"/>'+
+      '<path d="M86 150v-32h28v32z" class="a-deep"/>'
 };
 function emptyState(art,title,copy,cta){
   return '<div class="empty">'+
@@ -327,16 +330,37 @@ function ordersTodayFor(merchantId){
 }
 
 // ── Category glyphs (duotone tinted chips, per-category hue) ──
-var CATS={Food:{ic:'cat-food',cls:'c-food'},Grocery:{ic:'cat-grocery',cls:'c-grocery'},
-  Pharmacy:{ic:'cat-pharmacy',cls:'c-pharmacy'},Packages:{ic:'cat-packages',cls:'c-packages'}};
+/* `card` is the whole-card tint class — a very soft, transparent wash of the
+   category's own hue (see .mc-food & friends in pages.css) so the grid reads as
+   a set of merchant TYPES at a glance, without any card leaving the one system. */
+var CATS={Food:{ic:'cat-food',cls:'c-food',card:'mc-food'},Grocery:{ic:'cat-grocery',cls:'c-grocery',card:'mc-grocery'},
+  Pharmacy:{ic:'cat-pharmacy',cls:'c-pharmacy',card:'mc-pharmacy'},Packages:{ic:'cat-packages',cls:'c-packages',card:'mc-packages'}};
 function catIcon(cat,size){
   var c=CATS[cat]||{ic:'merchants',cls:'c-other'};
   return '<div class="cat-ico '+(size==='lg'?'lg ':'')+c.cls+'">'+icon(c.ic)+'</div>';
 }
+function catCard(cat){ return (CATS[cat]||{card:'mc-other'}).card; }
 function merchantMedia(m,size){
   if(m.imageUrl) return '<img class="thumb'+(size==='lg'?' lg':'')+'" src="'+esc(m.imageUrl)+'" alt="" '+
     'onerror="this.outerHTML=this.dataset.fb" data-fb="'+esc(catIcon(m.category,size))+'">';
   return catIcon(m.category,size);
+}
+/* The merchant-card cover — the same photo as merchantMedia, but as a band
+   rather than a chip.
+   Covers are uploaded through mountMerchantUploader at 1000×500, so 2:1 is the
+   asset's real shape and the image is never cropped by the frame it is put in.
+   That is also the answer to "the images look too circular": a 42px tile at a
+   16px radius is 38% round, which is a plate, and a plate is the right shape
+   for a GLYPH. A photograph wants an edge.
+   With no photo the band takes the category's own tint and glyph, so a merchant
+   without a cover still reads as a merchant of some particular kind rather than
+   as a hole in the grid. */
+function merchantCover(m){
+  var c=CATS[m.category]||{ic:'merchants',cls:'c-other'},
+      fb='<div class="mcd-fb '+c.cls+'">'+icon(c.ic)+'</div>';
+  if(!m.imageUrl) return fb;
+  return '<img class="mcd-img" src="'+esc(m.imageUrl)+'" alt="" '+
+    'onerror="this.outerHTML=this.dataset.fb" data-fb="'+esc(fb)+'">';
 }
 
 // ══════════════════════ THEME ══════════════════════
@@ -451,8 +475,8 @@ function closeMobileSidebar(){
    gold / teal / green dot reads the same everywhere. */
 var ACT_SECTIONS={
   orders:{one:'order',many:'orders',tone:'brand'},
-  overseas:{one:'shop & deliver request',many:'shop & deliver requests',tone:'gold'},
-  customers:{one:'customer',many:'customers',tone:'ocean'},
+  overseas:{one:'shop & deliver request',many:'shop & deliver requests',tone:'warning'},
+  customers:{one:'customer',many:'customers',tone:'info'},
   drivers:{one:'driver',many:'drivers',tone:'success'}
 };
 var ACT_ORDER=['orders','overseas','customers','drivers'];
@@ -859,7 +883,10 @@ function startListeners(){
 function stopListeners(){ unsubscribers.forEach(function(u){ u(); }); unsubscribers=[]; }
 
 // ══════════════════════ SPARKLINE ══════════════════════
-function sparkline(values,color){
+// `tone` is a CSS hook, not a colour: it becomes .spark-<tone>, which sets the
+// svg's `color`, and every paint below resolves through currentColor. That is
+// what keeps the sparkline on-theme without a hex ever entering this file.
+function sparkline(values,tone){
   if(!values||values.length<2) return '';
   var w=120,h=26,max=Math.max.apply(null,values)||1;
   var pts=values.map(function(v,i){
@@ -868,12 +895,14 @@ function sparkline(values,color){
   var d=pts.map(function(p,i){ return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1); }).join(' ');
   var area=d+' L'+w+' '+h+' L0 '+h+' Z';
   var uid='sp'+Math.random().toString(36).slice(2,8);
-  return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
+  return '<svg class="spark spark-'+(tone||'accent')+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true">'+
     '<defs><linearGradient id="'+uid+'" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0%" stop-color="'+color+'" stop-opacity=".28"/>'+
-      '<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs>'+
+      // .28 put a visible red haze behind the stat number it sits under; .20 keeps
+      // the fill as a hint of volume without competing with the value.
+      '<stop offset="0%" stop-color="currentColor" stop-opacity=".20"/>'+
+      '<stop offset="100%" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>'+
     '<path d="'+area+'" fill="url(#'+uid+')"/>'+
-    '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
+    '<path d="'+d+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
   '</svg>';
 }
 function hourlyCounts(list){
@@ -906,8 +935,8 @@ function renderDashboard(){
   countUp($('drv-ondel'),onDelivery);
   countUp($('drv-avail'),onlineDrv.length-onDelivery);
 
-  var sp1=$('spark-orders'); if(sp1) sp1.innerHTML=sparkline(hourlyCounts(todayOrders),'#C8102E');
-  var sp2=$('spark-revenue'); if(sp2) sp2.innerHTML=sparkline(hourlyCounts(deliveredToday),'#F5A524');
+  var sp1=$('spark-orders'); if(sp1) sp1.innerHTML=sparkline(hourlyCounts(todayOrders),'accent');
+  var sp2=$('spark-revenue'); if(sp2) sp2.innerHTML=sparkline(hourlyCounts(deliveredToday),'money');
 
   var tbody=$('dash-tbody');
   if(!loadedOnce.orders){ tbody.innerHTML=skeletonRows(8,5); return; }
@@ -934,10 +963,13 @@ function renderDashboard(){
     // DB-5: recent orders now show the destination and open on a row click.
     return '<tr class="row-click" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'">'+
       '<td><span class="cell-id">'+esc(shortId(o.id))+'</span>'+typeBadge(o.type)+'</td>'+
-      '<td>'+esc(o.customer)+'</td>'+
-      '<td>'+esc(o.merchant)+'</td>'+
+      // The column is a fixed width now, so a long name ellipsises rather than
+      // widening it. title= is what gives it back — nothing in a table is ever
+      // the only place a value can be read, but it must not become unreadable.
+      '<td title="'+esc(o.customer)+'">'+esc(o.customer)+'</td>'+
+      '<td title="'+esc(o.merchant)+'">'+esc(o.merchant)+'</td>'+
       '<td class="cell-mute cell-clip" title="'+esc(dest)+'">'+esc(dest)+'</td>'+
-      '<td class="cell-mute">'+esc(o.driver)+'</td>'+
+      '<td class="cell-mute" title="'+esc(o.driver)+'">'+esc(o.driver)+'</td>'+
       '<td class="right cell-strong">'+esc(o.amount)+'</td>'+
       '<td>'+badge(o.status)+'</td>'+
       '<td><button class="aicon ai-v" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'" title="View order" aria-label="View order">'+icon('view')+'</button></td>'+
@@ -1072,9 +1104,9 @@ function renderOrders(){
       // Beside the id, not in its own column: a package job needs to be
       // obvious at a glance, and the orders table is already nine columns wide.
       '<td><span class="cell-id">'+esc(shortId(o.id))+'</span>'+typeBadge(o.type)+'</td>'+
-      '<td>'+esc(o.customer)+'</td>'+
-      '<td>'+esc(o.merchant)+'</td>'+
-      '<td class="cell-mute">'+esc(o.driver)+'</td>'+
+      '<td title="'+esc(o.customer)+'">'+esc(o.customer)+'</td>'+
+      '<td title="'+esc(o.merchant)+'">'+esc(o.merchant)+'</td>'+
+      '<td class="cell-mute" title="'+esc(o.driver)+'">'+esc(o.driver)+'</td>'+
       '<td class="right cell-strong">'+esc(o.amount)+'</td>'+
       '<td><span class="bdg bg-neutral plain">'+esc(o.payment)+'</span></td>'+
       '<td>'+badge(o.status)+'</td>'+
@@ -1407,8 +1439,8 @@ function renderDrivers(){
     el.innerHTML=
       statCard('drivers','Total Drivers',drivers.length,'','')+
       statCard('bolt','Online',onlineC,delC+' on a delivery','success')+
-      statCard('orders','Available',drivers.filter(function(d){ return d.available; }).length,'Online and free','ocean')+
-      statCard('clock','Pending Approval',pendC,'Awaiting review','gold');
+      statCard('orders','Available',drivers.filter(function(d){ return d.available; }).length,'Online and free','info')+
+      statCard('clock','Pending Approval',pendC,'Awaiting review','warning');
   }
   var grid=$('drivers-grid'); if(!grid) return;
   if(!loadedOnce.drivers){
@@ -2161,11 +2193,11 @@ function renderCustomers(){
     var totalSpend=customers.reduce(function(s,c){ return s+customerValue(c.id); },0);
     stats.innerHTML=
       statCard('users','Total Customers',customers.length,'','')+
-      statCard('orders','Customers Who Ordered',ordering,customers.length?Math.round((ordering/customers.length)*100)+'% of accounts':'','ocean')+
+      statCard('orders','Customers Who Ordered',ordering,customers.length?Math.round((ordering/customers.length)*100)+'% of accounts':'','info')+
       statCard('bolt','New This Month',newThisMonth,'joined since the 1st','success')+
-      statCard('star','Repeat Customers',repeat,REPEAT_ORDER_THRESHOLD+'+ delivered orders','gold')+
+      statCard('star','Repeat Customers',repeat,REPEAT_ORDER_THRESHOLD+'+ delivered orders','warning')+
       statCard('clock','Inactive Customers',inactive,'no order in '+INACTIVE_DAYS_THRESHOLD+' days','')+
-      statCard('revenue','Total Customer Spend',money(totalSpend),'lifetime delivered','gold')+
+      statCard('revenue','Total Customer Spend',money(totalSpend),'lifetime delivered','warning')+
       statCard('close','Disabled',disabledCount,disabledCount?'blocked from signing in':'','');
   }
 
@@ -2190,8 +2222,8 @@ function renderCustomers(){
     var count=customerOrders(c.id).length;
     var last=customerLastOrder(c.id);   // CU-3
     return '<tr class="row-click'+(c.disabled?' row-muted':'')+'" data-action="view-customer" data-cid="'+esc(c.id)+'">'+
-      '<td><b>'+esc(c.name)+'</b></td>'+
-      '<td class="cell-mute">'+esc(c.email)+'</td>'+
+      '<td title="'+esc(c.name)+'"><b>'+esc(c.name)+'</b></td>'+
+      '<td class="cell-mute" title="'+esc(c.email)+'">'+esc(c.email)+'</td>'+
       '<td class="cell-mute num">'+esc(phoneFmt(c.phone))+'</td>'+
       '<td class="right cell-id">'+count+'</td>'+
       '<td class="cell-mute num">'+(last?esc(last.toLocaleDateString('en-JM',{month:'short',day:'numeric',year:'numeric'})):'—')+'</td>'+
@@ -2360,11 +2392,11 @@ function toggleCustomerDisabled(uid){
   $('cf-title').textContent='Disable '+c.name+'?';
   $('cf-body').innerHTML='They will be signed out immediately and cannot sign in again '+
     'until re-enabled. Their past orders are kept.'+
-    '<label for="cf-reason" style="display:block;margin-top:12px;font-size:13px">Reason (required)</label>'+
-    '<select id="cf-reason" style="width:100%;margin-top:6px">'+
+    '<div class="fr fr-standalone"><label for="cf-reason">Reason <small>(required)</small></label>'+
+    '<select id="cf-reason">'+
       '<option value="">Select a reason…</option>'+
       DISABLE_REASONS.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('')+
-    '</select>';
+    '</select></div>';
   var ok=$('cf-ok'); ok.textContent='Disable account'; ok.className='btn btn-danger';
   confirmResolve=function(confirmed){
     var reason=(($('cf-reason')||{}).value||'').trim();
@@ -2450,7 +2482,7 @@ function renderOverseas(){
     // every terminal state (completed / declined / cancelled / expired).
     stats.innerHTML=
       statCard('send','New Requests',s.newCount,'awaiting review','')+
-      statCard('clock','Awaiting Customer',s.awaitingCustomer,'quote sent, waiting for response','gold')+
+      statCard('clock','Awaiting Customer',s.awaitingCustomer,'quote sent, waiting for response','warning')+
       statCard('success','Closed',s.closed,s.counts[Overseas.COMPLETED]+' completed · '+s.counts[Overseas.DECLINED]+' declined','success');
   }
 
@@ -2479,10 +2511,10 @@ function renderOverseas(){
     acts+='</div>';
     return '<tr>'+
       '<td><span class="cell-id">'+esc(inquiryRef(i.id))+'</span></td>'+
-      '<td><b>'+esc(i.customerName)+'</b><div class="cell-mute">'+esc(i.originCountry)+'</div></td>'+
-      '<td>'+esc(i.recipientName)+'</td>'+
+      '<td title="'+esc(i.customerName)+'"><b>'+esc(i.customerName)+'</b><div class="cell-mute">'+esc(i.originCountry)+'</div></td>'+
+      '<td title="'+esc(i.recipientName)+'">'+esc(i.recipientName)+'</td>'+
       '<td class="cell-mute">'+esc(i.recipientParish)+'</td>'+
-      '<td class="cell-mute">'+listCell+'</td>'+
+      '<td class="cell-mute" title="'+esc(i.itemCategory)+' · '+esc(i.itemDescription)+'">'+listCell+'</td>'+
       '<td class="right num">'+esc(inquiryBudget(i.budget))+'</td>'+
       '<td>'+inquiryBadge(i.status)+'</td>'+
       // A brand-new enquiry has no resolved timestamp yet, and "—" would read
@@ -2865,34 +2897,121 @@ function renderMerchantStats(){
   el.innerHTML=
     statCard('merchants','Total Merchants',merchants.length,'','')+
     statCard('check','Open Now',openC,'Accepting orders','success')+
-    statCard('clock','Closed',merchants.length-openC,'Not accepting','gold');
+    statCard('clock','Closed',merchants.length-openC,'Not accepting','warning');
+}
+/* The loading state has to be card-shaped too. skeletonRows() draws <tr>s, so
+   reusing it here would have put a table inside a grid; the .sk blocks and the
+   pulse are the same tokens, only the frame differs. Eight, because that is two
+   full rows at the desktop four-up and the grid should not visibly reflow when
+   the real data lands. */
+function merchantSkeletons(n){
+  var out='';
+  for(var i=0;i<(n||8);i++){
+    // Built from the REAL card's own boxes, so the placeholder is exactly the
+    // height of the thing it stands in for and the grid does not jump when the
+    // data lands.
+    out+='<div class="mcd mcd-sk">'+
+      '<div class="mcd-cover"><div class="sk"></div></div>'+
+      '<div class="mcd-body">'+
+        '<div class="mcd-id">'+
+          '<div class="mcd-name"><span class="sk sk-line" style="width:84%"></span></div>'+
+          '<div class="sk sk-pill mcd-sk-cat"></div>'+
+        '</div>'+
+        '<div class="mcd-line one"><span class="sk sk-line" style="width:62%"></span></div>'+
+        '<div class="mcd-stats"><div class="mcd-row">'+
+          '<span class="sk sk-line" style="width:52%"></span>'+
+          '<span class="sk sk-pill mcd-sk-tgl"></span>'+
+        '</div></div>'+
+      '</div>'+
+      '<div class="mcd-foot"><div class="sk mcd-sk-btn"></div></div>'+
+    '</div>';
+  }
+  return out;
 }
 function renderMerchants(){
   renderMerchantStats();
-  var tbody=$('merchants-tbody'); if(!tbody) return;
-  if(!loadedOnce.merchants){ tbody.innerHTML=skeletonRows(9,5); return; }
+  var cnt=$('merchants-count');
+  if(cnt) cnt.textContent=loadedOnce.merchants
+    ? merchants.length+(merchants.length===1?' store':' stores')
+    : '';
+  var grid=$('merchants-grid'); if(!grid) return;
+  if(!loadedOnce.merchants){ grid.innerHTML=merchantSkeletons(8); return; }
   if(!merchants.length){
-    tbody.innerHTML=emptyRow(9,'store','No merchants yet','Add a restaurant, grocer, or pharmacy to start taking orders.');
+    // The empty state gets a card of its own to sit in — the grid itself has
+    // no surface, so without one the illustration would float on the page
+    // ground with nothing holding it.
+    grid.innerHTML='<div class="card mgrid-full">'+
+      emptyState('store','No merchants yet',
+        'Add a restaurant, grocer, or pharmacy to start taking orders.')+'</div>';
     return;
   }
-  tbody.innerHTML=merchants.map(function(m){
-    return '<tr>'+
-      '<td><div class="cell-media">'+merchantMedia(m)+'<b>'+esc(m.name)+'</b></div></td>'+
-      '<td><span class="bdg bg-info plain">'+esc(m.category)+'</span></td>'+
-      '<td class="cell-mute num">'+esc(phoneFmt(m.phone))+'</td>'+
-      '<td class="cell-mute" style="max-width:180px;font-size:12px">'+esc(m.address)+'</td>'+
-      '<td class="right cell-id">'+ordersTodayFor(m.id)+'</td>'+
-      '<td>'+starsOrNone(m.rating,m.ratingCount)+'</td>'+
-      '<td>'+badge(m.open?'Open':'Closed')+'</td>'+
-      '<td><label class="tgl" title="Toggle open"><input type="checkbox"'+(m.open?' checked':'')+
-        ' class="tgl-merchant" data-id="'+esc(m.id)+'" aria-label="Merchant open"><span class="ts"></span></label></td>'+
-      '<td><div class="cell-actions">'+
-        '<button class="aicon ai-v" data-action="view-merchant" data-id="'+esc(m.id)+'" title="View" aria-label="View merchant">'+icon('view')+'</button>'+
-        '<button class="aicon ai-e" data-action="edit-merchant" data-id="'+esc(m.id)+'" title="Edit" aria-label="Edit merchant">'+icon('edit')+'</button>'+
-        '<button class="aicon ai-d" data-action="del-merchant" data-id="'+esc(m.id)+'" title="Delete" aria-label="Delete merchant">'+icon('delete')+'</button>'+
-      '</div></td>'+
-    '</tr>';
+  grid.innerHTML=merchants.map(function(m){
+    var id=esc(m.id),open=!!m.open,shown=!!expandedMerchants[m.id];
+    return '<article class="mcd '+catCard(m.category)+(shown?' open':'')+'">'+
+      // ── Cover. The state badge rides on the photo rather than sitting in
+      //    the body: open/closed is the fact you scan a grid FOR, and up here
+      //    it is in the same place on all four cards in a row.
+      '<div class="mcd-cover">'+merchantCover(m)+
+        '<div class="mcd-state">'+badge(open?'Open':'Closed')+'</div>'+
+      '</div>'+
+      // ── The default half: who they are, what they sell, how to reach them,
+      //    and the one switch that changes what customers see right now. Five
+      //    facts, every one of them a fixed height — see .mcd-name in pages.css
+      //    for why that is the whole trick behind cards that stay the same size.
+      '<div class="mcd-body">'+
+        '<div class="mcd-id">'+
+          '<h3 class="mcd-name" title="'+esc(m.name)+'">'+esc(m.name)+'</h3>'+
+          '<span class="bdg bg-info plain bdg-cap mcd-cat">'+esc(m.category)+'</span>'+
+        '</div>'+
+        // Glyph-led, because a card has no column header to name the value and
+        // an uppercase caption would cost another line to say what a phone
+        // handset says instantly.
+        '<div class="mcd-line one">'+icon('phone','ic-xs')+'<span class="num">'+esc(phoneFmt(m.phone))+'</span></div>'+
+        '<div class="mcd-stats">'+
+          // The switch is the one control in the panel that writes to Firestore
+          // on a single click with no confirmation, so it says what it does in
+          // words instead of relying on a title attribute — and the words never
+          // change, because the STATE is the badge on the cover.
+          '<div class="mcd-row"><span class="mcd-k">Accepting orders</span>'+
+            '<label class="tgl" title="Toggle open"><input type="checkbox"'+(open?' checked':'')+
+              ' class="tgl-merchant" data-id="'+id+'" aria-label="Merchant open"><span class="ts"></span></label>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      // ── The revealed half. An address runs to one line or three, a rating is
+      //    a star row or the words "No ratings yet" — variable heights, all of
+      //    them, which is exactly why they are behind the button.
+      '<div class="mcd-more" id="mcd-more-'+id+'">'+
+        '<div class="mcd-line">'+icon('map-pin','ic-xs')+'<span class="mcd-addr">'+esc(m.address)+'</span></div>'+
+        '<div class="mcd-row"><span class="mcd-k">Orders Today</span>'+
+          '<span class="mcd-v num">'+ordersTodayFor(m.id)+'</span></div>'+
+        '<div class="mcd-row"><span class="mcd-k">Rating</span>'+
+          '<span class="mcd-v">'+starsOrNone(m.rating,m.ratingCount)+'</span></div>'+
+        '<div class="mcd-acts">'+
+          '<button class="aicon ai-v" data-action="view-merchant" data-id="'+id+'" title="View" aria-label="View merchant">'+icon('view')+'</button>'+
+          '<button class="aicon ai-e" data-action="edit-merchant" data-id="'+id+'" title="Edit" aria-label="Edit merchant">'+icon('edit')+'</button>'+
+          '<button class="aicon ai-d" data-action="del-merchant" data-id="'+id+'" title="Delete" aria-label="Delete merchant">'+icon('delete')+'</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="mcd-foot">'+
+        '<button type="button" class="mcd-exp" data-action="expand-merchant" data-id="'+id+'" '+
+          'aria-expanded="'+(shown?'true':'false')+'" aria-controls="mcd-more-'+id+'">'+
+          '<span class="mcd-exp-t">'+(shown?'Hide details':'View details')+'</span>'+
+          '<span class="mcd-exp-ic" aria-hidden="true">'+icon('caret-down')+'</span>'+
+        '</button>'+
+      '</div>'+
+    '</article>';
   }).join('');
+}
+/* Which cards are open, by merchant id. It has to live OUTSIDE the DOM: the
+   grid is rebuilt wholesale on every Firestore snapshot, and flipping a card's
+   own "Accepting orders" switch causes one — so a state held on the element
+   would collapse the card the moment you used the control inside it. */
+var expandedMerchants={};
+function toggleMerchantCard(id){
+  if(expandedMerchants[id]) delete expandedMerchants[id];
+  else expandedMerchants[id]=true;
+  renderMerchants();
 }
 /* ── Merchant cover uploader (P4-01, upload-only, inline) ─────────────
    Built once and re-pointed at whichever merchant is open. `#m-imageurl` is a
@@ -3185,7 +3304,9 @@ function openMerchantPanel(id){
       // P5-06. Whether this merchant feeds nearest-first driver dispatch.
       row('Pickup Location',(m.lat!=null&&m.lng!=null)
         ?'<span class="sp-val sm num">'+esc(formatLatLng(m.lat,m.lng))+'</span>'
-        :'<span class="sp-val sm" style="color:var(--gold)">Not set — no distance ranking</span>',true)+'</div>'+
+        // --gold was never declared, so this warning used to render in the
+        // inherited body colour and read as a normal value, not a gap.
+        :'<span class="sp-val sm sp-warn">Not set — no distance ranking</span>',true)+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Contact</div>'+
       row('Phone','<span class="num">'+esc(phoneFmt(m.phone))+'</span>')+
       row('Email','<span class="sp-val sm">'+esc(m.email)+'</span>',true)+'</div>'+
@@ -3288,7 +3409,7 @@ function renderMenuItems(){
         (item.description?'<div class="mi-desc">'+esc(item.description)+'</div>':'')+
         '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">'+
           '<span class="mi-price">'+money(item.price)+'</span>'+
-          '<span class="bdg bg-info plain" style="font-size:10px;text-transform:capitalize">'+esc(item.category)+'</span>'+
+          '<span class="bdg bg-info plain bdg-cap">'+esc(item.category)+'</span>'+
         '</div>'+
       '</div>'+
       '<div class="cell-actions">'+
@@ -3381,15 +3502,14 @@ function renderNotifHist(){
     // deliveredCount / openedCount / failedCount are written back by
     // onNotificationCreated after the send; each is briefly null on a
     // just-sent push, so each is only shown once present.
-    var mute='font-size:11px;color:var(--text-mute)';
-    var stat=function(txt){ return '<span style="'+mute+'" class="num">'+txt+'</span>'; };
+    var stat=function(txt){ return '<span class="num nh-stamp">'+txt+'</span>'; };
     var chips=[];
     if(n.delivered!=null) chips.push(stat('Delivered to '+n.delivered+' device'+(n.delivered===1?'':'s')));
     if(n.opened!=null){
       chips.push(stat(n.opened+' opened'));
       if(n.delivered) chips.push(stat('Tap rate '+Math.round((n.opened/n.delivered)*100)+'%'));
     }
-    if(n.failed) chips.push('<span style="font-size:11px;color:var(--danger)" class="num">'+n.failed+' failed</span>');
+    if(n.failed) chips.push('<span class="num nh-stamp" style="color:var(--danger)">'+n.failed+' failed</span>');
     // NT-3: a scheduled push that has not gone out yet.
     var schedChip='';
     if(n.scheduledFor&&!n.dispatched){
@@ -3565,7 +3685,7 @@ function renderPromos(){
     // anything — so "why didn't this apply?" has an answer right in the table.
     var eligNote=PromoEligibility.describeEligibility(p.eligibility);
     return '<tr>'+
-      '<td><b class="cell-id" style="letter-spacing:1.2px">'+esc(p.code)+'</b>'+
+      '<td><b class="cell-id cell-code">'+esc(p.code)+'</b>'+
         (eligNote?'<div class="cell-mute" style="font-size:10.5px;font-weight:500;margin-top:2px">'+esc(eligNote)+'</div>':'')+
       '</td>'+
       '<td class="cell-strong">'+esc(p.discount)+'</td>'+
@@ -3860,9 +3980,9 @@ function renderAnalytics(){
     var uniq=new Set(os.map(function(o){ return o.customer; })).size;
     var avg=completed.length?Math.round(revenue/completed.length):0;
     analyticsStats[p]=[
-      {lbl:'Revenue',val:money(revenue),ic:'revenue',accent:'gold'},
+      {lbl:'Revenue',val:money(revenue),ic:'revenue',accent:'warning'},
       {lbl:'Orders',val:String(os.length),ic:'orders',accent:''},
-      {lbl:'Customers',val:String(uniq),ic:'users',accent:'ocean'},
+      {lbl:'Customers',val:String(uniq),ic:'users',accent:'info'},
       {lbl:'Avg Order Value',val:money(avg),ic:'receipt',accent:'success'}
     ];
   });
@@ -3940,13 +4060,10 @@ function renderBarChart(){
   }).join('');
 
   host.innerHTML=
+    // No <defs>: the bars are flat fills set in pages.css (.bar / .bar.max).
+    // The two gradients that used to live here were referenced by nothing.
     '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(cfg.title)+'">'+
-      '<defs>'+
-        '<linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0">'+
-          '<stop offset="0%" stop-color="#C8102E"/><stop offset="100%" stop-color="#E1495F"/></linearGradient>'+
-        '<linearGradient id="barGradMax" x1="0" y1="1" x2="0" y2="0">'+
-          '<stop offset="0%" stop-color="#E11D34"/><stop offset="100%" stop-color="#FF6A3D"/></linearGradient>'+
-      '</defs>'+grid+bars+
+      grid+bars+
     '</svg><div class="chart-tip" id="chart-tip"></div>';
 }
 function renderZones(){
@@ -3991,7 +4108,7 @@ function renderTopMerch(){
     return;
   }
   el.innerHTML=data.slice(0,5).map(function(m){
-    return '<tr><td><b>'+esc(m.n)+'</b></td>'+
+    return '<tr><td title="'+esc(m.n)+'"><b>'+esc(m.n)+'</b></td>'+
       '<td class="right cell-id">'+m.o+'</td>'+
       '<td class="right cell-strong">'+money(m.r)+'</td></tr>';
   }).join('');
@@ -4046,8 +4163,21 @@ function closeSidePanel(){
 }
 
 // ══════════════════════ EVENT DELEGATION ══════════════════════
+/* The mobile filter dropdown lives on .filterbar (the wrapper, which survives
+   the tab re-render). Any click that is not inside an open bar closes it. */
+function closeAllFilterbars(){
+  var list=document.querySelectorAll('.filterbar.open');
+  for(var i=0;i<list.length;i++){
+    list[i].classList.remove('open');
+    var b=list[i].querySelector('.fbtn'); if(b) b.setAttribute('aria-expanded','false');
+  }
+}
 document.addEventListener('click',function(e){
   var t=e.target;
+  /* A click anywhere outside a filter bar dismisses its open dropdown. Clicks on
+     the Filter button or a filter tab are inside .filterbar, so they fall through
+     to their own branches below rather than being closed here first. */
+  if(!t.closest('.filterbar')) closeAllFilterbars();
   /* First, because the chevron sits inside a row's first cell and must not fall
      through to whatever that cell or row is otherwise wired to. */
   var mcx=t.closest('[data-mc-exp]'); if(mcx){ toggleRowExpanded(mcx); return; }
@@ -4084,8 +4214,18 @@ document.addEventListener('click',function(e){
 
   var pb=t.closest('.pb'); if(pb){ setPeriod(pb.getAttribute('data-period')); return; }
   var mtab=t.closest('[data-mtab]'); if(mtab){ switchMerchantTab(mtab.getAttribute('data-mtab')); return; }
-  var tab=t.closest('.tab[data-filter]'); if(tab){ ordersFilter=tab.getAttribute('data-filter'); renderOrders(); return; }
-  var otab=t.closest('.tab[data-otab]'); if(otab){ overseasFilter=otab.getAttribute('data-otab'); renderOverseas(); return; }
+  /* The Filter button toggles its bar's dropdown open/closed. */
+  var fbtn=t.closest('.fbtn');
+  if(fbtn){
+    var fb=fbtn.closest('.filterbar'), wasOpen=fb&&fb.classList.contains('open');
+    closeAllFilterbars();
+    if(fb&&!wasOpen){ fb.classList.add('open'); fbtn.setAttribute('aria-expanded','true'); }
+    return;
+  }
+  /* Choosing a filter closes the dropdown, then re-renders (which rebuilds the
+     tabs, so the newly-active one becomes the single chip shown in the bar). */
+  var tab=t.closest('.tab[data-filter]'); if(tab){ closeAllFilterbars(); ordersFilter=tab.getAttribute('data-filter'); renderOrders(); return; }
+  var otab=t.closest('.tab[data-otab]'); if(otab){ closeAllFilterbars(); overseasFilter=otab.getAttribute('data-otab'); renderOverseas(); return; }
 
   var btn=t.closest('[data-action]'); if(!btn) return;
   var action=btn.getAttribute('data-action'),
@@ -4117,6 +4257,7 @@ document.addEventListener('click',function(e){
     case 'driver-assign':   assignFromDriver(id); break;
     case 'driver-active-delivery': driverActiveDelivery(id); break;
     case 'driver-review':   reviewDriverDocs(id); break;
+    case 'expand-merchant': toggleMerchantCard(id); break;
     case 'view-merchant':   openMerchantPanel(id); break;
     case 'edit-merchant':   openMerchantModal('edit',id); break;
     case 'del-merchant':    deleteMerchant(id); break;
@@ -4235,7 +4376,9 @@ var MOBILE_PRIMARY={
   'orders-tbody':    [0,1,4,6],  // Order ID · Customer · Total · Status
   'dash-tbody':      [0,1,5,6],  // Order ID · Customer · Amount · Status
   // drivers-tbody removed — the Drivers roster is a card grid now (DV-1…DV-8).
-  'merchants-tbody': [0,1,6],    // Merchant · Category · Status
+  // No 'merchants-tbody' — Merchants is a card grid, not a table, so it never
+  // needs the row-card fold. It already reads as one record per card at every
+  // width; see .mgrid in pages.css.
   'customers-tbody': [0,1,7],    // Name · Email · Status
   'overseas-tbody':  [0,1,6],    // Ref · Customer · Status
   'promos-tbody':    [0,1,5]     // Code · Discount · Status

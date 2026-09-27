@@ -14,11 +14,12 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_empty_state.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
-import 'login_screen.dart';
+import 'welcome_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final ValueNotifier<String> driverNameNotifier;
@@ -217,7 +218,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        // Out to the welcome screen, not straight to the form. Signing out
+        // returns you to where a signed-out driver starts, which is the same
+        // place a cold launch would put you.
+        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
         (route) => false,
       );
     }
@@ -301,128 +305,109 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    // The hero reads left-to-right like every other cap in the app rather than
+    // as a centred column. Centred, it was the only screen whose title did not
+    // start at the gutter, and the 92dp avatar pushed the first real content
+    // most of a screen down.
+    return SePageScaffold(
+      showBack: false,
+      capTitle: Row(
         children: [
-          _header(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                  SeSpacing.gutter, SeSpacing.x5, SeSpacing.gutter, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_isEditing) _editForm() else _viewMode(),
-                  const SizedBox(height: SeSpacing.x4),
-                  _settingsCard(),
-                  const SizedBox(height: SeSpacing.x4),
-                  SeButton(
-                    label: 'Sign Out',
-                    icon: SeIcons.signOut,
-                    variant: SeButtonVariant.destructive,
-                    onPressed: _confirmSignOut,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _header() => Container(
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, SeSpacing.x3,
-                SeSpacing.gutter, SeSpacing.x6),
-            child: Column(
+          GestureDetector(
+            onTap: _showPhotoOptions,
+            child: Stack(
               children: [
-                Row(
-                  children: [
-                    const Spacer(),
-                    Text('Driver Profile',
-                        style: SeType.h3.copyWith(color: Colors.white)),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: _isEditing
-                          ? () => setState(() => _isEditing = false)
-                          : _startEditing,
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.20),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _isEditing ? SeIcons.close : SeIcons.edit,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
+                _avatar(),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                      color: SeColors.surfaceRaised,
+                      shape: BoxShape.circle,
+                      boxShadow: SeElevation.e1,
                     ),
-                  ],
-                ),
-                const SizedBox(height: SeSpacing.x5),
-                GestureDetector(
-                  onTap: _showPhotoOptions,
-                  child: Stack(
-                    children: [
-                      _avatar(),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: SeElevation.e1,
-                          ),
-                          child: const Icon(SeIcons.camera,
-                              size: 15, color: SeColors.red500),
-                        ),
-                      ),
-                    ],
+                    child: const Icon(SeIcons.camera,
+                        size: 13, color: SeColors.brandAction),
                   ),
-                ),
-                const SizedBox(height: SeSpacing.x3),
-                Text(_name, style: SeType.h2.copyWith(color: Colors.white)),
-                const SizedBox(height: 2),
-                Text(
-                  '$_vehicle · ShipEast Driver',
-                  style: SeType.bodyS
-                      .copyWith(color: Colors.white.withValues(alpha: 0.82)),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: SeSpacing.x4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      SeType.h1.copyWith(color: SeColors.shellInk, height: 1.15),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '$_vehicle · ShipEast Driver',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: SeType.bodyS.copyWith(
+                      color: SeColors.shellInk.withValues(alpha: 0.76)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      trailing: SeCapButton(
+        icon: _isEditing ? SeIcons.close : SeIcons.edit,
+        onTap: _isEditing
+            ? () => setState(() => _isEditing = false)
+            : _startEditing,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, SeSpacing.x5, SeSpacing.gutter, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_isEditing) _editForm() else _viewMode(),
+            const SizedBox(height: SeSpacing.x4),
+            _settingsCard(),
+            const SizedBox(height: SeSpacing.x4),
+            SeButton(
+              label: 'Sign out',
+              icon: SeIcons.signOut,
+              variant: SeButtonVariant.destructive,
+              onPressed: _confirmSignOut,
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
   Widget _avatar() {
-    const size = 92.0;
+    const size = 64.0;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: Colors.white.withValues(alpha: 0.14),
         shape: BoxShape.circle,
         border: Border.all(
-            color: Colors.white.withValues(alpha: 0.55), width: 2.5),
+            color: Colors.white.withValues(alpha: 0.35), width: 2),
       ),
       child: _isUploadingPhoto
           ? const Center(
               child: SizedBox(
-                width: 28,
-                height: 28,
+                width: 22,
+                height: 22,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
+                    color: SeColors.shellInk, strokeWidth: 2.2),
               ),
             )
           : ClipOval(
@@ -432,11 +417,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => const Icon(
                           SeIcons.userFill,
-                          size: 44,
-                          color: Colors.white),
+                          size: 32,
+                          color: SeColors.shellInk),
                     )
                   : const Icon(SeIcons.userFill,
-                      size: 44, color: Colors.white),
+                      size: 32, color: SeColors.shellInk),
             ),
     );
   }
@@ -585,11 +570,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const EdgeInsets.symmetric(vertical: SeSpacing.x3),
                       decoration: BoxDecoration(
                         color:
-                            selected ? SeColors.red50 : SeColors.surface50,
+                            selected ? SeColors.brandSoft : SeColors.field,
                         borderRadius: SeRadius.all(SeRadius.sm),
                         border: Border.all(
                           color:
-                              selected ? SeColors.red500 : SeColors.ink200,
+                              selected ? SeColors.brand : SeColors.ink200,
                           width: selected ? 2 : 1.5,
                         ),
                       ),
@@ -598,7 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           v,
                           style: SeType.eyebrow.copyWith(
                             color: selected
-                                ? SeColors.red700
+                                ? SeColors.brandInk
                                 : SeColors.ink500,
                             letterSpacing: 0.2,
                           ),
@@ -700,7 +685,7 @@ class _RatingRing extends StatelessWidget {
         builder: (context, value, _) => CustomPaint(
           painter: _RingPainter(value),
           child: const Center(
-            child: Icon(SeIcons.star, color: SeColors.gold500, size: 30),
+            child: Icon(SeIcons.star, color: SeColors.star, size: 30),
           ),
         ),
       ),
@@ -722,7 +707,7 @@ class _RingPainter extends CustomPainter {
       center,
       radius,
       Paint()
-        ..color = SeColors.goldTint
+        ..color = SeColors.warningSoft
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke,
     );
@@ -733,7 +718,7 @@ class _RingPainter extends CustomPainter {
       2 * math.pi * progress,
       false,
       Paint()
-        ..color = SeColors.gold500
+        ..color = SeColors.star
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke
         ..strokeCap = StrokeCap.round,

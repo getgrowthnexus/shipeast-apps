@@ -8,9 +8,18 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_skeleton.dart';
 import '../widgets/se_empty_state.dart';
+import '../widgets/se_page.dart';
+import '../widgets/se_skeleton.dart';
 
+/// Alerts.
+///
+/// The old version drew each notification as its own shadowed card, and gave
+/// unread ones a red fill plus a heavier red border plus a red dot — three
+/// signals for one bit of information, which made a normal inbox look like a
+/// list of errors. Unread is now carried by ONE thing: a red rule down the
+/// leading edge. The rows sit in a single hairlined group, so the list reads as
+/// an inbox rather than a pile.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -30,7 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
     _subscribe();
     _markRead();
@@ -78,69 +87,71 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return ts.toDate().isAfter(_lastReadAt!);
   }
 
+  int get _unreadCount => _notifications.where(_isUnread).length;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(child: _buildBody()),
-        ],
-      ),
+    final unread = _unreadCount;
+    return SePageScaffold(
+      title: 'Alerts',
+      subtitle: _loading
+          ? null
+          : unread > 0
+              ? '$unread new ${unread == 1 ? 'update' : 'updates'}'
+              : 'You are all caught up',
+      child: _body(),
     );
   }
 
-  Widget _buildHeader() => Container(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 14,
-          bottom: 14,
-          left: SeSpacing.gutter,
-          right: SeSpacing.gutter,
-        ),
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(bottom: BorderSide(color: SeColors.ink200)),
-        ),
-        child: Row(
-          children: [
-            // When reached as a pushed route (from Profile) there was no way
-            // back — the bare title read as a broken, half-rendered header.
-            if (Navigator.canPop(context)) ...[
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                      color: SeColors.surface50, shape: BoxShape.circle),
-                  child: const Icon(SeIcons.arrowLeft,
-                      size: 20, color: SeColors.ink900),
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-            Text('Notifications', style: SeType.h1),
-          ],
+  Widget _body() {
+    if (_loading) return _loadingList();
+    if (_notifications.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(SeSpacing.gutter),
+          child: SeEmptyState(
+            icon: SeIcons.bell,
+            title: 'Nothing yet',
+            message:
+                'Order updates and offers will land here as they happen.',
+          ),
         ),
       );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(
+          SeSpacing.gutter, 20, SeSpacing.gutter, 110),
+      itemCount: _notifications.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (ctx, i) {
+        final n = _notifications[i];
+        final ts = n['createdAt'] as Timestamp?;
+        return SeNotificationRow(
+          title: n['title'] as String? ?? 'Notification',
+          message: n['message'] as String? ?? '',
+          type: n['type'] as String? ?? 'info',
+          when: ts == null ? '' : _timeAgo(ts.toDate()),
+          unread: _isUnread(n),
+        );
+      },
+    );
+  }
 
-  Widget _buildBody() {
-    if (_loading) {
-      return SeShimmer(
+  Widget _loadingList() => SeShimmer(
         child: ListView.separated(
-          padding: const EdgeInsets.all(SeSpacing.gutter),
+          padding: const EdgeInsets.fromLTRB(
+              SeSpacing.gutter, 20, SeSpacing.gutter, 24),
           itemCount: 6,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, __) => Row(
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, _) => Row(
             children: const [
-              SeSkeleton.circle(size: 44),
+              SeSkeleton.circle(size: 38),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SeSkeleton(width: 140, height: 13, radius: 5),
+                    SeSkeleton(width: 150, height: 13, radius: 5),
                     SizedBox(height: 8),
                     SeSkeleton(width: double.infinity, height: 11, radius: 5),
                   ],
@@ -150,90 +161,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
       );
-    }
-    if (_notifications.isEmpty) {
-      return Center(
-        child: SeEmptyState(
-          icon: SeIcons.bell,
-          title: 'No notifications yet',
-          message: "You're all caught up!",
-        ),
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.all(SeSpacing.gutter),
-      itemCount: _notifications.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (ctx, i) => _buildCard(_notifications[i]),
-    );
-  }
-
-  Widget _buildCard(Map<String, dynamic> notif) {
-    final title = notif['title'] as String? ?? 'Notification';
-    final message = notif['message'] as String? ?? '';
-    final type = notif['type'] as String? ?? 'info';
-    final ts = notif['createdAt'] as Timestamp?;
-    final unread = _isUnread(notif);
-
-    final (IconData iconData, Color hue, Color tint) = switch (type) {
-      'order' => (SeIcons.orders, SeColors.red500, SeColors.red50),
-      'promo' => (SeIcons.tag, SeColors.gold500, SeColors.goldTint),
-      _ => (SeIcons.bell, SeColors.ocean500, SeColors.oceanTint),
-    };
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: unread ? SeColors.red50 : SeColors.surface0,
-        borderRadius: SeRadius.all(SeRadius.md),
-        border: Border.all(
-            color: unread ? SeColors.red100 : SeColors.ink200,
-            width: unread ? 1.5 : 1),
-        boxShadow: unread ? SeElevation.e0 : SeElevation.e1,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
-            child: Icon(iconData, size: 21, color: hue),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: Text(title, style: SeType.title)),
-                    if (unread)
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                            color: SeColors.red500, shape: BoxShape.circle),
-                      ),
-                  ],
-                ),
-                if (message.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(message,
-                      style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-                ],
-                if (ts != null) ...[
-                  const SizedBox(height: 6),
-                  Text(_timeAgo(ts.toDate()),
-                      style: SeType.label.copyWith(color: SeColors.ink400)),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
@@ -242,5 +169,114 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+/// One alert. Unread is a red rule on the leading edge and nothing else.
+class SeNotificationRow extends StatelessWidget {
+  final String title;
+  final String message;
+  final String type;
+  final String when;
+  final bool unread;
+
+  const SeNotificationRow({
+    super.key,
+    required this.title,
+    required this.message,
+    required this.type,
+    required this.when,
+    required this.unread,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData icon, Color hue) = switch (type) {
+      'order' => (SeIcons.bike, SeColors.brand),
+      'delivered' => (SeIcons.checkCircle, SeColors.success),
+      'promo' => (SeIcons.tag, SeColors.warning),
+      _ => (SeIcons.info, SeColors.info),
+    };
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: SeColors.surface0,
+        borderRadius: SeRadius.all(SeRadius.md),
+        border: Border.all(color: SeColors.ink200),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // The whole unread signal.
+            SizedBox(
+              width: 3,
+              child: ColoredBox(
+                color: unread ? SeColors.brandAction : Colors.transparent,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(13, 13, 13, 13),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: hue.withValues(alpha: 0.10),
+                        borderRadius: SeRadius.all(SeRadius.sm),
+                      ),
+                      child: Icon(icon, size: 19, color: hue),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: SeType.title.copyWith(
+                                    fontSize: 15,
+                                    fontWeight: unread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (when.isNotEmpty) ...[
+                                const SizedBox(width: 10),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(when,
+                                      style: SeType.label
+                                          .copyWith(color: SeColors.ink400)),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (message.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(message,
+                                style: SeType.bodyS
+                                    .copyWith(color: SeColors.ink500, height: 1.45)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

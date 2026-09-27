@@ -1,0 +1,68 @@
+<!-- card: Sign in | group: Screens · Signed out | desc: The auth shell — brand cap for context, sheet for the task -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Sign in</h1>
+    <p>Route <code>/login</code>. Built on <code>SeAuthScaffold</code>: a flat
+      brand cap carrying the title, and a blush sheet lifted over it holding the
+      form. The eye lands on the title, drops into the sheet, and finds the
+      button at the end of it.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="on-shell" style="height:254px;flex:none;padding:calc(var(--safe-top) + 8px) var(--gutter) 28px;display:flex;flex-direction:column;justify-content:space-between">
+        <div class="cap-btn" style="margin:0"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div>
+          <div style="font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.66px;color:#FFF4F7">Welcome back</div>
+          <div style="margin-top:8px;font-size:15px;line-height:1.45;color:rgba(255,244,247,.78)">Sign in to pick up where you left off.</div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-height:0;background:var(--surface-0);border-radius:var(--r-xl) var(--r-xl) 0 0;box-shadow:0 -8px 28px rgba(70,8,24,.22);padding:26px var(--gutter) 0;overflow:hidden">
+        <label class="field-label">Email address</label>
+        <div class="field"><svg class="i"><use href="#i-envelope"/></svg><span class="ph">you@email.com</span></div>
+
+        <label class="field-label mt16">Password</label>
+        <div class="field"><svg class="i"><use href="#i-lock"/></svg><span class="ph">Enter your password</span><svg class="i"><use href="#i-eye"/></svg></div>
+
+        <div style="text-align:right;padding:10px 0 2px"><b style="font-size:13px;font-weight:700;color:var(--brand-action)">Forgot password?</b></div>
+
+        <div class="mt12"><button class="btn btn--primary">Sign in</button></div>
+
+        <div class="divider-or mt20">or</div>
+
+        <div class="mt16">
+          <button class="btn" style="background:var(--surface-raised);border:1.5px solid var(--ink-200);color:var(--ink-900);font-weight:700">
+            <svg class="i" style="color:#4285F4"><use href="#i-google"/></svg>Continue with Google
+          </button>
+        </div>
+
+        <div class="center mt24" style="font-size:15px;color:var(--ink-500)">
+          New to ShipEast?&nbsp; <b style="color:var(--brand-action);font-weight:700">Create an account</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Why two surfaces</td><td>The previous auth screens centred an emblem, a title and the fields as one
+        floating group, which read as a column of unrelated parts with dead air around them. Splitting the
+        screen gives every element a job: the cap is brand and context, the sheet is the task</td></tr>
+      <tr><td>Cap height</td><td>A <b>minimum</b> of 28.5% of the viewport <i>minus</i> the status bar — the seam
+        is measured from the top of the screen, which is where the eye measures it from. Sized to its own
+        text it came out at a fifth of the screen, and the form then read as the page with the brand as a
+        band stuck on top</td></tr>
+      <tr><td>Never clipped</td><td>It is a floor, not a fixed height: a wrapped title, a large system text size
+        or a short phone all push straight past it</td></tr>
+      <tr><td>Keyboard</td><td>The cap collapses to a single line (title 22px, no subtitle) once the inset passes
+        120px. On a small phone a fixed hero would push the last field under the keyboard</td></tr>
+      <tr><td>Title</td><td><code>display</code> at 30px / 26px / 22px for roomy, tight and keyboard states</td></tr>
+      <tr><td>Sheet fill</td><td><code>surface0</code>, not <code>surface50</code> — the auth sheet is the lighter
+        of the two card tones because it is the whole page rather than a card on a page</td></tr>
+      <tr><td>Google</td><td>Firebase's own OAuth flow, so no <code>google_sign_in</code> plugin and no native
+        config churn</td></tr>
+    </table>
+  </div>
+</div>

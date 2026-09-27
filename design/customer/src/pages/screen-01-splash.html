@@ -1,0 +1,49 @@
+<!-- card: Splash | group: Screens · Signed out | desc: The launch screen — wordmark, rule, strapline, load bar -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Splash</h1>
+    <p>Route <code>/</code>. Holds for 2200ms, then routes to <code>/home</code>
+      or <code>/welcome</code> depending on the session. The 2026 rebuild
+      dropped the old white rounded plate around the logo — the mark sits
+      directly on the brand field now.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone on-shell" style="align-items:center;justify-content:center">
+      <div class="disc" style="width:280px;height:280px;top:-110px;right:-90px;opacity:.06"></div>
+      <div class="disc" style="width:340px;height:340px;bottom:-140px;left:-100px;opacity:.05"></div>
+      <!-- A ring rather than a disc: three identical discs would read as a
+           pattern, and one of them has to break the rhythm. -->
+      <div style="position:absolute;top:150px;left:-70px;width:180px;height:180px;border-radius:999px;border:26px solid rgba(255,255,255,.10)"></div>
+
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="wordmark" style="font-size:46px;letter-spacing:-1.47px">Ship<span class="east">East</span></div>
+        <div style="width:78px;height:3px;border-radius:2px;background:#FFC9D6;margin:20px 0"></div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:2.6px;color:rgba(255,244,247,.72)">COURIERS &amp; DELIVERY · JAMAICA</div>
+      </div>
+
+      <div style="position:absolute;left:0;right:0;bottom:44px;display:flex;flex-direction:column;align-items:center">
+        <div style="width:132px;height:3px;border-radius:3px;background:rgba(255,244,247,.16);overflow:hidden">
+          <div style="width:62%;height:100%;background:#FFC9D6"></div>
+        </div>
+        <div style="margin-top:14px;font-size:11px;font-weight:600;letter-spacing:.7px;color:rgba(255,244,247,.45)">v1.2.1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Ground</td><td><code>shell</code> #B00D33, flat. No gradient</td></tr>
+      <tr><td>Geometry</td><td>280px disc at 6% top-right, 340px disc at 5% bottom-left, and a 180px
+        ring with a 26px stroke at 10% on the left — depth without a gradient</td></tr>
+      <tr><td>Wordmark</td><td>46px, on-dark tones (warm white + <code>shellMark</code>)</td></tr>
+      <tr><td>Rule</td><td>78 × 3px <code>shellMark</code>, 20px clear above and below. It grows in from
+        zero between 34% and 85% of the intro</td></tr>
+      <tr><td>Strapline</td><td><code>eyebrow</code> at 2.6px tracking, <code>shellInk</code> 72%</td></tr>
+      <tr><td>Load bar</td><td>132 × 3px, 44px off the bottom, filling over the 2200ms hold</td></tr>
+      <tr><td>Entrance</td><td>Mark fades and lifts 20px over the first 60% of 1100ms; the rule grows
+        next; the strapline fades in last. Reduced motion drops all three</td></tr>
+    </table>
+  </div>
+</div>

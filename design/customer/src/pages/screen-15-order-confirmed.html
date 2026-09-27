@@ -1,0 +1,80 @@
+<!-- card: Order confirmed | group: Screens · Ordering | desc: The receipt — arrival, reference, address and totals -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Order confirmed</h1>
+    <p>Route <code>/order-confirmed</code>. The moment the order lands. Every
+      number a customer might want to screenshot is on this one screen.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap" style="padding-bottom:26px">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="width:78px;height:78px;border-radius:999px;background:rgba(255,255,255,.16);display:grid;place-items:center;color:var(--shell-ink)">
+            <svg class="i" style="width:40px;height:40px"><use href="#i-checkCircle"/></svg>
+          </div>
+          <div class="mt16" style="font-size:26px;font-weight:800;letter-spacing:-.6px;color:var(--shell-ink)">Order placed</div>
+          <div class="mt4 t-bodyS" style="color:rgba(255,244,247,.78)">Island Grill Morant Bay is preparing it now.</div>
+        </div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="hstack g10">
+            <div class="panel grow">
+              <div class="t-eyebrow">ARRIVES</div>
+              <div class="tnum mt4" style="font-size:21px;font-weight:800;letter-spacing:-.5px">7:35 pm</div>
+              <div class="t-bodyS">in about 30 min</div>
+            </div>
+            <div class="panel grow">
+              <div class="t-eyebrow">ORDER</div>
+              <div class="tnum mt4" style="font-size:15px;font-weight:700">#se4821bf90c1</div>
+              <div class="t-bodyS">Tap to copy</div>
+            </div>
+          </div>
+
+          <div class="panel mt14">
+            <div class="t-eyebrow">DELIVERING TO</div>
+            <div class="hstack g10 mt6">
+              <svg class="i" style="width:18px;height:18px;color:var(--brand-action)"><use href="#i-location"/></svg>
+              <div class="grow t-body ink-900">14 Yallahs Main Road, St. Thomas</div>
+            </div>
+          </div>
+
+          <div class="panel mt14" style="padding:16px">
+            <div class="t-eyebrow" style="margin-bottom:8px">RECEIPT</div>
+            <div class="money"><span class="lbl">Curry Goat with Rice &amp; Peas × 2</span><span class="amt">$2,900</span></div>
+            <div class="money"><span class="lbl">Festival (2 pcs) × 1</span><span class="amt">$300</span></div>
+            <div class="money"><span class="lbl">Ting × 3</span><span class="amt">$750</span></div>
+            <div style="height:1px;background:var(--ink-100);margin:9px 0"></div>
+            <div class="money"><span class="lbl">Subtotal</span><span class="amt">$3,850</span></div>
+            <div class="money"><span class="lbl">Delivery fee</span><span class="amt">$350</span></div>
+            <div class="money"><span class="lbl">Service fee</span><span class="amt">$385</span></div>
+            <div style="height:1px;background:var(--ink-200);margin:9px 0"></div>
+            <div class="money money--strong"><span class="lbl">Total</span><span class="amt">$4,585</span></div>
+          </div>
+
+          <div class="notice mt14">
+            <svg class="i"><use href="#i-cash"/></svg>
+            <p>Cash on delivery — have $4,585 ready for the driver.</p>
+          </div>
+        </div>
+        <div class="bottom-bar"><button class="btn btn--primary"><svg class="i"><use href="#i-bike"/></svg>Track my order</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>The mark</td><td>A 78px translucent disc with a check, on the cap. Confetti was tried and cut — a
+        delivery order is a transaction, and celebrating it every time wears out fast</td></tr>
+      <tr><td>Two tiles</td><td>Arrival time and reference side by side. These are the two things a customer looks for
+        first, so they are above the receipt rather than inside it</td></tr>
+      <tr><td>Reference</td><td>Tappable to copy, and tabular so it can be read aloud over the phone</td></tr>
+      <tr><td>Receipt</td><td>The same <code>SeMoneyLine</code> block as the cart and checkout — a subtotal must look
+        identical in all three places</td></tr>
+      <tr><td>Cash notice</td><td>States the exact amount to have ready. The single most useful line on the screen</td></tr>
+    </table>
+  </div>
+</div>

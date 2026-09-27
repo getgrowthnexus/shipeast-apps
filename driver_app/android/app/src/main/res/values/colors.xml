@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#C8102E</color>
+    <!-- The adaptive icon draws @mipmap/ic_launcher_background, not this, so
+         this is only the flat fallback. Kept in step with the centre of the
+         master tile — it was still the retired 2025 red (#C8102E) after the
+         2026 rebrand, which is the kind of thing nobody notices until a
+         launcher falls back to it. -->
+    <color name="ic_launcher_background">#F5204D</color>
 </resources>

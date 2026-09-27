@@ -1,0 +1,130 @@
+<!-- card: Page chrome & nav | group: Components | desc: The cap-and-sheet shell every screen is built on, plus the tab bar -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Page chrome &amp; navigation</h1>
+    <p>Two surfaces, always the same two. A flat brand <b>cap</b> says where you
+      are and gives you the way out; a blush <b>sheet</b> lifted over it holds the
+      task. The cap never scrolls and the sheet always does, so the answer to
+      "where am I" stays on screen while the content moves under it.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Why a shared shell at all</h2>
+    <p style="margin:0;font-size:13px;line-height:19px;color:#6E5F66">
+      Before this, thirteen screens each invented their own header — some a
+      gradient hero, some a white app bar, some nothing at all — and the app read
+      as a set of pages built by different people on different days. One shell is
+      what makes it feel like software rather than a collection of screens.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The four cap configurations</h2>
+    <div class="ds-grid">
+      <div>
+        <div class="ds-frame" style="width:412px">
+          <div class="phone" style="height:300px">
+            <div class="cap has-back">
+              <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+              <div class="cap-row">
+                <div>
+                  <div class="cap-title">Saved addresses</div>
+                  <div class="cap-sub">3 addresses saved</div>
+                </div>
+              </div>
+            </div>
+            <div class="sheet"><div class="sheet-body pad"><div class="t-bodyS">Sheet content</div></div></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px;text-align:center">Back + title + subtitle</div>
+      </div>
+      <div>
+        <div class="ds-frame" style="width:412px">
+          <div class="phone" style="height:300px">
+            <div class="cap has-bottom">
+              <div class="cap-row">
+                <div>
+                  <div class="hstack g4" style="color:#FFC9D6">
+                    <svg class="i" style="width:13px;height:13px"><use href="#i-locationFill"/></svg>
+                    <span class="t-label">St. Thomas, Jamaica</span>
+                  </div>
+                  <div class="t-h2 mt4" style="color:#FFF4F7">Good evening, Andre</div>
+                </div>
+                <div style="width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(255,255,255,.35);padding:2px">
+                  <div style="width:100%;height:100%;border-radius:999px;background:rgba(255,255,255,.16);display:grid;place-items:center;color:#FFF4F7;font-weight:800;font-size:14px">AB</div>
+                </div>
+              </div>
+              <div class="mt16">
+                <div class="shell-field"><svg class="i"><use href="#i-search"/></svg><span>Search restaurants, shops, items…</span></div>
+              </div>
+            </div>
+            <div class="sheet"><div class="sheet-body pad"><div class="t-bodyS">Sheet content</div></div></div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px;text-align:center">Rich cap title + trailing + cap bottom</div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Gutter</td><td>20px, both sides, on the cap and in the sheet</td></tr>
+      <tr><td>Cap padding</td><td>Top 12px (6px when a back button is present, since the button carries its
+        own height); bottom 22px, or 16px when a cap-bottom is set</td></tr>
+      <tr><td>Title</td><td><code>h1</code> 26px at line-height 1.15, <code>shellInk</code>, clamped to 2 lines</td></tr>
+      <tr><td>Subtitle</td><td>13px at <code>shellInk</code> 76%, 5px under the title, clamped to 2 lines</td></tr>
+      <tr><td>The sheet edge</td><td><code>xl</code> 28px top radius and a shadow cast <b>upward</b> onto the red.
+        That upward shadow is the whole trick — it makes the sheet a card lying on the brand
+        rather than a region where the colour stops</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Bottom navigation</h2>
+    <div style="max-width:412px;border-radius:12px;overflow:hidden;border:1px solid #E6DAE0">
+      <div style="position:relative;background:#F8ECF0;height:120px">
+        <div class="navbar" style="position:absolute">
+          <div class="on"><svg class="i"><use href="#i-homeFill"/></svg><span>Home</span></div>
+          <div><svg class="i"><use href="#i-search"/></svg><span>Search</span></div>
+          <div><svg class="i"><use href="#i-orders"/></svg><span>Orders</span></div>
+          <div><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span><span>Alerts</span></div>
+          <div><svg class="i"><use href="#i-user"/></svg><span>Profile</span></div>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Five destinations</td><td>Home · Search · Orders · Alerts · Profile</td></tr>
+      <tr><td>Active</td><td>The <b>filled</b> glyph variant plus the action red. The icon family carries
+        the state change, not a pill or an underline</td></tr>
+      <tr><td>Inactive</td><td>Outlined glyph, <code>ink400</code></td></tr>
+      <tr><td>Unread</td><td>An 8px action-red dot with a surface-coloured ring, over the Alerts glyph</td></tr>
+      <tr><td>Safe area</td><td>The gesture inset is painted in the bar's own <code>surface0</code></td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Bottom sheets</h2>
+    <div class="ds-frame" style="width:412px">
+      <div class="phone" style="height:420px">
+        <div class="cap has-back">
+          <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+          <div class="cap-title">Saved addresses</div>
+        </div>
+        <div class="sheet"><div class="sheet-body pad"></div></div>
+        <div class="scrim"></div>
+        <div class="modal">
+          <div class="handle"></div>
+          <div class="t-h2 mt14">Delete address</div>
+          <div class="t-body mt8">Remove "Home" from your saved addresses?</div>
+          <div class="hstack g10 mt20">
+            <button class="btn btn--ghost">Cancel</button>
+            <button class="btn btn--destructive">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Top radius</td><td><code>xl</code> 28px, the same edge as the sheet</td></tr>
+      <tr><td>Handle</td><td>40 × 4px, <code>ink200</code>, 10px above and 6px below</td></tr>
+      <tr><td>Scrim</td><td><code>ink900</code> at 45%</td></tr>
+      <tr><td>Keyboard</td><td>The sheet is scroll-controlled and pads itself by the keyboard inset, so a
+        field never ends up underneath the keyboard</td></tr>
+    </table>
+  </div>
+</div>

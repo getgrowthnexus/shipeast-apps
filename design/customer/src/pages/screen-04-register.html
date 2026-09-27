@@ -1,0 +1,55 @@
+<!-- card: Sign up | group: Screens · Signed out | desc: Account creation on the same auth shell -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Sign up</h1>
+    <p>Route <code>/register</code>. The same <code>SeAuthScaffold</code> as sign
+      in, so the whole signed-out path reads as one continuous piece rather than
+      two screens that happen to share a colour.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="on-shell" style="height:254px;flex:none;padding:calc(var(--safe-top) + 8px) var(--gutter) 28px;display:flex;flex-direction:column;justify-content:space-between">
+        <div class="cap-btn" style="margin:0"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div>
+          <div style="font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.66px;color:#FFF4F7">Create your account</div>
+          <div style="margin-top:8px;font-size:15px;line-height:1.45;color:rgba(255,244,247,.78)">A minute now, and checkout is one tap after this.</div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-height:0;background:var(--surface-0);border-radius:var(--r-xl) var(--r-xl) 0 0;box-shadow:0 -8px 28px rgba(70,8,24,.22);padding:26px var(--gutter) 0;overflow:hidden">
+        <label class="field-label">Full name</label>
+        <div class="field"><svg class="i"><use href="#i-user"/></svg><span class="ph">Andre Brown</span></div>
+
+        <label class="field-label mt16">Email address</label>
+        <div class="field"><svg class="i"><use href="#i-envelope"/></svg><span class="ph">you@email.com</span></div>
+
+        <label class="field-label mt16">Phone number</label>
+        <div class="field"><svg class="i"><use href="#i-phone"/></svg><span class="ph">+1 876 000 0000</span></div>
+
+        <label class="field-label mt16">Password</label>
+        <div class="field"><svg class="i"><use href="#i-lock"/></svg><span class="ph">At least 6 characters</span><svg class="i"><use href="#i-eye"/></svg></div>
+
+        <div class="mt20"><button class="btn btn--primary">Create account</button></div>
+
+        <div class="center mt20" style="font-size:15px;color:var(--ink-500)">
+          Already have an account?&nbsp; <b style="color:var(--brand-action);font-weight:700">Sign in</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Four fields</td><td>Name, email, phone, password. The phone number is not optional — it is how a
+        driver reaches the customer at the door</td></tr>
+      <tr><td>Field rhythm</td><td>16px between fields, 20px before the button. Tighter than sign in because
+        there are twice as many of them</td></tr>
+      <tr><td>Validation</td><td>Inline, under the field that failed, using the field's own error state — never a
+        dialog and never a toast for a field-level problem</td></tr>
+      <tr><td>Keyboard</td><td>Same collapse as sign in, and it matters more here: four fields plus a keyboard on
+        a 568dp phone is exactly the case the cap floor was written for</td></tr>
+    </table>
+  </div>
+</div>

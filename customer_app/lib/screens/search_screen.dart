@@ -1,17 +1,21 @@
 import 'dart:async';
-import '../widgets/app_image.dart';
 import 'package:flutter/material.dart';
 import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
-import '../theme/se_typography.dart';
 import '../services/firestore_service.dart';
-import '../utils/money.dart';
-import '../widgets/se_card.dart';
-import '../widgets/se_chip.dart';
-import '../widgets/se_skeleton.dart';
 import '../widgets/se_empty_state.dart';
+import '../widgets/se_listing.dart';
+import '../widgets/se_page.dart';
+import '../widgets/se_skeleton.dart';
 
+/// Search.
+///
+/// The live field lives in the brand cap, where home's fake one points. The
+/// sheet below it is never blank: with no query it is a browsable list of
+/// every merchant, so the box NARROWS the page rather than gating it. A search
+/// screen that shows nothing until you type is a dead end for anyone who does
+/// not already know what they want.
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -23,16 +27,30 @@ class _SearchScreenState extends State<SearchScreen> {
   final _ctrl = TextEditingController();
   final _focus = FocusNode();
   String _query = '';
+  String _category = '';
   List<Map<String, dynamic>> _allMerchants = [];
+  bool _loaded = false;
   StreamSubscription<List<Map<String, dynamic>>>? _sub;
 
   bool _argsApplied = false;
+
+  static const List<(String, IconData, Color)> _quickCats = [
+    ('Food', SeIcons.food, SeColors.catFood),
+    ('Grocery', SeIcons.grocery, SeColors.catGrocery),
+    ('Pharmacy', SeIcons.pharmacy, SeColors.catPharmacy),
+    ('Packages', SeIcons.packages, SeColors.catPackages),
+  ];
 
   @override
   void initState() {
     super.initState();
     _sub = FirestoreService.allMerchantsStream().listen((merchants) {
-      if (mounted) setState(() => _allMerchants = merchants);
+      if (mounted) {
+        setState(() {
+          _allMerchants = merchants;
+          _loaded = true;
+        });
+      }
     });
   }
 
@@ -60,317 +78,169 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filtered {
-    if (_query.trim().isEmpty) return const [];
-    final q = _query.toLowerCase();
-    return _allMerchants
-        .where((m) =>
-            (m['name'] as String? ?? '').toLowerCase().contains(q) ||
-            (m['category'] as String? ?? '').toLowerCase().contains(q))
-        .toList();
+  /// The typed query and the category chips narrow the same list, so picking
+  /// "Grocery" and typing "hi-lo" composes instead of one replacing the other.
+  List<Map<String, dynamic>> get _results {
+    final q = _query.trim().toLowerCase();
+    return _allMerchants.where((m) {
+      final name = (m['name'] as String? ?? '').toLowerCase();
+      final cat = (m['category'] as String? ?? '');
+      if (_category.isNotEmpty && cat != _category) return false;
+      if (q.isEmpty) return true;
+      return name.contains(q) || cat.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  bool get _filtering => _query.trim().isNotEmpty || _category.isNotEmpty;
+
+  void _openMerchant(Map<String, dynamic> m) {
+    final rating = m['rating'];
+    final ratingStr = rating is double
+        ? rating.toStringAsFixed(1)
+        : rating?.toString() ?? '4.5';
+    Navigator.pushNamed(context, '/merchant', arguments: {
+      'id': m['id'] ?? '',
+      'name': m['name'] ?? '',
+      'emoji': m['emoji'] as String? ?? '🍽️',
+      'imageUrl': m['imageUrl'] as String? ?? '',
+      'category': m['category'] as String? ?? '',
+      'rating': ratingStr,
+      'deliveryTime': m['deliveryTime'] ?? '25–35 min',
+      // Integer JMD (P3-01) — displayed and charged from one field.
+      'deliveryFee': (m['deliveryFee'] as num?)?.toInt() ?? 0,
+      'isOpen': m['isOpen'] as bool? ?? true,
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: _query.trim().isEmpty
-                ? _buildBrowse()
-                : results.isEmpty
-                    ? _buildNoResults()
-                    : _buildResults(results),
-          ),
-        ],
-      ),
+    final results = _results;
+    return SePageScaffold(
+      title: 'Search',
+      capBottom: _field(),
+      child: !_loaded
+          ? _loadingList()
+          : results.isEmpty
+              ? _empty()
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(
+                      SeSpacing.gutter, 18, SeSpacing.gutter, 110),
+                  itemCount: results.length + 1,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    if (i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: SeSectionTitle(
+                          title: _filtering
+                              ? '${results.length} '
+                                  '${results.length == 1 ? 'result' : 'results'}'
+                              : 'All merchants',
+                        ),
+                      );
+                    }
+                    final m = results[i - 1];
+                    final rating = m['rating'];
+                    return SeMerchantRow(
+                      name: m['name'] as String? ?? '',
+                      imageUrl: m['imageUrl'] as String? ?? '',
+                      category: m['category'] as String? ?? '',
+                      rating: rating is double
+                          ? rating.toStringAsFixed(1)
+                          : rating?.toString() ?? '4.5',
+                      deliveryTime: m['deliveryTime'] as String? ?? '25–35 min',
+                      deliveryFee: (m['deliveryFee'] as num?)?.toInt() ?? 0,
+                      isOpen: m['isOpen'] as bool? ?? true,
+                      onTap: () => _openMerchant(m),
+                    );
+                  },
+                ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-        decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, SeSpacing.gutter, 16),
-            child: Row(
-              children: [
-                if (Navigator.canPop(context)) ...[
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(SeIcons.arrowLeft,
-                          size: 20, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: SeRadius.all(SeRadius.md),
-                      boxShadow: SeElevation.e2,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(SeIcons.search,
-                            size: 20, color: SeColors.ink400),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _ctrl,
-                            focusNode: _focus,
-                            style: SeType.body.copyWith(color: SeColors.ink900),
-                            cursorColor: SeColors.red500,
-                            decoration: InputDecoration(
-                              hintText: 'Search merchants, food, items...',
-                              hintStyle:
-                                  SeType.body.copyWith(color: SeColors.ink400),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              filled: false,
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            onChanged: (v) => setState(() => _query = v),
-                          ),
-                        ),
-                        if (_query.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              _ctrl.clear();
-                              setState(() => _query = '');
-                            },
-                            child: const Icon(SeIcons.close,
-                                size: 18, color: SeColors.ink400),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+  /// The cap's field and its filter chips — both shared widgets, so the fake
+  /// field on home and this real one are literally the same component.
+  Widget _field() => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SeShellField(
+            hint: 'Restaurants, shops, items…',
+            controller: _ctrl,
+            focusNode: _focus,
+            onChanged: (v) => setState(() => _query = v),
+            showClear: _query.isNotEmpty,
+            onClear: () {
+              _ctrl.clear();
+              setState(() => _query = '');
+            },
           ),
-        ),
-      );
-
-  static const List<(String, IconData, Color)> _quickCats = [
-    ('Food', SeIcons.food, SeColors.red500),
-    ('Grocery', SeIcons.grocery, SeColors.success),
-    ('Pharmacy', SeIcons.pharmacy, SeColors.ocean500),
-  ];
-
-  void _setQuery(String q) {
-    _ctrl.text = q;
-    setState(() => _query = q);
-  }
-
-  /// An idle search screen shouldn't be a blank page with one icon. Show quick
-  /// category filters and the full merchant list so there's always something to
-  /// browse — the search box narrows it down, it doesn't gate the whole page.
-  Widget _buildBrowse() {
-    if (_allMerchants.isEmpty) {
-      return Center(
-        child: SeEmptyState(
-          icon: SeIcons.search,
-          title: 'Search merchants',
-          message: 'Food, grocery, pharmacy & more',
-        ),
-      );
-    }
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-                SeSpacing.gutter, SeSpacing.gutter, SeSpacing.gutter, 4),
-            child: Row(
-              children: [
-                Text('Browse by category', style: SeType.section),
-              ],
-            ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 40,
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 32,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 10, SeSpacing.gutter, 0),
               itemCount: _quickCats.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
-                final (label, icon, hue) = _quickCats[i];
-                return SeChip(
+                final (label, icon, _) = _quickCats[i];
+                final on = _category == label;
+                return SeShellChip(
                   label: label,
                   icon: icon,
-                  fg: hue,
-                  bg: SeColors.surface0,
-                  onTap: () => _setQuery(label),
+                  selected: on,
+                  onTap: () => setState(() => _category = on ? '' : label),
                 );
               },
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-                SeSpacing.gutter, 22, SeSpacing.gutter, 4),
-            child: Text('All merchants', style: SeType.section),
+        ],
+      );
+
+  Widget _loadingList() => SeShimmer(
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(
+              SeSpacing.gutter, 24, SeSpacing.gutter, 24),
+          itemCount: 6,
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, _) => Row(
+            children: const [
+              SeSkeleton(width: 56, height: 56, radius: SeRadius.sm),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SeSkeleton(width: 160, height: 14, radius: 5),
+                    SizedBox(height: 8),
+                    SeSkeleton(width: 220, height: 11, radius: 5),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        _buildResultsSliver(_allMerchants),
-        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-      ],
-    );
-  }
+      );
 
-  Widget _buildNoResults() => Center(
-        child: SeEmptyState(
-          icon: SeIcons.noConnection,
-          title: 'No results for "$_query"',
-          message: 'Try a different search term',
-          hue: SeColors.ink500,
-          tint: SeColors.surface50,
+  Widget _empty() => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(SeSpacing.gutter),
+          child: _filtering
+              ? SeEmptyState(
+                  icon: SeIcons.search,
+                  title: 'Nothing matched',
+                  message: _query.trim().isEmpty
+                      ? 'No $_category merchants are listed yet.'
+                      : 'No merchants match “${_query.trim()}”. '
+                          'Try a shorter word.',
+                  hue: SeColors.ink500,
+                  tint: SeColors.surface0,
+                )
+              : SeEmptyState(
+                  icon: SeIcons.storefront,
+                  title: 'No merchants yet',
+                  message:
+                      'We are onboarding partners near you — check back soon.',
+                ),
         ),
       );
-
-  Widget _buildResults(List<Map<String, dynamic>> results) =>
-      ListView.separated(
-        padding: const EdgeInsets.all(SeSpacing.gutter),
-        itemCount: results.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (context, i) => _merchantTile(results[i]),
-      );
-
-  Widget _buildResultsSliver(List<Map<String, dynamic>> results) =>
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(
-            SeSpacing.gutter, 12, SeSpacing.gutter, 0),
-        sliver: SliverList.separated(
-          itemCount: results.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) => _merchantTile(results[i]),
-        ),
-      );
-
-  Widget _merchantTile(Map<String, dynamic> m) {
-          final imageUrl = m['imageUrl'] as String? ?? '';
-          final isOpen = m['isOpen'] as bool? ?? true;
-          final rating = m['rating'];
-          final ratingStr = rating is double
-              ? rating.toStringAsFixed(1)
-              : rating?.toString() ?? '4.5';
-          // Integer JMD (P3-01) — displayed and charged from one field.
-          final deliveryFee = (m['deliveryFee'] as num?)?.toInt() ?? 0;
-          final deliveryTime = m['deliveryTime'] as String? ?? '25–35 min';
-          final category = m['category'] as String? ?? '';
-
-          return SeCard(
-            shadow: SeElevation.e1,
-            border: Border.all(color: SeColors.ink200, width: 1),
-            onTap: () => Navigator.pushNamed(context, '/merchant', arguments: {
-              'id': m['id'] ?? '',
-              'name': m['name'] ?? '',
-              'emoji': m['emoji'] as String? ?? '🍽️',
-              'imageUrl': imageUrl,
-              'category': category,
-              'rating': ratingStr,
-              'deliveryTime': deliveryTime,
-              'deliveryFee': deliveryFee,
-              'isOpen': isOpen,
-            }),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: SeRadius.all(SeRadius.sm),
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: AppImage(
-                      url: imageUrl,
-                      placeholder: const SeShimmer(
-                          child:
-                              SeSkeleton(width: 60, height: 60, radius: 12)),
-                      errorWidget: _iconFallback(category),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(m['name'] as String? ?? '',
-                          style: SeType.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          if (category.isNotEmpty)
-                            SeChip.status(
-                              label: category,
-                              color: SeColors.red700,
-                              tint: SeColors.red50,
-                            ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(SeIcons.star,
-                                  size: 13, color: SeColors.gold500),
-                              const SizedBox(width: 3),
-                              Text(
-                                  '$ratingStr · $deliveryTime · ${Money.deliveryFee(deliveryFee)}',
-                                  style: SeType.bodyS
-                                      .copyWith(color: SeColors.ink500)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(SeIcons.caretRight,
-                    size: 18, color: SeColors.ink300),
-              ],
-            ),
-          );
-  }
-
-  Widget _iconFallback(String category) => Container(
-        color: SeColors.surface50,
-        child: Icon(_categoryIcon(category),
-            size: 26, color: SeColors.ink400),
-      );
-
-  IconData _categoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return SeIcons.food;
-      case 'Grocery':
-        return SeIcons.grocery;
-      case 'Pharmacy':
-        return SeIcons.pharmacy;
-      default:
-        return SeIcons.storefront;
-    }
-  }
 }

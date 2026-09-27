@@ -7,14 +7,19 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
 import '../widgets/se_skeleton.dart';
 import '../widgets/se_empty_state.dart';
 import '../widgets/se_bottom_sheet.dart';
 
+/// Saved addresses.
+///
+/// A short list that is edited rarely, so it is one grouped surface with the
+/// add action docked — not a stack of cards each carrying its own pair of icon
+/// buttons.
 class SavedAddressesScreen extends StatefulWidget {
   const SavedAddressesScreen({super.key});
 
@@ -34,7 +39,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
     if (_uid.isNotEmpty) {
       _sub = FirestoreService.addressStream(_uid).listen((addrs) {
@@ -56,7 +61,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     super.dispose();
   }
 
-  void _showAddEditDialog({Map<String, dynamic>? existing}) {
+  void _showAddEditSheet({Map<String, dynamic>? existing}) {
     if (_uid.isEmpty) return;
     final isEdit = existing != null;
     final labelCtrl = TextEditingController(
@@ -64,10 +69,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     final addressCtrl = TextEditingController(
         text: isEdit ? existing['text'] as String? ?? '' : '');
     const quickLabels = ['Home', 'Work', 'Mom', 'Dad', 'School', 'Other'];
-    String selectedQuick =
-        isEdit && quickLabels.contains(existing['label'])
-            ? existing['label'] as String
-            : '';
+    String selectedQuick = isEdit && quickLabels.contains(existing['label'])
+        ? existing['label'] as String
+        : '';
 
     showSeBottomSheet(
       context: context,
@@ -84,12 +88,11 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SeSheetHandle(),
-              const SizedBox(height: 12),
-              Text(isEdit ? 'Edit Address' : 'Add New Address',
+              const SizedBox(height: 14),
+              Text(isEdit ? 'Edit address' : 'Add an address',
                   style: SeType.h2),
-              const SizedBox(height: 16),
-              Text('LABEL', style: SeType.eyebrow),
-              const SizedBox(height: 8),
+              const SizedBox(height: 18),
+              const SeFieldLabel('LABEL'),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -100,22 +103,21 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                       setModalState(() => selectedQuick = ql);
                       labelCtrl.text = ql;
                     },
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: sel ? SeColors.red50 : SeColors.surface50,
+                        color: sel ? SeColors.brandSoft : SeColors.surface50,
                         borderRadius: SeRadius.pill,
                         border: Border.all(
-                          color: sel ? SeColors.red500 : SeColors.ink200,
-                          width: 1.5,
+                          color: sel ? SeColors.brandAction : SeColors.ink200,
                         ),
                       ),
                       child: Text(ql,
                           style: SeType.label.copyWith(
                               color:
-                                  sel ? SeColors.red700 : SeColors.ink500,
-                              fontWeight: FontWeight.w600)),
+                                  sel ? SeColors.brandInk : SeColors.ink500)),
                     ),
                   );
                 }).toList(),
@@ -123,9 +125,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               const SizedBox(height: 12),
               SeTextField(
                   controller: labelCtrl,
-                  hint: 'Or type a custom label...',
+                  hint: 'Or type your own label…',
                   icon: SeIcons.tag),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               SeTextField(
                 controller: addressCtrl,
                 label: 'ADDRESS',
@@ -136,8 +138,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
               ),
               const SizedBox(height: 20),
               SeButton(
-                label: isEdit ? 'Save Changes' : 'Add Address',
-                icon: SeIcons.check,
+                label: isEdit ? 'Save changes' : 'Add address',
                 onPressed: () async {
                   final label = labelCtrl.text.trim();
                   final text = addressCtrl.text.trim();
@@ -165,7 +166,7 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     if (_uid.isEmpty) return;
     final confirm = await SeConfirmSheet.show(
       context,
-      title: 'Delete Address',
+      title: 'Delete address',
       message: 'Remove "${addr['label']}" from your saved addresses?',
       confirmLabel: 'Delete',
       destructive: true,
@@ -177,74 +178,38 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildBody()),
-          ],
-        ),
-      ),
+    final empty = !_loading && _addresses.isEmpty;
+    return SePageScaffold(
+      title: 'Saved addresses',
+      subtitle: _loading || empty
+          ? 'Where we bring your orders'
+          : '${_addresses.length} '
+              '${_addresses.length == 1 ? 'address' : 'addresses'} saved',
+      bottomBar: _loading || empty
+          ? null
+          : SeBottomBar(
+              child: SeButton(
+                label: 'Add another address',
+                icon: SeIcons.plus,
+                variant: SeButtonVariant.secondary,
+                onPressed: () => _showAddEditSheet(),
+              ),
+            ),
+      child: _body(),
     );
   }
 
-  Widget _buildHeader() => Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, SeSpacing.gutter, 12),
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                    color: SeColors.surface50, shape: BoxShape.circle),
-                child: const Icon(SeIcons.arrowLeft,
-                    size: 20, color: SeColors.ink900),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text('Saved Addresses', style: SeType.h3)),
-            GestureDetector(
-              onTap: () => _showAddEditDialog(),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                decoration: BoxDecoration(
-                    gradient: SeColors.emberGradient,
-                    borderRadius: SeRadius.pill,
-                    boxShadow: SeElevation.glow),
-                child: Row(
-                  children: [
-                    const Icon(SeIcons.plus, size: 15, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text('Add',
-                        style: SeType.label.copyWith(color: Colors.white)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildBody() {
+  Widget _body() {
     if (_loading) {
       return SeShimmer(
         child: ListView.separated(
-          padding: const EdgeInsets.all(SeSpacing.gutter),
+          padding: const EdgeInsets.fromLTRB(
+              SeSpacing.gutter, 20, SeSpacing.gutter, 24),
           itemCount: 4,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (_, __) => Row(
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, _) => Row(
             children: const [
-              SeSkeleton(width: 42, height: 42, radius: 11),
+              SeSkeleton(width: 34, height: 34, radius: 8),
               SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -263,75 +228,84 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     }
     if (_addresses.isEmpty) {
       return Center(
-        child: SeEmptyState(
-          icon: SeIcons.addresses,
-          title: 'No saved addresses',
-          message: 'Save a delivery address to check out faster.',
-          ctaLabel: 'Add New Address',
-          onCta: () => _showAddEditDialog(),
+        child: Padding(
+          padding: const EdgeInsets.all(SeSpacing.gutter),
+          child: SeEmptyState(
+            icon: SeIcons.addresses,
+            title: 'No saved addresses',
+            message: 'Save a delivery address to check out faster.',
+            ctaLabel: 'Add an address',
+            onCta: () => _showAddEditSheet(),
+          ),
         ),
       );
     }
-    return ListView.separated(
-      padding: const EdgeInsets.all(SeSpacing.gutter),
-      itemCount: _addresses.length,
-      separatorBuilder: (ctx, idx) => const SizedBox(height: 10),
-      itemBuilder: (ctx, i) => _buildAddressCard(_addresses[i]),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+          SeSpacing.gutter, 20, SeSpacing.gutter, 24),
+      children: [
+        SeRowGroup(
+          children: [for (final addr in _addresses) _addressRow(addr)],
+        ),
+      ],
     );
   }
 
-  Widget _buildAddressCard(Map<String, dynamic> addr) {
+  Widget _addressRow(Map<String, dynamic> addr) {
     final label = addr['label'] as String? ?? '';
     final text = addr['text'] as String? ?? '';
-    final iconData = label == 'Home'
-        ? SeIcons.home
-        : label == 'Work'
-            ? SeIcons.box
-            : SeIcons.location;
+    final icon = switch (label) {
+      'Home' => SeIcons.home,
+      'Work' => SeIcons.box,
+      _ => SeIcons.location,
+    };
 
-    return SeCard(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: SeColors.red50,
-              borderRadius: SeRadius.all(SeRadius.sm),
+              color: SeColors.brandAction.withValues(alpha: 0.10),
+              borderRadius: SeRadius.all(SeRadius.xs),
             ),
-            child: Icon(iconData, size: 20, color: SeColors.red500),
+            child: Icon(icon, size: 18, color: SeColors.brandAction),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label, style: SeType.title),
-                const SizedBox(height: 3),
+                Text(label, style: SeType.title.copyWith(fontSize: 15)),
+                const SizedBox(height: 2),
                 Text(text,
-                    style: SeType.bodyS.copyWith(color: SeColors.ink500)),
+                    style: SeType.bodyS.copyWith(color: SeColors.ink500),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
-          _iconBtn(SeIcons.edit, SeColors.surface50, SeColors.ink700,
-              () => _showAddEditDialog(existing: addr)),
-          const SizedBox(width: 8),
-          _iconBtn(SeIcons.trash, SeColors.dangerTint, SeColors.danger,
-              () => _deleteAddress(addr)),
+          // Two quiet glyphs rather than two filled buttons: editing an address
+          // is housekeeping, and housekeeping should not shout.
+          _iconBtn(SeIcons.edit, SeColors.ink500,
+              () => _showAddEditSheet(existing: addr)),
+          _iconBtn(SeIcons.trash, SeColors.danger, () => _deleteAddress(addr)),
         ],
       ),
     );
   }
 
-  Widget _iconBtn(IconData icon, Color bg, Color fg, VoidCallback onTap) =>
+  Widget _iconBtn(IconData icon, Color fg, VoidCallback onTap) =>
       GestureDetector(
         onTap: onTap,
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration:
-              BoxDecoration(color: bg, borderRadius: SeRadius.all(SeRadius.sm)),
-          child: Icon(icon, size: 17, color: fg),
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(icon, size: 18, color: fg),
         ),
       );
 }

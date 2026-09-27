@@ -1,0 +1,86 @@
+<!-- card: Welcome | group: Screens · Signed out | desc: The signed-out hero — the one screen allowed a 900-weight headline -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Welcome</h1>
+    <p>Route <code>/welcome</code>. The only screen in the app that reaches past
+      weight 800 — it has exactly one thing to say and the whole composition is
+      built around it.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="disc" style="width:240px;height:240px;top:-110px;right:-90px;opacity:.06"></div>
+      <div class="disc" style="width:230px;height:230px;bottom:-70px;right:-50px;opacity:.05"></div>
+
+      <div class="on-shell" style="flex:1;position:relative;display:flex;flex-direction:column;justify-content:space-between;padding-top:var(--safe-top);min-height:0">
+        <div style="padding:16px var(--gutter) 0">
+          <div class="wordmark" style="font-size:26px;letter-spacing:-.83px">Ship<span class="east">East</span></div>
+          <div style="margin-top:3px;font-size:11.5px;font-weight:500;letter-spacing:.1px;color:rgba(255,244,247,.72)">ShipEast Couriers &amp; Bearer Services Ltd</div>
+
+          <!-- hero(37): weight 900, leading 1.05 so the two lines lock together
+               as one shape instead of reading as two sentences. -->
+          <div style="margin-top:26px;font-size:37px;font-weight:900;line-height:1.05;letter-spacing:-1.04px;color:#FFF4F7">
+            Delivery,<br><span style="color:#FFC9D6">done right.</span>
+          </div>
+
+          <div style="margin-top:12px;max-width:330px;font-size:13px;line-height:1.5;color:rgba(255,244,247,.78)">
+            Restaurants, groceries and pharmacy runs across St. Thomas &amp;
+            Kingston — at your door.
+          </div>
+
+          <div class="wrap g6" style="margin-top:16px">
+            <span class="shell-chip" style="height:auto;padding:6px 12px 6px 10px;background:rgba(255,255,255,.13)"><svg class="i" style="width:13px;height:13px"><use href="#i-food"/></svg>Restaurants</span>
+            <span class="shell-chip" style="height:auto;padding:6px 12px 6px 10px;background:rgba(255,255,255,.13)"><svg class="i" style="width:13px;height:13px"><use href="#i-grocery"/></svg>Groceries</span>
+            <span class="shell-chip" style="height:auto;padding:6px 12px 6px 10px;background:rgba(255,255,255,.13)"><svg class="i" style="width:13px;height:13px"><use href="#i-pharmacy"/></svg>Pharmacy</span>
+          </div>
+        </div>
+
+        <!-- The rider owns a fixed band at the foot of the shell, so the copy
+             above can never push it off the screen. It is painted as an alpha
+             MASK over a solid fill rather than as an image, which is why it can
+             be recoloured from a token. -->
+        <div style="height:300px;position:relative">
+          <div class="rider" style="--rider:url({{asset:rider}});right:-37px;bottom:0;width:448px;height:267px"></div>
+        </div>
+      </div>
+
+      <div style="flex:none;background:var(--surface-0);border-radius:var(--r-xl) var(--r-xl) 0 0;
+                  box-shadow:0 -8px 28px rgba(70,8,24,.22);
+                  padding:40px var(--gutter) calc(26px + var(--safe-bottom))">
+        <button class="btn btn--primary">Create an account</button>
+        <div class="center" style="padding:12px 0;font-size:15px;color:var(--ink-500)">
+          Already have an account?&nbsp; <b style="color:var(--brand-action);font-weight:700">Sign in</b>
+        </div>
+        <div class="center mt10" style="font-size:13px;color:var(--ink-400)">
+          By continuing you agree to our
+          <b style="color:var(--brand-action);font-weight:600">Terms</b> &amp;
+          <b style="color:var(--brand-action);font-weight:600">Privacy</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Headline</td><td><code>hero(37)</code> — weight <b>900</b>, leading 1.05, tracking −0.028em.
+        37px is <code>width × 0.09</code> clamped to 28–37, so two phones 8dp apart do not get
+        headlines 6dp apart</td></tr>
+      <tr><td>Two tones</td><td>Line one <code>shellInk</code>, line two <code>shellMark</code>. The colour
+        break is the emphasis; there is no second type size</td></tr>
+      <tr><td>Lockup</td><td>26px wordmark with the legal name tucked under it. A delivery app asking for
+        an address and a phone number should say who is actually collecting them</td></tr>
+      <tr><td>Body copy</td><td><code>bodyS</code> at <code>shellInk</code> 78%, leading 1.5, capped at 330px
+        so it breaks where it was designed to break</td></tr>
+      <tr><td>Pills</td><td>13% white fill, 18% white hairline, 13px <code>shellMark</code> glyph</td></tr>
+      <tr><td>Rider band</td><td>46% of the shell height, never leaving the copy under ~260dp. The copy
+        scrolls if even that is not enough — a short scroll is a better failure than an
+        overflow stripe</td></tr>
+      <tr><td>The sheet</td><td>Padding is <b>deliberately generous</b> (40px top). It is the only white on
+        the screen and it carries the only button; sized to its contents it reads as a strip
+        pushed against the bottom edge rather than a surface the page comes to rest on</td></tr>
+      <tr><td>Rhythm</td><td>Every vertical gap is multiplied by an <code>air</code> factor — 1.0, 0.6 or
+        0.35 by available height. A short phone gets the <b>same composition, tighter</b></td></tr>
+    </table>
+  </div>
+</div>

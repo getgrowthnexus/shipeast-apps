@@ -1,0 +1,81 @@
+<!-- card: Payment | group: Screens · Ordering | desc: Method, promo code and the final total -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Payment</h1>
+    <p>Route <code>/payment</code>. Cash on delivery is the only live method
+      today; card and mobile money are shown as "Soon" rather than hidden, so the
+      roadmap is visible instead of secret.</p>
+  </div>
+
+  <div class="ds-frame">
+    <div class="phone">
+      <div class="cap has-back">
+        <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-row"><div><div class="cap-title">Payment</div><div class="cap-sub">Order from Island Grill Morant Bay</div></div></div>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet-body pad">
+          <div class="section-title"><h2>How you will pay</h2></div>
+          <div class="row-group mt10">
+            <div class="row" style="background:var(--brand-soft)">
+              <div class="plate"><svg class="i"><use href="#i-cash"/></svg></div>
+              <div class="rbody"><div class="rlabel">Cash on delivery</div><div class="rsub">Pay the driver at your door</div></div>
+              <div style="width:22px;height:22px;border-radius:999px;background:var(--brand-action);display:grid;place-items:center;color:#fff;flex:none">
+                <svg class="i" style="width:14px;height:14px"><use href="#i-check"/></svg>
+              </div>
+            </div>
+            <div class="row" style="opacity:.55">
+              <div class="plate" style="background:var(--surface-50);color:var(--ink-400)"><svg class="i"><use href="#i-creditCard"/></svg></div>
+              <div class="rbody"><div class="rlabel">Card</div><div class="rsub">Visa, Mastercard</div></div>
+              <span class="chip" style="background:var(--surface-50);color:var(--ink-500)">Soon</span>
+            </div>
+          </div>
+
+          <div class="section-title mt22"><h2>Delivering to</h2></div>
+          <div class="panel mt10">
+            <div class="hstack g12">
+              <div class="plate" style="width:34px;height:34px;border-radius:var(--r-xs);background:rgba(227,13,59,.10);color:var(--brand-action);display:grid;place-items:center;flex:none">
+                <svg class="i" style="width:18px;height:18px"><use href="#i-location"/></svg>
+              </div>
+              <div class="grow">
+                <div class="t-title" style="font-size:15px">Home</div>
+                <div class="t-bodyS mt2">14 Yallahs Main Road, St. Thomas</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title mt22"><h2>Promo code</h2></div>
+          <div class="hstack g10 mt10">
+            <div class="field grow"><svg class="i"><use href="#i-tag"/></svg><span class="val">ISLAND20</span></div>
+            <button class="btn btn--secondary btn--md btn--auto" style="flex:none">Remove</button>
+          </div>
+
+          <div class="panel mt20" style="padding:16px">
+            <div class="money"><span class="lbl">Items</span><span class="amt">$3,850</span></div>
+            <div class="money"><span class="lbl">Delivery fee</span><span class="amt">$350</span></div>
+            <div class="money"><span class="lbl">Service fee</span><span class="amt">$385</span></div>
+            <div class="money"><span class="lbl">Promo ISLAND20</span><span class="amt c-success">−$770</span></div>
+            <div style="height:1px;background:var(--ink-200);margin:9px 0"></div>
+            <div class="money money--strong"><span class="lbl">Total to pay</span><span class="amt">$3,815</span></div>
+            <div style="text-align:right;margin-top:2px" class="t-bodyS tnum ink-400"><s>was $4,585</s></div>
+          </div>
+        </div>
+        <div class="bottom-bar"><button class="btn btn--primary">Place order · $3,815</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Unavailable methods</td><td>Shown at 55% with a "Soon" chip rather than removed. Hiding them makes the
+        app look like it will never take cards</td></tr>
+      <tr><td>Promo</td><td>Field plus a secondary action that flips between Apply and Remove. The discount lands as
+        its own money line in success green, and the pre-discount total is struck through under the new one</td></tr>
+      <tr><td>Confirm</td><td>Placing the order opens a confirm sheet — "Place this order?" with <b>Place order</b> and
+        <b>Not yet</b>. The last irreversible step gets a deliberate pause</td></tr>
+      <tr><td>Total label</td><td>"Total to pay", not "Total" — this is the number that leaves the customer's pocket</td></tr>
+    </table>
+  </div>
+</div>

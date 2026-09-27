@@ -1,0 +1,160 @@
+<!-- card: Fields & chips | group: Components | desc: Sunken wells that lift to white on focus, plus the chip family -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Fields &amp; chips</h1>
+    <p>A field is a <b>sunken well you type into</b>: it rests on the field tone
+      and lifts to white on focus — a real change of surface, not just a
+      recoloured border. From <code>se_text_field.dart</code> and <code>se_chip.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Text field — every state</h2>
+    <div class="stack g18" style="max-width:360px">
+      <div>
+        <label class="field-label">EMAIL</label>
+        <div class="field">
+          <svg class="i"><use href="#i-envelope"/></svg>
+          <span class="ph">you@example.com</span>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Rest — <code>field</code> #FBEFF4, 1.5px <code>ink200</code></div>
+      </div>
+      <div>
+        <label class="field-label">EMAIL</label>
+        <div class="field field--focus">
+          <svg class="i"><use href="#i-envelope"/></svg>
+          <span class="val">andre@shipeastja.com</span>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Focus — lifts to <b>white</b>, 2px action red, 3px ring at 12%</div>
+      </div>
+      <div>
+        <label class="field-label">PASSWORD</label>
+        <div class="field">
+          <svg class="i"><use href="#i-lock"/></svg>
+          <span class="val">••••••••••</span>
+          <svg class="i"><use href="#i-eye"/></svg>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Obscured, with the reveal toggle</div>
+      </div>
+      <div>
+        <label class="field-label">PASSWORD</label>
+        <div class="field field--error">
+          <svg class="i"><use href="#i-lock"/></svg>
+          <span class="val">••••</span>
+          <svg class="i"><use href="#i-eye"/></svg>
+        </div>
+        <div class="field-err">
+          <svg class="i"><use href="#i-warningCircle"/></svg>
+          <span>Password must be at least 6 characters</span>
+        </div>
+      </div>
+      <div>
+        <label class="field-label">ADDRESS</label>
+        <div class="field field--multi">
+          <svg class="i"><use href="#i-location"/></svg>
+          <span class="ph">e.g. 14 Yallahs Main Road, St. Thomas</span>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Multi-line — the glyph pins to the top, not the middle</div>
+      </div>
+      <div>
+        <label class="field-label">PARISH</label>
+        <div class="field">
+          <svg class="i"><use href="#i-locationLine"/></svg>
+          <span class="val">St. Thomas</span>
+          <svg class="i"><use href="#i-caretDown"/></svg>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Picker — same well, trailing caret</div>
+      </div>
+      <div>
+        <label class="field-label">EMAIL</label>
+        <div class="field field--disabled">
+          <svg class="i"><use href="#i-envelope"/></svg>
+          <span class="ph">andre@shipeastja.com</span>
+        </div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">Disabled — falls back to the page ground</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The shell field — a white pill ON the brand cap</h2>
+    <div style="background:#B00D33;border-radius:12px;padding:20px">
+      <div class="shell-field"><svg class="i"><use href="#i-search"/></svg><span>Search restaurants, shops, items…</span></div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      Home shows a non-interactive one as a doorway into search; search shows a
+      live one. Both come from the same widget, so tapping the first lands on
+      something <i>identical</i> rather than something that merely resembles it.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Chips</h2>
+    <div class="wrap g10" style="background:#F8ECF0;padding:18px;border-radius:12px">
+      <span class="chip">All</span>
+      <span class="chip chip--on">Food</span>
+      <span class="chip chip--success">Delivered</span>
+      <span class="chip chip--warning">On the way</span>
+      <span class="chip chip--danger">Cancelled</span>
+      <span class="chip chip--info">Preparing</span>
+      <span class="chip chip--brand">20% OFF</span>
+      <span class="chip"><svg class="i"><use href="#i-clock"/></svg>25–35 min</span>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Default</td><td><code>surfaceRaised</code> white on the blush ground, <code>ink700</code> label</td></tr>
+      <tr><td>Selected</td><td>1.5px <code>brand</code> ring — the identity red, since nothing small and
+        white sits on it</td></tr>
+      <tr><td>Status</td><td>Semantic tone on its own tint. Open/Closed, order state, promo</td></tr>
+      <tr><td>Metrics</td><td>7px × 12px padding, pill radius, 12/16 at weight 600</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Shell chips &amp; tabs — the versions that live on the red</h2>
+    <div style="background:#B00D33;border-radius:12px;padding:20px" class="stack g16">
+      <div class="wrap g8">
+        <span class="shell-chip on"><svg class="i"><use href="#i-food"/></svg>Food</span>
+        <span class="shell-chip"><svg class="i"><use href="#i-grocery"/></svg>Grocery</span>
+        <span class="shell-chip"><svg class="i"><use href="#i-packages"/></svg>Packages</span>
+        <span class="shell-chip"><svg class="i"><use href="#i-pharmacy"/></svg>Pharmacy</span>
+      </div>
+      <div class="shell-tabs">
+        <div class="on">Active</div><div>Completed</div><div>Cancelled</div>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      Selected goes solid warm-white; unselected is a translucent well — the same
+      language as the cap's back button. The segmented control is <b>one track,
+      no shadows, no lift</b>. Its predecessor was a row of gradient pills that
+      grew a glow and dropped it again on every tap: the loudest generated-UI tell
+      in the app, and genuinely distracting to use.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Category tiles</h2>
+    <div class="hstack g16" style="background:#F8ECF0;padding:18px;border-radius:12px">
+      <div class="cat cat--on">
+        <div class="plate" style="background:#F72B54;box-shadow:0 8px 18px -4px rgba(247,43,84,.20)"><svg class="i"><use href="#i-food"/></svg></div>
+        <div class="lbl">Food</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#EFF8F2;color:#1C8252;border:1px solid rgba(28,130,82,.14)"><svg class="i"><use href="#i-grocery"/></svg></div>
+        <div class="lbl">Grocery</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#FDF4E7;color:#D37A0D;border:1px solid rgba(211,122,13,.14)"><svg class="i"><use href="#i-packages"/></svg></div>
+        <div class="lbl">Packages</div>
+      </div>
+      <div class="cat">
+        <div class="plate" style="background:#EFF4FC;color:#1F6BC1;border:1px solid rgba(31,107,193,.14)"><svg class="i"><use href="#i-pharmacy"/></svg></div>
+        <div class="lbl">Pharmacy</div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Shape</td><td>58px squircle at <code>md</code> radius — a <b>surface</b> sitting on the page,
+        not a bare floating circle</td></tr>
+      <tr><td>Unselected</td><td>Soft tint fill + a hairline of the hue at 14%</td></tr>
+      <tr><td>Selected</td><td>Fills with its hue, white glyph, and a restrained tinted lift</td></tr>
+      <tr><td>Layout</td><td>Each tile must sit in an equal-width slot with the label clamped to it.
+        Sized to its own content, "Pharmacy" ran off the right edge of a 320dp phone</td></tr>
+    </table>
+  </div>
+</div>

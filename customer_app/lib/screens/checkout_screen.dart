@@ -8,11 +8,17 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_toast.dart';
 import 'saved_addresses_screen.dart';
 
+/// Checkout: where it goes, and what it comes to.
+///
+/// Two decisions and one confirmation, in that order. The address list is a
+/// real choice so it comes first; the summary below it is a receipt, not a
+/// control. The action is docked, because on a long order the button used to
+/// end up below the fold on the one screen where hesitation costs an order.
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -34,7 +40,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
     _subscribeAddresses();
   }
@@ -81,32 +87,152 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return _addresses[_selectedAddress]['text'] as String? ?? '';
   }
 
+  void _openAddresses() => Navigator.push(context,
+      MaterialPageRoute(builder: (_) => const SavedAddressesScreen()));
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: SafeArea(
+    final total = _orderArgs['total'] as int? ?? 0;
+    return SePageScaffold(
+      title: 'Checkout',
+      subtitle: _orderArgs['merchantName'] as String?,
+      bottomBar: _loading
+          ? null
+          : SeBottomBar(
+              child: SeButton(
+                label: 'Choose payment · ${Money.format(total)}',
+                onPressed: () {
+                  if (_addresses.isEmpty) {
+                    SeToast.error(
+                        context, 'Please add a delivery address first');
+                    return;
+                  }
+                  Navigator.pushNamed(context, '/payment', arguments: {
+                    ..._orderArgs,
+                    'deliveryAddress': selectedAddressText,
+                  });
+                },
+              ),
+            ),
+      child: _loading
+          ? const Center(
+              child: CircularProgressIndicator(color: SeColors.brandAction))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(
+                  SeSpacing.gutter, 20, SeSpacing.gutter, 24),
+              children: [
+                SeSectionTitle(
+                  title: 'Deliver to',
+                  actionLabel: _addresses.isEmpty ? null : 'Manage',
+                  onAction: _addresses.isEmpty ? null : _openAddresses,
+                ),
+                const SizedBox(height: 10),
+                if (_addresses.isEmpty) _noAddress() else _addressList(),
+                const SizedBox(height: 22),
+                const SeSectionTitle(title: 'Order summary'),
+                const SizedBox(height: 10),
+                _summary(),
+              ],
+            ),
+    );
+  }
+
+  Widget _noAddress() => SePanel(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(),
-            Expanded(
-              child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: SeColors.red500))
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(SeSpacing.gutter),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildAddressCard(),
-                          const SizedBox(height: 14),
-                          _buildOrderSummaryCard(),
-                          const SizedBox(height: 20),
-                          _buildChoosePaymentButton(),
-                        ],
+            const Icon(SeIcons.locationLine, size: 30, color: SeColors.ink300),
+            const SizedBox(height: 10),
+            Text('No addresses saved',
+                style: SeType.body.copyWith(color: SeColors.ink500)),
+            const SizedBox(height: 4),
+            Text('We need somewhere to bring this.',
+                style: SeType.bodyS.copyWith(color: SeColors.ink400)),
+            const SizedBox(height: 14),
+            SeButton(
+              label: 'Add an address',
+              icon: SeIcons.plus,
+              variant: SeButtonVariant.secondary,
+              size: SeButtonSize.medium,
+              expand: false,
+              onPressed: _openAddresses,
+            ),
+          ],
+        ),
+      );
+
+  Widget _addressList() => SeRowGroup(
+        children: [
+          for (var i = 0; i < _addresses.length; i++)
+            _addressRow(i, _addresses[i]),
+        ],
+      );
+
+  Widget _addressRow(int i, Map<String, dynamic> addr) {
+    final selected = _selectedAddress == i;
+    final label = addr['label'] as String? ?? '';
+    final icon = switch (label) {
+      'Home' => SeIcons.home,
+      'Work' => SeIcons.box,
+      _ => SeIcons.location,
+    };
+    return GestureDetector(
+      onTap: () => setState(() => _selectedAddress = i),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+        color: selected ? SeColors.brandSoft : Colors.transparent,
+        child: Row(
+          children: [
+            // A filled circle, not a Material Radio: the whole row is the
+            // target, and a stock radio next to dead text invites people to aim
+            // at the 20dp circle instead.
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? SeColors.brandAction : SeColors.ink300,
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: const BoxDecoration(
+                            color: SeColors.brandAction,
+                            shape: BoxShape.circle),
                       ),
-                    ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(icon,
+                          size: 13,
+                          color:
+                              selected ? SeColors.brandInk : SeColors.ink400),
+                      const SizedBox(width: 5),
+                      Text(label,
+                          style: SeType.label.copyWith(
+                              color: selected
+                                  ? SeColors.brandInk
+                                  : SeColors.ink500)),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(addr['text'] as String? ?? '',
+                      style: SeType.bodyS.copyWith(color: SeColors.ink700)),
+                ],
+              ),
             ),
           ],
         ),
@@ -114,153 +240,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildHeader() => Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, SeSpacing.gutter, 12),
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                    color: SeColors.surface50, shape: BoxShape.circle),
-                child: const Icon(SeIcons.arrowLeft,
-                    size: 20, color: SeColors.ink900),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text('Checkout', style: SeType.h2),
-          ],
-        ),
-      );
-
-  Widget _buildAddressCard() => SeCard(
-        padding: EdgeInsets.zero,
-        child: Column(
-          children: [
-            _coHead('Delivery Address',
-                actionLabel: 'Manage',
-                onAction: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const SavedAddressesScreen()))),
-            if (_addresses.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const Icon(SeIcons.locationLine,
-                        size: 32, color: SeColors.ink300),
-                    const SizedBox(height: 10),
-                    Text('No addresses saved',
-                        style:
-                            SeType.body.copyWith(color: SeColors.ink500)),
-                    const SizedBox(height: 10),
-                    SeButton(
-                      label: 'Add New Address',
-                      icon: SeIcons.plus,
-                      variant: SeButtonVariant.secondary,
-                      size: SeButtonSize.small,
-                      expand: false,
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SavedAddressesScreen())),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ..._addresses.asMap().entries.map((e) {
-                final i = e.key;
-                final addr = e.value;
-                final selected = _selectedAddress == i;
-                final isLast = i == _addresses.length - 1;
-                final label = addr['label'] as String? ?? '';
-                final iconData = label == 'Home'
-                    ? SeIcons.home
-                    : label == 'Work'
-                        ? SeIcons.box
-                        : SeIcons.location;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedAddress = i),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: selected ? SeColors.red50 : Colors.transparent,
-                      border: isLast
-                          ? null
-                          : const Border(
-                              bottom:
-                                  BorderSide(color: SeColors.ink100)),
-                    ),
-                    child: Row(
-                      children: [
-                        _radio(selected),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(iconData,
-                                      size: 14,
-                                      color: selected
-                                          ? SeColors.red500
-                                          : SeColors.ink400),
-                                  const SizedBox(width: 5),
-                                  Text(label,
-                                      style: SeType.label.copyWith(
-                                          color: selected
-                                              ? SeColors.red700
-                                              : SeColors.ink500)),
-                                ],
-                              ),
-                              const SizedBox(height: 3),
-                              Text(addr['text'] as String? ?? '',
-                                  style: SeType.bodyS
-                                      .copyWith(color: SeColors.ink700)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-          ],
-        ),
-      );
-
-  Widget _radio(bool selected) => Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? SeColors.red500 : SeColors.ink300,
-            width: 2,
-          ),
-        ),
-        child: selected
-            ? Center(
-                child: Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                      color: SeColors.red500, shape: BoxShape.circle),
-                ),
-              )
-            : null,
-      );
-
-  Widget _buildOrderSummaryCard() {
+  Widget _summary() {
     final rawItems = _orderArgs['items'] as List? ?? [];
     final items =
         rawItems.map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -268,101 +248,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final serviceFee = _orderArgs['serviceFee'] as int? ?? 0;
     final total = _orderArgs['total'] as int? ?? 0;
 
-    return SeCard(
-      padding: EdgeInsets.zero,
+    return SePanel(
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _coHead('Order Summary'),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Column(
-              children: [
-                ...items.map((item) {
-                  final name = item['name'] as String? ?? '';
-                  final qty = item['quantity'] as int? ?? 1;
-                  final price = item['price'] as int? ?? 0;
-                  return _summaryLine(
-                      '$name × $qty', Money.format(price * qty));
-                }),
-                _summaryLine('Delivery fee', Money.deliveryFee(deliveryFee)),
-                _summaryLine(
-                    'Service fee (10%)', Money.format(serviceFee)),
-                const SizedBox(height: 4),
-                const Divider(height: 1, color: SeColors.ink100),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Total', style: SeType.h3),
-                    Text(Money.format(total),
-                        style: SeType.tabular(SeType.h3)
-                            .copyWith(color: SeColors.red600)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
+          for (final item in items)
+            SeMoneyLine(
+              label: '${item['name'] ?? ''} × ${item['quantity'] ?? 1}',
+              value: Money.format(
+                  (item['price'] as int? ?? 0) * (item['quantity'] as int? ?? 1)),
             ),
-          ),
+          const Divider(height: 18, color: SeColors.ink100),
+          SeMoneyLine(
+              label: 'Delivery fee', value: Money.deliveryFee(deliveryFee)),
+          SeMoneyLine(
+              label: 'Service fee (10%)', value: Money.format(serviceFee)),
+          const Divider(height: 18, color: SeColors.ink200),
+          SeMoneyLine(
+              label: 'Total', value: Money.format(total), strong: true),
         ],
       ),
     );
   }
-
-  Widget _summaryLine(String label, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(label,
-                  style: SeType.body.copyWith(color: SeColors.ink500)),
-            ),
-            const SizedBox(width: 12),
-            Text(value,
-                style:
-                    SeType.tabular(SeType.body).copyWith(color: SeColors.ink700)),
-          ],
-        ),
-      );
-
-  Widget _buildChoosePaymentButton() => SeButton(
-        label: 'Choose Payment',
-        icon: SeIcons.arrowRight,
-        onPressed: () {
-          if (_addresses.isEmpty) {
-            SeToast.error(context, 'Please add a delivery address first');
-            return;
-          }
-          Navigator.pushNamed(context, '/payment', arguments: {
-            ..._orderArgs,
-            'deliveryAddress': selectedAddressText,
-          });
-        },
-      );
-
-  Widget _coHead(String title, {String? actionLabel, VoidCallback? onAction}) =>
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: SeType.title),
-            if (actionLabel != null)
-              GestureDetector(
-                onTap: onAction,
-                child: Row(
-                  children: [
-                    const Icon(SeIcons.edit, size: 14, color: SeColors.red500),
-                    const SizedBox(width: 4),
-                    Text(actionLabel,
-                        style: SeType.label.copyWith(color: SeColors.red500)),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      );
 }

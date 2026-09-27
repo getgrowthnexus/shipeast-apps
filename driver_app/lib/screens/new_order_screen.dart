@@ -152,11 +152,19 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   Widget build(BuildContext context) {
     if (_expired) return _expiredView();
 
+    // The one screen that is deliberately NOT the calm shell red. An incoming
+    // job is the only thing in this app that expires, so it gets the brighter
+    // action red — the same tone the presence slab uses while delivering.
     return Scaffold(
-      backgroundColor: SeColors.red500,
-      body: Container(
-        decoration: const BoxDecoration(gradient: SeColors.sunsetGradient),
+      backgroundColor: SeColors.brandAction,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(color: SeColors.brandAction),
+        // `bottom: false`, because the decision bar takes the gesture inset
+        // itself. Consumed out here it was painted in the Scaffold's red,
+        // leaving a red stripe under a white bar — which reads as a rendering
+        // fault rather than a design.
         child: SafeArea(
+          bottom: false,
           child: Column(
             children: [
               // ── Header ──────────────────────────────────────────────────
@@ -169,11 +177,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
+                        color: Colors.white.withValues(alpha: 0.16),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(SeIcons.box,
-                          color: Colors.white, size: 21),
+                          color: SeColors.shellInk, size: 21),
                     ),
                     const SizedBox(width: SeSpacing.x3),
                     Expanded(
@@ -183,10 +191,10 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                           Text('NEW DELIVERY REQUEST',
                               style: SeType.eyebrow.copyWith(
                                   color:
-                                      Colors.white.withValues(alpha: 0.85))),
+                                      SeColors.shellInk.withValues(alpha: 0.85))),
                           Text('Order #$_shortId',
                               style: SeType.tabular(SeType.h3)
-                                  .copyWith(color: Colors.white)),
+                                  .copyWith(color: SeColors.shellInk)),
                         ],
                       ),
                     ),
@@ -206,7 +214,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                     ? 'Expiring — decide now'
                     : 'Respond before the timer runs out',
                 style: SeType.body.copyWith(
-                  color: Colors.white.withValues(alpha: 0.90),
+                  color: SeColors.shellInk.withValues(alpha: 0.90),
                   fontWeight:
                       _remainingSeconds <= 10 ? FontWeight.w700 : null,
                 ),
@@ -218,8 +226,15 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: SeColors.surface0,
+                    color: SeColors.surface50,
                     borderRadius: SeRadius.sheetTop,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color.fromRGBO(70, 8, 24, 0.22),
+                        blurRadius: 28,
+                        offset: Offset(0, -8),
+                      ),
+                    ],
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(SeSpacing.gutter,
@@ -239,16 +254,13 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
               ),
 
               // ── Decision bar ────────────────────────────────────────────
-              Container(
+              ColoredBox(
                 color: SeColors.surface0,
-                padding: EdgeInsets.fromLTRB(
-                  SeSpacing.gutter,
-                  SeSpacing.x2,
-                  SeSpacing.gutter,
-                  MediaQuery.of(context).padding.bottom > 0
-                      ? SeSpacing.x3
-                      : SeSpacing.x5,
-                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                padding: const EdgeInsets.fromLTRB(SeSpacing.gutter,
+                    SeSpacing.x3, SeSpacing.gutter, SeSpacing.x3),
                 child: Row(
                   children: [
                     Expanded(
@@ -270,6 +282,8 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                       ),
                     ),
                   ],
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -378,7 +392,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
             Column(
               children: [
                 const Icon(SeIcons.storefront,
-                    color: SeColors.red500, size: 20),
+                    color: SeColors.brandAction, size: 20),
                 Container(
                   width: 2,
                   height: 38,
@@ -428,11 +442,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(SeIcons.navigation,
-                              size: 13, color: SeColors.ocean500),
+                              size: 13, color: SeColors.info),
                           const SizedBox(width: 4),
                           Text(_pickupDistanceLabel!,
                               style: SeType.bodyS.copyWith(
-                                  color: SeColors.ocean500,
+                                  color: SeColors.info,
                                   fontWeight: FontWeight.w600)),
                         ],
                       ),
@@ -499,10 +513,10 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: SeColors.red50,
+              color: SeColors.brandSoft,
               borderRadius: SeRadius.all(SeRadius.xs),
             ),
-            child: const Icon(SeIcons.box, color: SeColors.red700, size: 18),
+            child: const Icon(SeIcons.box, color: SeColors.brandInk, size: 18),
           ),
           const SizedBox(width: SeSpacing.x3),
           Expanded(

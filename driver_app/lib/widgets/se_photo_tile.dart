@@ -41,8 +41,8 @@ class SePhotoTile extends StatelessWidget {
   }
 
   Widget _empty(BuildContext context) {
-    final hue = errored ? SeColors.danger : SeColors.red500;
-    final tint = errored ? SeColors.dangerTint : SeColors.red50;
+    final hue = errored ? SeColors.danger : SeColors.brand;
+    final tint = errored ? SeColors.dangerSoft : SeColors.brandSoft;
 
     return GestureDetector(
       key: const ValueKey('empty'),
@@ -63,7 +63,7 @@ class SePhotoTile extends StatelessWidget {
               height: 64,
               decoration: BoxDecoration(
                 color: hue.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
+                borderRadius: SeRadius.all(SeRadius.sm),
               ),
               child: Icon(SeIcons.camera, size: 30, color: hue),
             ),
@@ -88,7 +88,7 @@ class SePhotoTile extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: SeRadius.all(SeRadius.md),
-        boxShadow: SeElevation.e2,
+        border: Border.all(color: SeColors.ink200),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(

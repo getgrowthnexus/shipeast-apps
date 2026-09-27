@@ -1,0 +1,94 @@
+<!-- card: Typography | group: Foundations | desc: One face, Figtree, with the hierarchy carried by a weight ladder -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Typography</h1>
+    <p><b>One face: Figtree, and nothing else.</b> The hierarchy that used to be
+      carried by swapping faces is now carried by the weight ladder — and the
+      ladder <i>is</i> the system. From <code>lib/theme/se_typography.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Why one face</h2>
+    <p style="margin:0;font-size:13px;line-height:19px;color:#6E5F66">
+      The admin panel went through three pairings before landing here. The
+      lesson: a display/UI family split puts a <b>seam</b> through every screen —
+      two different ideas of what a letter is, read as two products glued
+      together. Figtree is a warm geometric sans whose heavy weights hold their
+      counters at display sizes and whose 400 is quiet enough for body copy, so
+      it carries both jobs alone.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The weight ladder</h2>
+    <table>
+      <tr><td style="font-weight:800">800</td><td>Display, page titles, big figures — the things allowed to be loud</td></tr>
+      <tr><td style="font-weight:700">700</td><td>Card, sheet and section titles. The heaviest a heading gets</td></tr>
+      <tr><td style="font-weight:600">600</td><td>All emphasis below title: buttons, labels, tabs, badges, eyebrows</td></tr>
+      <tr><td style="font-weight:500">500</td><td>Secondary values — one step below normal emphasis</td></tr>
+      <tr><td style="font-weight:400">400</td><td>Body, descriptions, help text</td></tr>
+      <tr><td style="font-weight:900">900</td><td>The signed-out hero only. Figtree Black, bundled for one line — it earns
+        the exception because the welcome screen has exactly one thing to say</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The scale</h2>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-display">Curry Goat with Rice</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">display · 32/38 · 800 · −0.7</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-h1">Saved addresses</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">h1 · 26/32 · 800 · −0.6 — the cap title</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-h2">Add an address</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">h2 · 22/28 · 800 · −0.5 — sheet titles</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-section">Popular near you</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">section · 19/24 · 800 · −0.4 — in-page headings, loud enough to read like a real storefront</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-h3">Your cart is empty</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">h3 · 18/24 · 700 · −0.3</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-title">Island Grill Morant Bay</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">title · 16/22 · 700 · −0.2 — card and row names</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-body">We shop in Jamaica and deliver to your family, so nothing has to be shipped.</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">body · 15/22 · 400 · ink700</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-bodyS">25–35 min · $350 delivery · St. Thomas</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">bodyS · 13/18 · 400 · ink500</div>
+    </div>
+    <div style="border-bottom:1px solid #F1EAED;padding:14px 0">
+      <div class="t-label">DELIVERY ADDRESS</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">label · 12/16 · 600 · +0.3 — buttons, field labels, chips</div>
+    </div>
+    <div style="padding:14px 0">
+      <div class="t-eyebrow">ORDER #SE4821BF90C1</div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:4px">eyebrow · 11/14 · 600 · +0.7 · ink500</div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Tabular figures — prices, stats, timers</h2>
+    <p style="margin:0 0 10px;font-size:13px;line-height:19px;color:#6E5F66">
+      Anything that counts or costs gets fixed-width figures, so a total does not
+      jitter sideways while it updates.</p>
+    <div class="hstack g24">
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:4px">Proportional (wrong)</div>
+        <div style="font-size:22px;font-weight:800">$4,585<br>$1,110</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:4px">Tabular (right)</div>
+        <div class="tnum" style="font-size:22px;font-weight:800">$4,585<br>$1,110</div>
+      </div>
+    </div>
+  </div>
+</div>

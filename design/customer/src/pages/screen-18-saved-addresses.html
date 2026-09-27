@@ -1,0 +1,115 @@
+<!-- card: Saved addresses | group: Screens · Account | desc: The address list, its empty state and the add/edit sheet -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Saved addresses</h1>
+    <p>Route <code>/saved-addresses</code>. A short list that is edited rarely,
+      so it is one grouped surface with the add action docked — not a stack of
+      cards each carrying its own pair of icon buttons.</p>
+  </div>
+
+  <div class="ds-grid">
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Saved addresses</div><div class="cap-sub">3 addresses saved</div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-body pad">
+              <div class="row-group">
+                <div class="row">
+                  <div class="plate"><svg class="i"><use href="#i-home"/></svg></div>
+                  <div class="rbody"><div class="rlabel">Home</div><div class="rsub">14 Yallahs Main Road, St. Thomas</div></div>
+                  <svg class="i" style="width:18px;height:18px;color:var(--ink-500);margin:0 11px"><use href="#i-edit"/></svg>
+                  <svg class="i" style="width:18px;height:18px;color:var(--danger);margin:0 11px"><use href="#i-trash"/></svg>
+                </div>
+                <div class="row">
+                  <div class="plate"><svg class="i"><use href="#i-box"/></svg></div>
+                  <div class="rbody"><div class="rlabel">Work</div><div class="rsub">Shop 3, Morant Bay Plaza, St. Thomas</div></div>
+                  <svg class="i" style="width:18px;height:18px;color:var(--ink-500);margin:0 11px"><use href="#i-edit"/></svg>
+                  <svg class="i" style="width:18px;height:18px;color:var(--danger);margin:0 11px"><use href="#i-trash"/></svg>
+                </div>
+                <div class="row">
+                  <div class="plate"><svg class="i"><use href="#i-location"/></svg></div>
+                  <div class="rbody"><div class="rlabel">Mom</div><div class="rsub">Lot 27 Retreat District, Seaforth P.O.</div></div>
+                  <svg class="i" style="width:18px;height:18px;color:var(--ink-500);margin:0 11px"><use href="#i-edit"/></svg>
+                  <svg class="i" style="width:18px;height:18px;color:var(--danger);margin:0 11px"><use href="#i-trash"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="bottom-bar"><button class="btn btn--secondary"><svg class="i"><use href="#i-plus"/></svg>Add another address</button></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">With addresses</div>
+    </div>
+
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Saved addresses</div><div class="cap-sub">Where we bring your orders</div></div></div>
+          </div>
+          <div class="sheet">
+            <div class="sheet-body" style="display:grid;place-items:center">
+              <div class="empty">
+                <div class="medal"><div><svg class="i"><use href="#i-addresses"/></svg></div></div>
+                <h3>No saved addresses</h3>
+                <p>Save a delivery address to check out faster.</p>
+                <button class="btn btn--primary btn--md btn--auto">Add an address</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">Empty — the CTA moves into the medallion, so no docked bar</div>
+    </div>
+
+    <div>
+      <div class="ds-frame">
+        <div class="phone">
+          <div class="cap has-back">
+            <div class="cap-btn"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+            <div class="cap-row"><div><div class="cap-title">Saved addresses</div><div class="cap-sub">3 addresses saved</div></div></div>
+          </div>
+          <div class="sheet"><div class="sheet-body pad"></div></div>
+          <div class="scrim"></div>
+          <div class="modal">
+            <div class="handle"></div>
+            <div class="t-h2 mt14">Add an address</div>
+            <div class="mt18"><span class="field-label">LABEL</span></div>
+            <div class="wrap g8">
+              <span class="chip" style="background:var(--brand-soft);border:1px solid var(--brand-action);color:var(--brand-ink);padding:7px 13px">Home</span>
+              <span class="chip" style="background:var(--surface-50);border:1px solid var(--ink-200);color:var(--ink-500);padding:7px 13px">Work</span>
+              <span class="chip" style="background:var(--surface-50);border:1px solid var(--ink-200);color:var(--ink-500);padding:7px 13px">Mom</span>
+              <span class="chip" style="background:var(--surface-50);border:1px solid var(--ink-200);color:var(--ink-500);padding:7px 13px">Dad</span>
+              <span class="chip" style="background:var(--surface-50);border:1px solid var(--ink-200);color:var(--ink-500);padding:7px 13px">School</span>
+              <span class="chip" style="background:var(--surface-50);border:1px solid var(--ink-200);color:var(--ink-500);padding:7px 13px">Other</span>
+            </div>
+            <div class="field mt12"><svg class="i"><use href="#i-tag"/></svg><span class="ph">Or type your own label…</span></div>
+            <div class="mt16"><span class="field-label">ADDRESS</span></div>
+            <div class="field field--multi"><svg class="i"><use href="#i-location"/></svg><span class="ph">e.g. 14 Yallahs Main Road, St. Thomas</span></div>
+            <div class="mt20"><button class="btn btn--primary">Add address</button></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#8A7A81;margin-top:8px;text-align:center">The add / edit sheet</div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spec</h2>
+    <table>
+      <tr><td>Row actions</td><td>Two quiet glyphs rather than two filled buttons. Editing an address is housekeeping,
+        and housekeeping should not shout</td></tr>
+      <tr><td>Label → glyph</td><td>Home → house · Work → box · anything else → pin</td></tr>
+      <tr><td>Quick labels</td><td>Six preset chips that fill the free-text field, so the common case is one tap and
+        the uncommon case is still possible</td></tr>
+      <tr><td>Delete</td><td>Goes through a confirm sheet naming the address, with a destructive confirm</td></tr>
+      <tr><td>Docked bar</td><td>Only when the list has something in it. When it is empty the CTA lives in the
+        medallion instead, so there is exactly one add action on screen at any time</td></tr>
+    </table>
+  </div>
+</div>

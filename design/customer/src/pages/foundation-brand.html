@@ -1,0 +1,85 @@
+<!-- card: Brand | group: Foundations | desc: The wordmark, the legal lockup and the shell surface -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Brand</h1>
+    <p>The wordmark is one face in two tones. Tracking tightens as the mark
+      grows, which is what keeps it looking <i>drawn</i> rather than typed at
+      display sizes. From <code>lib/theme/se_brand.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Wordmark — on light</h2>
+    <div style="background:#FFF6F8;border:1px solid #E6DAE0;border-radius:12px;padding:26px;display:flex;flex-direction:column;gap:22px">
+      <div class="wordmark" style="font-size:44px;letter-spacing:-1.41px;color:#33292E">Ship<span class="east">East</span></div>
+      <div class="wordmark" style="font-size:32px;letter-spacing:-1.02px;color:#33292E">Ship<span class="east">East</span></div>
+      <div class="wordmark" style="font-size:26px;letter-spacing:-.83px;color:#33292E">Ship<span class="east">East</span></div>
+      <div class="wordmark" style="font-size:19px;letter-spacing:-.61px;color:#33292E">Ship<span class="east">East</span></div>
+    </div>
+    <table style="margin-top:12px">
+      <tr><td>"Ship"</td><td><span class="swatch" style="background:#33292E"></span>ink900 on light · <span class="swatch" style="background:#FFF4F7"></span>shellInk on the brand</td></tr>
+      <tr><td>"East"</td><td><span class="swatch" style="background:#F72B54"></span>red500 on light · <span class="swatch" style="background:#FFC9D6"></span>shellMark on the brand</td></tr>
+      <tr><td>Tracking</td><td>−0.032em, scaled with the mark. Never set it loose</td></tr>
+      <tr><td>Weight</td><td>800, and the same face as the headline it sits above — the mark is
+        built from the <code>display</code> style, not a loose one-off</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Wordmark — on the shell</h2>
+    <div class="on-shell" style="background:#B00D33;border-radius:12px;padding:26px;display:flex;flex-direction:column;gap:22px">
+      <div class="wordmark" style="font-size:44px;letter-spacing:-1.41px">Ship<span class="east">East</span></div>
+      <div class="wordmark" style="font-size:26px;letter-spacing:-.83px">Ship<span class="east">East</span></div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The lockup — mark plus legal name</h2>
+    <p style="margin:0 0 14px;font-size:13px;line-height:19px;color:#6E5F66">
+      Two lines that form a <b>signature</b>, not a heading and a caption. The
+      small line is tucked tight under the mark and tracked out a little, which
+      is what keeps it reading as part of the mark rather than as the first line
+      of copy. A delivery app asking for an address and a phone number should say
+      who is actually collecting them.</p>
+    <div class="wrap g20">
+      <div style="flex:1;min-width:280px;background:#FFF6F8;border:1px solid #E6DAE0;border-radius:12px;padding:24px">
+        <div class="wordmark" style="font-size:26px;letter-spacing:-.83px;color:#33292E">Ship<span class="east">East</span></div>
+        <div style="margin-top:3px;font-size:11.5px;font-weight:500;letter-spacing:.1px;color:#79676F">ShipEast Couriers &amp; Bearer Services Ltd</div>
+      </div>
+      <div class="on-shell" style="flex:1;min-width:280px;background:#B00D33;border-radius:12px;padding:24px">
+        <div class="wordmark" style="font-size:26px;letter-spacing:-.83px">Ship<span class="east">East</span></div>
+        <div style="margin-top:3px;font-size:11.5px;font-weight:500;letter-spacing:.1px;color:rgba(255,244,247,.72)">ShipEast Couriers &amp; Bearer Services Ltd</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Strings — single source, do not retype</h2>
+    <table>
+      <tr><td>Legal name</td><td>ShipEast Couriers &amp; Bearer Services Ltd</td></tr>
+      <tr><td>Tagline</td><td>Couriers &amp; Bearer Services · Jamaica</td></tr>
+      <tr><td>Strapline (launch screen)</td><td>COURIERS &amp; DELIVERY · JAMAICA — tracked out, short enough to
+        hold one line on a 320dp phone</td></tr>
+      <tr><td>Version</td><td>1.2.1 — kept in lockstep with the pubspec</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The shell — a flat brand surface, and the quiet geometry on it</h2>
+    <p style="margin:0 0 14px;font-size:13px;line-height:19px;color:#6E5F66">
+      Every ember and sunset gradient was retired in the 2026 restyle. Depth now
+      comes from rose-black shadows and hairline rings, never a sheen. Where a
+      brand field needs relief it gets <b>soft discs bleeding off the edges</b> at
+      5–6% white — depth without a gradient. The single surviving gradient in the
+      system is the ink scrim over photography, because a legibility scrim is a
+      function rather than a decoration.</p>
+    <div style="position:relative;overflow:hidden;background:#B00D33;border-radius:12px;height:190px">
+      <div class="disc" style="width:280px;height:280px;top:-110px;right:-90px;opacity:.06"></div>
+      <div class="disc" style="width:340px;height:340px;bottom:-140px;left:-100px;opacity:.05"></div>
+      <div style="position:relative;padding:26px" class="on-shell">
+        <div class="wordmark" style="font-size:32px;letter-spacing:-1.02px">Ship<span class="east">East</span></div>
+        <div style="margin-top:14px;height:3px;width:64px;background:#FFC9D6;border-radius:2px"></div>
+        <div style="margin-top:14px;font-size:11px;font-weight:600;letter-spacing:.7px;color:rgba(255,244,247,.8)">COURIERS &amp; DELIVERY · JAMAICA</div>
+      </div>
+    </div>
+  </div>
+</div>

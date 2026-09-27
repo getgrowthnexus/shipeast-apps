@@ -10,10 +10,10 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../models/package_pricing.dart';
 import '../services/firestore_service.dart';
-import '../widgets/app_image.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_chip.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_listing.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
 import '../widgets/se_skeleton.dart';
@@ -21,6 +21,16 @@ import '../widgets/se_empty_state.dart';
 import '../widgets/se_bottom_sheet.dart';
 import 'all_merchants_screen.dart';
 
+/// The storefront.
+///
+/// Built on [SePageScaffold] like everything else, with the greeting and the
+/// search field living in the brand cap. Putting search ON the red rather than
+/// in the scrolling sheet is deliberate: it is the one control a customer
+/// reaches for from any scroll position, so it does not get to scroll away.
+///
+/// The sheet leads with categories, because choosing what kind of errand this
+/// is comes before choosing who runs it. Everything below reacts to that one
+/// choice.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -59,11 +69,12 @@ class _HomeScreenState extends State<HomeScreen> {
     {'icon': SeIcons.pharmacy, 'label': 'Pharmacy', 'hue': SeColors.catPharmacy, 'tint': SeColors.catPharmacyTint},
   ];
 
+  // Package-type accents drawn from the brand palette (no off-palette hues).
   static const List<Map<String, dynamic>> _packageCategories = [
-    {'icon': SeIcons.food, 'label': 'Food Items', 'color': Color(0xFFF97316)},
-    {'icon': SeIcons.box, 'label': 'Clothing', 'color': Color(0xFF8B5CF6)},
-    {'icon': SeIcons.box, 'label': 'Glassware', 'color': SeColors.ocean500},
-    {'icon': SeIcons.box, 'label': 'Electronics', 'color': Color(0xFF3B82F6)},
+    {'icon': SeIcons.food, 'label': 'Food Items', 'color': SeColors.warning},
+    {'icon': SeIcons.box, 'label': 'Clothing', 'color': SeColors.brand},
+    {'icon': SeIcons.box, 'label': 'Glassware', 'color': SeColors.info},
+    {'icon': SeIcons.box, 'label': 'Electronics', 'color': SeColors.info},
     {'icon': SeIcons.note, 'label': 'Documents', 'color': SeColors.success},
     {'icon': SeIcons.packages, 'label': 'Custom Package', 'color': SeColors.ink500},
   ];
@@ -132,24 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _goToProfile() => Navigator.pushNamed(context, '/profile');
-
-  Widget _avatarInitials() {
-    final initials = _userName.isNotEmpty
-        ? _userName
-            .trim()
-            .split(' ')
-            .map((w) => w.isNotEmpty ? w[0] : '')
-            .take(2)
-            .join()
-            .toUpperCase()
-        : '';
-    return Center(
-      child: initials.isNotEmpty
-          ? Text(initials,
-              style: SeType.jakarta(14, FontWeight.w800, color: Colors.white))
-          : const Icon(SeIcons.user, size: 20, color: Colors.white),
-    );
-  }
 
   // Returns null when still loading, empty list when loaded but no merchants
   List<Map<String, dynamic>>? _merchantsFor(int catIndex) {
@@ -227,40 +220,20 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SeSheetHandle(),
-                const SizedBox(height: 12),
-                Text('Package Request', style: SeType.h2),
+                const SizedBox(height: 14),
+                Text('Package request', style: SeType.h2),
                 const SizedBox(height: 4),
                 Text(
-                  'Fill in the details below to submit your package request.',
-                  style: SeType.body.copyWith(color: SeColors.ink500),
+                  'Tell us what is moving and where, and we will price it.',
+                  style: SeType.bodyS.copyWith(color: SeColors.ink500),
                 ),
                 const SizedBox(height: 20),
-                Text('Item Category',
-                    style: SeType.label.copyWith(color: SeColors.ink700)),
-                const SizedBox(height: 7),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: SeColors.surface50,
-                    borderRadius: SeRadius.inputRadius,
-                    border: Border.all(color: SeColors.ink200, width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(SeIcons.packages,
-                          size: 20, color: SeColors.ink400),
-                      const SizedBox(width: 10),
-                      Text(category,
-                          style:
-                              SeType.body.copyWith(color: SeColors.ink900)),
-                    ],
-                  ),
-                ),
+                const SeFieldLabel('Item category'),
+                _ReadOnlyField(icon: SeIcons.packages, value: category),
                 const SizedBox(height: 14),
                 SeTextField(
                   controller: pickupCtrl,
-                  label: 'Pickup Location',
+                  label: 'Pickup location',
                   hint: 'Enter pickup address',
                   icon: SeIcons.locationLine,
                   keyboardType: TextInputType.streetAddress,
@@ -268,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 14),
                 SeTextField(
                   controller: deliveryCtrl,
-                  label: 'Delivery Location',
+                  label: 'Delivery location',
                   hint: 'Enter delivery address',
                   icon: SeIcons.location,
                   keyboardType: TextInputType.streetAddress,
@@ -276,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 14),
                 SeTextField(
                   controller: weightCtrl,
-                  label: 'Estimated Weight (kg)',
+                  label: 'Estimated weight (kg)',
                   hint: 'e.g. 2.5',
                   icon: SeIcons.scales,
                   keyboardType:
@@ -287,14 +260,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   onChanged: (_) => setModalState(() {}),
                 ),
                 const SizedBox(height: 14),
-                Text('Packing Required',
-                    style: SeType.label.copyWith(color: SeColors.ink700)),
-                const SizedBox(height: 7),
+                const SeFieldLabel('Packing required'),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
                   decoration: BoxDecoration(
-                    color: SeColors.surface50,
+                    color: SeColors.field,
                     borderRadius: SeRadius.inputRadius,
                     border: Border.all(color: SeColors.ink200, width: 1.5),
                   ),
@@ -307,29 +277,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             style:
                                 SeType.body.copyWith(color: SeColors.ink900)),
                       ),
+                      if (pricing.packingSurcharge > 0)
+                        Text(
+                          '+${Money.format(pricing.packingSurcharge)}',
+                          style:
+                              SeType.bodyS.copyWith(color: SeColors.ink500),
+                        ),
                       Switch(
                         value: packingRequired,
                         onChanged: (v) =>
                             setModalState(() => packingRequired = v),
-                        activeThumbColor: SeColors.red500,
+                        activeThumbColor: SeColors.brandAction,
                       ),
-                      if (pricing.packingSurcharge > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: Text(
-                            '+${Money.format(pricing.packingSurcharge)}',
-                            style: SeType.bodyS
-                                .copyWith(color: SeColors.ink500),
-                          ),
-                        ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 14),
                 SeTextField(
                   controller: instructionsCtrl,
-                  label: 'Special Instructions',
-                  hint: 'Any special handling instructions...',
+                  label: 'Special instructions',
+                  hint: 'Anything the driver should know…',
                   icon: SeIcons.note,
                   minLines: 2,
                   maxLines: 4,
@@ -338,8 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _quoteBlock(pricing, weightCtrl.text, packingRequired),
                 const SizedBox(height: 18),
                 SeButton(
-                  label: submitting ? 'Placing order…' : 'Place Package Order',
-                  icon: SeIcons.check,
+                  label: submitting ? 'Placing order…' : 'Place package order',
                   onPressed: submitting
                       ? null
                       : () async {
@@ -413,71 +379,35 @@ class _HomeScreenState extends State<HomeScreen> {
         : pricing.quote(weightKg: weight, packing: packingRequired);
 
     if (weight == null) {
-      return _quoteShell(
-        SeColors.oceanTint,
-        Row(
-          children: [
-            const Icon(SeIcons.info, size: 18, color: SeColors.ocean500),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Enter a weight to see the price.',
-                style: SeType.bodyS.copyWith(color: SeColors.ocean500),
-              ),
-            ),
-          ],
-        ),
-      );
+      return SeNotice.info('Enter a weight to see the price.');
     }
 
     if (quote == null) {
-      return _quoteShell(
-        SeColors.dangerTint,
-        Row(
-          children: [
-            const Icon(SeIcons.warningCircle, size: 18, color: SeColors.danger),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'We carry parcels up to ${pricing.maxWeightKg.round()} kg. '
-                'Contact support for anything heavier.',
-                style: SeType.bodyS.copyWith(color: SeColors.danger),
-              ),
-            ),
-          ],
-        ),
-      );
+      return SeNotice.danger(
+          'We carry parcels up to ${pricing.maxWeightKg.round()} kg. '
+          'Contact support for anything heavier.');
     }
 
-    Widget line(String label, String value, {bool strong = false}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(label,
-                    style: strong
-                        ? SeType.title
-                        : SeType.bodyS.copyWith(color: SeColors.ink500)),
-              ),
-              Text(value,
-                  style: SeType.tabular(strong ? SeType.title : SeType.bodyS)
-                      .copyWith(
-                          color: strong ? SeColors.ink900 : SeColors.ink700)),
-            ],
-          ),
-        );
-
-    return _quoteShell(
-      SeColors.surface50,
-      Column(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SeColors.surface0,
+        borderRadius: SeRadius.all(SeRadius.md),
+        border: Border.all(color: SeColors.ink200),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          line('Delivery (${quote.bandLabel})', Money.format(quote.deliveryFee)),
+          SeMoneyLine(
+              label: 'Delivery (${quote.bandLabel})',
+              value: Money.format(quote.deliveryFee)),
           if (quote.serviceFee > 0)
-            line('Packing', Money.format(quote.serviceFee)),
-          const Divider(height: 14, color: SeColors.ink200),
-          line('Total', Money.format(quote.total), strong: true),
-          const SizedBox(height: 4),
+            SeMoneyLine(
+                label: 'Packing', value: Money.format(quote.serviceFee)),
+          const Divider(height: 16, color: SeColors.ink200),
+          SeMoneyLine(
+              label: 'Total', value: Money.format(quote.total), strong: true),
+          const SizedBox(height: 6),
           Text('Cash on delivery. Nothing is charged now.',
               style: SeType.bodyS.copyWith(color: SeColors.ink400)),
         ],
@@ -485,214 +415,118 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _quoteShell(Color background, Widget child) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: SeRadius.all(SeRadius.md),
-        ),
-        child: child,
-      );
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
+    return SePageScaffold(
+      showBack: false,
+      capTitle: _greetingBlock(),
+      trailing: _avatar(),
+      capBottom: _searchField(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(0, 22, 0, 110),
         children: [
-          _buildHeader(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildOverseasBanner(),
-                  _buildCategories(),
-                  if (_selectedCategory == 2)
-                    _buildPackagesGrid()
-                  else
-                    _buildMerchants(),
-                  const SizedBox(height: 90),
-                ],
-              ),
-            ),
-          ),
+          _categoryRow(),
+          const SizedBox(height: 24),
+          if (_selectedCategory == 2) _packagesGrid() else _merchantList(),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(gradient: SeColors.emberGradient),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 14, SeSpacing.gutter, 20),
-          child: Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(SeIcons.locationFill,
-                                size: 13,
-                                color: Colors.white.withValues(alpha: 0.8)),
-                            const SizedBox(width: 4),
-                            Text(
-                              'St. Thomas, Jamaica',
-                              style: SeType.label.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.85)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          _userName.isEmpty
-                              ? _greeting
-                              : '$_greeting, $_firstName',
-                          style: SeType.h2.copyWith(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _goToProfile,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            width: 1.5),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        child: ClipOval(
-                          child: _avatarUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: _avatarUrl!,
-                                  fit: BoxFit.cover,
-                                  placeholder: (ctx, url) => _avatarInitials(),
-                                  errorWidget: (ctx, url, err) =>
-                                      _avatarInitials(),
-                                )
-                              : _avatarInitials(),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/search'),
-                child: Container(
-                  height: 46,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: SeRadius.all(SeRadius.sm),
-                    boxShadow: SeElevation.e1,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(SeIcons.search,
-                          size: 19, color: SeColors.ink400),
-                      const SizedBox(width: 9),
-                      Text(
-                        'Search food, merchants, items…',
-                        style:
-                            SeType.body.copyWith(color: SeColors.ink400),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // ── Cap ───────────────────────────────────────────────────────────────────
 
-  Widget _buildOverseasBanner() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 16, SeSpacing.gutter, 0),
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(context, '/overseas-order'),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF0E9488), Color(0xFF0B6E66)],
-            ),
-            borderRadius: SeRadius.all(SeRadius.md),
-            boxShadow: SeElevation.glowColor(SeColors.ocean500, opacity: 0.28),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(SeIcons.packages, size: 24, color: Colors.white),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // The total is confirmed by hand, so the banner promises
-                    // what the screen behind it actually does: a request to
-                    // shop and deliver, answered by a person.
-                    Text('Send to Family in Jamaica',
-                        style: SeType.title.copyWith(color: Colors.white)),
-                    const SizedBox(height: 2),
-                    Text('Abroad? We’ll shop locally & deliver to them',
-                        style: SeType.bodyS.copyWith(
-                            color: Colors.white.withValues(alpha: 0.85))),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(SeIcons.caretRight,
-                  size: 20, color: Colors.white.withValues(alpha: 0.9)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategories() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 22, SeSpacing.gutter, 0),
-      child: Column(
+  Widget _greetingBlock() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Categories', style: SeType.section),
-          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(_categories.length, (i) {
-              final c = _categories[i];
-              return SeCategoryTile(
+            children: [
+              Icon(SeIcons.locationFill,
+                  size: 13, color: SeColors.shellMark),
+              const SizedBox(width: 4),
+              Text('St. Thomas, Jamaica',
+                  style: SeType.label.copyWith(color: SeColors.shellMark)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _userName.isEmpty ? _greeting : '$_greeting, $_firstName',
+            style: SeType.h2.copyWith(color: SeColors.shellInk),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      );
+
+  Widget _avatar() => GestureDetector(
+        onTap: _goToProfile,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 44,
+          height: 44,
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+                color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+            ),
+            child: ClipOval(
+              child: _avatarUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: _avatarUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (ctx, url) => _avatarInitials(),
+                      errorWidget: (ctx, url, err) => _avatarInitials(),
+                    )
+                  : _avatarInitials(),
+            ),
+          ),
+        ),
+      );
+
+  Widget _avatarInitials() {
+    final initials = _userName.isNotEmpty
+        ? _userName
+            .trim()
+            .split(' ')
+            .map((w) => w.isNotEmpty ? w[0] : '')
+            .take(2)
+            .join()
+            .toUpperCase()
+        : '';
+    return Center(
+      child: initials.isNotEmpty
+          ? Text(initials,
+              style: SeType.jakarta(14, FontWeight.w800,
+                  color: SeColors.shellInk))
+          : const Icon(SeIcons.user, size: 20, color: SeColors.shellInk),
+    );
+  }
+
+  /// Not a real field — a button dressed as one, and dressed by the same
+  /// widget the search screen uses live. Typing happens there, which owns the
+  /// results; a live field here would need to own them too, and then there
+  /// would be two.
+  Widget _searchField() => SeShellField(
+        hint: 'Search restaurants, shops, items…',
+        onTap: () => Navigator.pushNamed(context, '/search'),
+      );
+
+  // ── Sheet ─────────────────────────────────────────────────────────────────
+
+  Widget _categoryRow() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
+        child: Row(
+          children: List.generate(_categories.length, (i) {
+            final c = _categories[i];
+            // Equal slots, not intrinsic widths — see SeCategoryTile.
+            return Expanded(
+              child: SeCategoryTile(
                 label: c['label'] as String,
                 icon: c['icon'] as IconData,
                 hue: c['hue'] as Color,
@@ -702,134 +536,181 @@ class _HomeScreenState extends State<HomeScreen> {
                   HapticFeedback.selectionClick();
                   setState(() => _selectedCategory = i);
                 },
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
+              ),
+            );
+          }),
+        ),
+      );
 
-  Widget _buildPackagesGrid() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 24, SeSpacing.gutter, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Select Package Type', style: SeType.section),
-          const SizedBox(height: 4),
-          Text('Choose what you need shipped and fill in the details.',
-              style: SeType.body.copyWith(color: SeColors.ink500)),
-          const SizedBox(height: 14),
-          GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.5,
+  Widget _overseasCard() => Padding(
+        padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 0, SeSpacing.gutter, 24),
+        child: GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/overseas-order'),
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: SeColors.surface0,
+              borderRadius: SeRadius.all(SeRadius.md),
+              border: Border.all(color: SeColors.ink200),
             ),
-            itemCount: _packageCategories.length,
-            itemBuilder: (context, i) {
-              final pkg = _packageCategories[i];
-              final color = pkg['color'] as Color;
-              return SeCard(
-                onTap: () => _showPackageForm(pkg['label'] as String),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.12),
-                          shape: BoxShape.circle),
-                      child: Icon(pkg['icon'] as IconData,
-                          size: 24, color: color),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(pkg['label'] as String,
-                        textAlign: TextAlign.center,
-                        style: SeType.title.copyWith(fontSize: 14)),
-                  ],
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: SeColors.brandSoft,
+                    borderRadius: SeRadius.all(SeRadius.sm),
+                  ),
+                  child: const Icon(SeIcons.plane,
+                      size: 22, color: SeColors.brand),
                 ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMerchants() {
-    final merchants = _merchantsFor(_selectedCategory);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 24, SeSpacing.gutter, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Popular Near You', style: SeType.section),
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AllMerchantsScreen(
-                        category: _categoryLabels[_selectedCategory]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // The total is confirmed by hand, so the card promises
+                      // what the screen behind it actually does: a request to
+                      // shop and deliver, answered by a person.
+                      Text('Send to family back home', style: SeType.title),
+                      const SizedBox(height: 2),
+                      Text('We shop in Jamaica and deliver to them.',
+                          style: SeType.bodyS.copyWith(color: SeColors.ink500),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Text('See all',
-                        style:
-                            SeType.label.copyWith(color: SeColors.red500)),
-                    const Icon(SeIcons.caretRight,
-                        size: 14, color: SeColors.red500),
-                  ],
-                ),
-              ),
-            ],
+                const Icon(SeIcons.caretRight,
+                    size: 20, color: SeColors.ink300),
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
-          if (merchants == null)
-            SeShimmer(
-              child: Column(
-                children: List.generate(3, (_) => _shimmerMerchantCard()),
+        ),
+      );
+
+  Widget _packagesGrid() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SeSectionTitle(title: 'What are you sending?'),
+            const SizedBox(height: 4),
+            Text('Pick a type and we will quote it by weight.',
+                style: SeType.bodyS.copyWith(color: SeColors.ink500)),
+            const SizedBox(height: 14),
+            GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.55,
               ),
-            )
-          else if (merchants.isEmpty)
-            SeEmptyState(
-              icon: SeIcons.storefront,
-              title: 'No merchants yet',
-              message: 'We\'re onboarding partners near you — check back soon.',
-              hue: _categories[_selectedCategory]['hue'] as Color,
-              tint: _categories[_selectedCategory]['tint'] as Color,
-            )
-          else
-            ...merchants
-                .asMap()
-                .entries
-                .map((e) => _merchantCard(e.key, e.value)),
-        ],
-      ),
+              itemCount: _packageCategories.length,
+              itemBuilder: (context, i) {
+                final pkg = _packageCategories[i];
+                final color = pkg['color'] as Color;
+                return GestureDetector(
+                  onTap: () => _showPackageForm(pkg['label'] as String),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: SeColors.surface0,
+                      borderRadius: SeRadius.all(SeRadius.md),
+                      border: Border.all(color: SeColors.ink200),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.10),
+                            borderRadius: SeRadius.all(SeRadius.sm),
+                          ),
+                          child: Icon(pkg['icon'] as IconData,
+                              size: 21, color: color),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(pkg['label'] as String,
+                            textAlign: TextAlign.center,
+                            style: SeType.title.copyWith(fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      );
+
+  Widget _merchantList() {
+    final merchants = _merchantsFor(_selectedCategory);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _overseasCard(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
+          child: SeSectionTitle(
+            title: 'Popular near you',
+            actionLabel: 'See all',
+            onAction: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AllMerchantsScreen(
+                    category: _categoryLabels[_selectedCategory]),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
+          child: merchants == null
+              ? SeShimmer(
+                  child: Column(
+                    children: List.generate(2, (_) => _shimmerCard()),
+                  ),
+                )
+              : merchants.isEmpty
+                  ? SeEmptyState(
+                      icon: SeIcons.storefront,
+                      title: 'No merchants yet',
+                      message:
+                          'We are onboarding partners near you — check back soon.',
+                      hue: _categories[_selectedCategory]['hue'] as Color,
+                      tint: _categories[_selectedCategory]['tint'] as Color,
+                    )
+                  : Column(
+                      children: [
+                        for (final m in merchants) _merchantCard(m),
+                      ],
+                    ),
+        ),
+      ],
     );
   }
 
-  Widget _shimmerMerchantCard() => Container(
+  Widget _shimmerCard() => Container(
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: SeColors.surface0,
           borderRadius: SeRadius.all(SeRadius.md),
-          boxShadow: SeElevation.e1,
+          border: Border.all(color: SeColors.ink200),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
+        child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             SeSkeleton(width: double.infinity, height: 150, radius: 0),
             Padding(
               padding: EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -848,7 +729,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Color _catHue(int i) => (_categories[i]['hue'] as Color);
 
-  Widget _merchantCard(int index, Map<String, dynamic> m) {
+  Widget _merchantCard(Map<String, dynamic> m) {
     final rating = m['rating'];
     final ratingStr = rating is double
         ? rating.toStringAsFixed(1)
@@ -858,16 +739,19 @@ class _HomeScreenState extends State<HomeScreen> {
     // of a display string and fall back to a hardcoded 100 when that failed —
     // the source of the J$100 phantom charge.
     final deliveryFee = (m['deliveryFee'] as num?)?.toInt() ?? 0;
-    final promo = m['promo'] as String?;
-    final imageUrl = m['imageUrl'] as String? ?? '';
     final id = (m['id'] ?? '').toString();
-    final fav = _favourites.contains(id);
-    final hue = _catHue(_selectedCategory);
 
-    return SeCard(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: EdgeInsets.zero,
-      clip: true,
+    return SeMerchantCard(
+      name: m['name'] as String? ?? '',
+      imageUrl: m['imageUrl'] as String? ?? '',
+      rating: ratingStr,
+      deliveryTime: m['deliveryTime'] as String? ?? '25–35 min',
+      deliveryFee: deliveryFee,
+      isOpen: isOpen,
+      promo: m['promo'] as String?,
+      hue: _catHue(_selectedCategory),
+      favourite: _favourites.contains(id),
+      onFavourite: () => _toggleFavourite(id),
       onTap: () {
         Navigator.pushNamed(context, '/merchant', arguments: {
           'id': m['id'] ?? '',
@@ -881,146 +765,32 @@ class _HomeScreenState extends State<HomeScreen> {
           'isOpen': isOpen,
         });
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 16:9 hero
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (imageUrl.isNotEmpty)
-                  AppImage(
-                    url: imageUrl,
-                    placeholder:
-                        const SeShimmer(child: SeSkeleton(height: 150)),
-                    errorWidget: _fallbackHero(hue),
-                  )
-                else
-                  _fallbackHero(hue),
-                if (imageUrl.isNotEmpty)
-                  const DecoratedBox(
-                      decoration: BoxDecoration(gradient: SeColors.inkScrim)),
-                if (promo != null)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: SeColors.red500,
-                        borderRadius: SeRadius.all(SeRadius.xs),
-                        boxShadow: SeElevation.e1,
-                      ),
-                      child: Text(promo,
-                          style: SeType.inter(10, FontWeight.w700,
-                              color: Colors.white)),
-                    ),
-                  ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: GestureDetector(
-                    onTap: () => _toggleFavourite(id),
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        shape: BoxShape.circle,
-                        boxShadow: SeElevation.e1,
-                      ),
-                      child: Icon(
-                        fav ? SeIcons.heartFill : SeIcons.heart,
-                        size: 18,
-                        color: fav ? SeColors.red500 : SeColors.ink500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(m['name'] as String? ?? '',
-                          style: SeType.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                    _ratingPill(ratingStr),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _infoBit(SeIcons.clock, m['deliveryTime'] as String? ?? ''),
-                    _infoBit(SeIcons.bike, Money.deliveryFee(deliveryFee)),
-                    SeChip.status(
-                      label: isOpen ? 'Open' : 'Closed',
-                      color: isOpen ? SeColors.success : SeColors.danger,
-                      tint: isOpen ? SeColors.successTint : SeColors.dangerTint,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
+}
 
-  Widget _fallbackHero(Color hue) => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [hue.withValues(alpha: 0.9), hue],
-          ),
-        ),
-        child: Center(
-          child: Icon(SeIcons.storefront,
-              size: 44, color: Colors.white.withValues(alpha: 0.85)),
-        ),
-      );
+/// The chosen package type, shown as a filled-in field rather than a heading.
+/// It is a value the customer picked on the previous step, so it belongs in the
+/// form reading like the fields around it — just one they cannot edit here.
+class _ReadOnlyField extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  const _ReadOnlyField({required this.icon, required this.value});
 
-  Widget _ratingPill(String rating) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: SeColors.goldTint,
-          borderRadius: SeRadius.pill,
+          color: SeColors.field,
+          borderRadius: SeRadius.inputRadius,
+          border: Border.all(color: SeColors.ink200, width: 1.5),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(SeIcons.star, size: 13, color: SeColors.gold500),
-            const SizedBox(width: 3),
-            Text(rating,
-                style: SeType.tabular(SeType.inter(12, FontWeight.w700,
-                    color: SeColors.ink700))),
+            Icon(icon, size: 20, color: SeColors.ink400),
+            const SizedBox(width: 10),
+            Text(value, style: SeType.body.copyWith(color: SeColors.ink900)),
           ],
         ),
-      );
-
-  Widget _infoBit(IconData icon, String text) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: SeColors.ink400),
-          const SizedBox(width: 4),
-          Text(text, style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-        ],
       );
 }

@@ -2,3 +2,7 @@
 # never committed. package-lock.json IS committed — `npm ci` requires it and it
 # is what pins the toolchain.
 node_modules/
+
+# Throwaway page tools/shoot.mjs builds from index.html to screenshot the
+# authenticated shell. Deleted on exit unless KEEP_HARNESS=1.
+__harness.html

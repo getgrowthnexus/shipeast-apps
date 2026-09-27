@@ -1,0 +1,774 @@
+/* ═══════════════════════════════════════════════════════════════
+   ShipEast Design System (SEDS) — Admin Panel
+   shell.css
+
+   Application chrome: login, sidebar, topbar, activity bell, page
+   wrapper, side panel, modals, toasts, overlays.
+
+   Values come from DESIGN-SPEC.md §2. Nothing here invents a colour, a
+   size or a spacing value.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─────────────── LOGIN ─────────────── */
+/* THE COMPOSITION IS THE DASHBOARD'S.
+   Brand red down the left, the content surface on the right, type left-aligned
+   in a single column. That is what the panel looks like one screen later, and
+   reusing it is the whole answer to "the login feels like a different product":
+   not a login-specific card, a login-specific canvas colour, a login-specific
+   field or a login-specific button, but the same two fields of colour the app
+   itself is built from.
+
+   THE OLD SCREEN, and what each piece of it cost —
+     · a 444px white card centred in a full viewport of --red-900. That maroon
+       is used nowhere else; the first thing anyone saw announced a colour the
+       product does not have.
+     · the raster lockup at 224px inside a 444px card — half the card's width,
+       so the artwork was the subject and the form was the footnote.
+     · 1.5px --line-strong field borders against the 1px --line every other
+       input in the panel uses, at --fs-body-lg against --fs-body.
+     · a 17px/700 CTA against the 14px/600 every other button is set at.
+   Four parallel decisions, none of them wrong on their own, none of them the
+   same as the app's.
+
+   IT ALSO FOLLOWS THE THEME NOW. This scope used to pin nine role tokens to
+   their light values because the lockup is single-colour #FF0043 drawn for
+   white stock and went muddy on a dark card. The lockup is knocked out to
+   white on the red panel now, so that reason is gone — and the pinned block
+   had already drifted (--danger-tint was #FDEDEF here against #FCE6E9 in
+   tokens.css). One palette, both themes, no local copies of it.            */
+#login-page{
+  min-height:100vh;min-height:100svh;
+  display:flex;align-items:stretch;
+}
+
+/* ── The brand panel ───────────────────────────────────────────────────
+   The rail, before you are signed in. Same flat --shell, same warm rail ink,
+   same right-edge inset shade — so it is literally the sidebar's material,
+   and in dark theme it deepens with it rather than staying stuck on a light
+   value the rest of the screen no longer agrees with. */
+.lb{
+  flex:0 0 42%;
+  background:var(--shell);
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
+  gap:var(--sp-6);
+  padding:var(--sp-10) var(--sp-9);
+  box-shadow:inset -1px 0 0 rgba(46,5,16,.16);
+}
+/* The centred zone. It holds the mark + line and carries all the gap between
+   them; the eyebrow and footer are pinned to the panel's top and bottom edges
+   by the parent's space-between, so the red field fills instead of pooling. */
+.lb-body{display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-6);}
+/* Wordmark eyebrow — the rail's own micro-label register (see .navlbl), dimmed
+   one step so it sits behind the lockup rather than competing with it. */
+.lb-eyebrow{
+  color:var(--shell-ink-dim);
+  font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  letter-spacing:var(--tr-micro);text-transform:uppercase;
+}
+/* Quiet base line — the live host, set as caption meta on the same dimmed ink
+   so it anchors the bottom edge without pulling weight. */
+.lb-foot{
+  color:var(--shell-ink-dim);
+  font-size:var(--fs-caption);line-height:var(--lh-caption);letter-spacing:var(--tr-rail);
+}
+/* brightness(0) crushes every non-transparent pixel to black regardless of its
+   colour and invert(1) lifts it to white, so single-colour artwork on an alpha
+   channel knocks out cleanly — the anti-aliased edges keep their alpha. White
+   on --shell is 7.12:1, gated as `white / rail`. */
+.lb-mark{display:block;width:min(268px,72%);height:auto;filter:brightness(0) invert(1);}
+/* --tr-rail, for the same reason the nav labels carry it: light type on a
+   saturated ground blooms into its background and closes the counters. */
+.lb-copy{
+  max-width:34ch;color:var(--shell-ink);
+  font-size:var(--fs-body-lg);line-height:var(--lh-prose);letter-spacing:var(--tr-rail);
+}
+
+/* ── The form panel ────────────────────────────────────────────────────
+   --surface, not --ground. It matters which: a field is --field, which is a
+   step DARKER than --surface and a step LIGHTER than --ground, so on the
+   ground the inputs would have read as raised chips instead of the sunken
+   wells they are everywhere else in the panel. The right half is a card the
+   size of half the screen. */
+.ls{
+  flex:1;background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  padding:var(--sp-9) var(--sp-6);
+}
+.lc{
+  width:min(384px,100%);
+  animation:rise var(--d-slow) var(--ease-in) both;
+}
+
+/* Left-aligned, and in brand red rather than grey. The flanking hairlines are
+   gone with the centring — a rule either side of a label is a device for
+   centred type, and it was the only ruled thing in the product.
+
+   --accent-ink, NOT --accent: this is red used as TEXT at 11px, which is the
+   role --accent-ink exists for. --accent is the fill tone, and on the dark
+   surface it lands near 3.4:1 — the eyebrow would have been the one piece of
+   type on the screen that failed AA, in the one theme nobody screenshots. */
+.lc-eyebrow{
+  color:var(--accent-ink);
+  font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  letter-spacing:var(--tr-micro);text-transform:uppercase;
+}
+/* A page title, so it is set like one: --fs-h1 at 800, which is the register
+   .pg-title uses on every screen behind this one. At --fs-h2 it was smaller
+   and lighter than the heading of any page it leads to. */
+.lc-title{
+  font-size:var(--fs-h1);line-height:var(--lh-h1);font-weight:800;
+  letter-spacing:var(--tr-display);
+  color:var(--ink);margin-top:var(--sp-2);
+}
+.lc-lede{
+  font-size:var(--fs-body-lg);line-height:var(--lh-body-lg);color:var(--ink-2);
+  margin:var(--sp-1) 0 var(--sp-7);
+}
+
+/* ── Login fields ──────────────────────────────────────────────────────
+   The .fr field, exactly: 1px --line, --r-md, the same inset well shadow, the
+   same focus (lift to --surface-raised, border to --accent, --focus-ring).
+   The only things this adds are the large control height and the reveal
+   toggle. It is still not `.fr` itself because .lf-box is a flex WRAPPER —
+   the reveal button has to sit inside the border with the input. */
+.lf{margin-bottom:var(--gap-field);}
+.lf label{
+  display:block;margin-bottom:var(--gap-tight);color:var(--ink-2);
+  font-size:var(--fs-micro);line-height:var(--lh-micro);font-weight:600;
+  letter-spacing:var(--tr-micro);text-transform:uppercase;
+}
+.lf-box{
+  display:flex;align-items:center;
+  min-height:var(--h-control-lg);
+  background:var(--field);
+  border:1px solid var(--line);border-radius:var(--r-md);
+  box-shadow:inset 0 1px 2px rgba(110,26,48,.05);
+  transition:border-color var(--d-fast) var(--ease),background var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease);
+}
+.lf-box:focus-within{border-color:var(--accent);background:var(--surface-raised);
+  box-shadow:var(--focus-ring);}
+.lf-box input{
+  flex:1;min-width:0;border:none;outline:none;background:transparent;
+  padding:var(--pad-input-y) var(--pad-input-x);
+  font-size:var(--fs-body);line-height:1.3;color:var(--ink);
+}
+.lf-box input::placeholder{color:var(--ink-4);}
+/* Chrome's autofill repaints the field a flat blue-white and overrides `color`;
+   the inset shadow is the only way to hold the surface, and -webkit-text-fill
+   the only way to hold the text. Without these an autofilled login card lost
+   both its white field and its ink. */
+.lf-box input:-webkit-autofill{
+  -webkit-text-fill-color:var(--ink);
+  -webkit-box-shadow:0 0 0 40px var(--field) inset;
+  caret-color:var(--ink);
+}
+.lf-eye{
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  width:32px;height:32px;margin-right:var(--gap-inline);
+  border:none;border-radius:var(--r-xs);
+  background:transparent;color:var(--ink-3);cursor:pointer;
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease);
+}
+.lf-eye .ic{width:18px;height:18px;}
+.lf-eye:hover{background:var(--sunken);color:var(--ink);}
+.lf-eye[aria-pressed="true"]{color:var(--accent);}
+
+/* The panel's own button, at the panel's own weight. Written as `.btn.lc-cta`
+   because the `.btn` rules — now in components.css, which loads AFTER this
+   file — would otherwise win and drag the height back to the default; doubled
+   specificity (0,2,0 against 0,1,0) is what keeps this, not source order.
+
+   What it overrides is now only what a full-width form submit genuinely needs:
+   the width, the large height, and one step up in size. It used to override the
+   type as well — 17px/700 with --tr-title, which is a CARD TITLE'S setting
+   applied to a button, and it made this the loudest control in the product.
+   .btn is --fs-body/600; one step up for a large control is --fs-body-lg, and
+   the weight and tracking are simply inherited. That is the ladder in §5 of
+   tokens.css, not an exception to it. The radius is inherited too — buttons
+   are pills panel-wide, so there was never anything to restate. */
+.btn.lc-cta{
+  width:100%;min-height:var(--h-control-lg);
+  margin-top:var(--sp-6);padding:0 var(--sp-5);
+  font-size:var(--fs-body-lg);
+}
+.btn.lc-cta .ic{width:20px;height:20px;transition:transform var(--d-fast) var(--ease);}
+.btn.lc-cta:hover:not(:disabled) .ic{transform:translateX(3px);}
+
+.l-foot{
+  display:flex;align-items:center;gap:var(--gap-tight);
+  margin-top:var(--sp-7);padding-top:var(--sp-4);border-top:1px solid var(--line);
+  font-size:var(--fs-caption);line-height:var(--lh-caption);color:var(--ink-3);
+}
+.l-foot .ic{opacity:.7;flex-shrink:0;}
+
+#l-err{
+  display:none;align-items:center;gap:var(--gap-inline);margin-top:var(--sp-3);
+  background:var(--danger-tint);color:var(--danger-ink);border-radius:var(--r-sm);
+  padding:var(--sp-3) var(--sp-4);
+  font-size:var(--fs-dense);line-height:var(--lh-dense);font-weight:600;
+  box-shadow:inset 3px 0 0 var(--danger);
+}
+#l-err.show{display:flex;animation:shake var(--d-slow) var(--ease);}
+#l-err .ic{flex-shrink:0;}
+/* The login's own breakpoints live in responsive.css with every other one.
+   They used to sit here, which meant one media query in the panel loaded
+   before the file whose entire job is media queries. */
+
+/* ─────────────── SHELL ─────────────── */
+#app{display:none;min-height:100vh;overflow-x:clip;}
+
+/* A FULL-HEIGHT RAIL, flush to three edges.
+   It used to float — inset 12px on the left, top and bottom, with a 22px
+   radius — on the reasoning that a card of chrome sits in the same material
+   as the content. The cost was a 12px stripe of page ground running down the
+   outside of the window and a rounded corner hanging in each corner of the
+   screen, so the app read as a page inside a page. Flush is what a fixed
+   navigation rail is: it OWNS its edge.
+
+   `inset:0 auto 0 0` sets top/bottom/left, so the height falls out of the
+   viewport rather than being pinned at 100vh — the old fixed height plus a
+   100vh #app was the reason the rail ran a hair past the fold on iOS.
+
+   Squaring it off retires two of the three inset hairlines. A lit top edge
+   and a lit left edge describe a corner catching light, and there is no
+   corner any more: both of those edges are now the viewport's, where nothing
+   sits behind them to light. What survives is the one edge that still exists
+   on screen — the RIGHT one, where the rail meets the ground — plus the cast
+   shadow it throws across it. */
+/* …AND IT IS BRAND RED, lit like a solid object.
+
+   The previous pass made it white, on the reasoning that a near-black slab
+   down the left of a light panel is dated. That was true and it fixed the
+   wrong thing: white chrome beside white cards on a near-white page is why
+   the product read as a white product. This is ~250px × full height of
+   permanently-visible pixels — the largest single area the brand can own,
+   and the same move FoodPanda, Deliveroo and Bolt all make with their own
+   brand colour.
+
+   The SHAPE of it is unchanged and deliberately so. What went is the four
+   layers of gradient that used to paint it: a bloom top-left, a pool of
+   near-black bottom-right, and a vertical light-to-dark wash over both.
+   They bought a dimensional read at the cost of the thing the rail is for
+   — by the foot of the column the colour had left the brand entirely and
+   gone to a soot red, so the nav's lower half sat on a different colour
+   from its upper half.
+
+   Flat --shell instead, pinned to the brightest value that stack ever
+   reached, so nothing on the column loses contrast. Depth is carried by
+   edges rather than fills: a lit top hairline, a lit left hairline, a
+   softened right one, and the cast shadow. --e-shell is tinted in the
+   rail's own red — a neutral shadow under a saturated object is the tell
+   that the colour was added late.                                        */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--shell);
+  position:fixed;inset:0 auto 0 0;
+  box-shadow:var(--e-shell),
+    inset -1px 0 0 rgba(46,5,16,.16);
+  display:flex;flex-direction:column;z-index:100;overflow:hidden;
+  transition:width var(--d-base) var(--ease),transform var(--d-base) var(--ease);
+}
+/* The desktop hamburger fully hides the sidebar and lets the content take the
+   full width — a partial 72px icon rail read as a "half sidebar" and looked
+   broken. Its own width is now the whole journey; it used to need an extra
+   --sidebar-gap on top or it parked with a 12px sliver still on screen. */
+.sidebar.collapsed{transform:translateX(-100%);}
+
+/* ── THE LOCKUP ────────────────────────────────────────────────────────
+   THREE LEFT EDGES became two. The tile started at 16px from the rail, the
+   section headings and nav icons at 24px, and the wordmark at 60px — none of
+   them lining up with anything, which is what "the alignment does not look
+   polished" is describing. Now the tile shares the ACTIVE PILL'S left edge
+   (12px — a white shape you can actually see below it) and the wordmark
+   shares the NAV LABEL column (60px). Both are edges the eye can verify.
+
+   Hitting 60px is what sets the tile at 40px rather than 42: 12 + 40 + 8 is
+   exactly the 12 + 12 + 24 + 12 the labels sit at. And 16 + 40 + 16 is
+   exactly --h-topbar, so the lockup's band and the topbar beside it are one
+   72px register across the top of the app instead of an 80 and a 72. That
+   only holds if the two lines of the wordmark declare their OWN leading —
+   both were inheriting body's 1.5, which made a 20px word 30px tall and
+   pushed the band to 80.5. */
+.sb-logo{padding:var(--sp-4) var(--sp-3);
+  overflow:hidden;white-space:nowrap;display:flex;align-items:center;
+  gap:var(--sp-2);min-height:var(--h-topbar);}
+/* Inverted with the rail: a WHITE plate carrying a red mark. On brand-red
+   chrome the strongest thing you can put is white, and it makes the mark the
+   one genuinely bright object at the top of the column. It takes the plate
+   treatment (§9) so it reads as a tile sitting ON the rail rather than a hole
+   cut out of it. */
+.sb-mark{display:flex;flex-shrink:0;width:40px;height:40px;border-radius:var(--r-md);
+  background:var(--n-0);
+  color:var(--red-700);align-items:center;justify-content:center;
+  font-weight:800;font-size:var(--fs-body-lg);
+  letter-spacing:var(--tr-display);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),
+             inset 0 -8px 12px -8px rgba(74,20,38,.18),
+             0 2px 4px rgba(46,5,16,.28),0 8px 16px -6px rgba(46,5,16,.36);}
+.sb-word{min-width:0;}
+/* ONE COLOUR, one size up. The wordmark used to be 17px with "East" set in
+   --shell-mark — a two-tone split invented for the rail, since the real
+   artwork sets "Ship East" in a single colour. At 17px the pale pink half
+   was too close in value to the warm white half to read as a device; it read
+   as a rendering fault. So the wordmark is now one warm white at --fs-h3,
+   which also gives the two-line block the mass to stand beside a 40px tile —
+   25 + 14 = 39px, just inside it, so the TILE sets the band's height and the
+   type sits within it rather than the other way round.
+
+   It stays at 800 — the lockup is one of the four things §5 allows to be
+   loud, because it is a wordmark rather than a label. */
+.sb-logo .slt{font-size:var(--fs-h3);line-height:var(--lh-h3);font-weight:800;
+  letter-spacing:var(--tr-display);color:var(--shell-ink-hi);}
+/* --shell-mark moves DOWN here, where a pale brand tint has a real job: a
+   quiet caps sub-label under a white wordmark, which is how a lockup is
+   built. It is the one pale red deliberately NOT re-cut for dark (the
+   --red-100/200 steps are, which is what would have made this vanish on the
+   dark rail): 4.94:1 on the light rail, 7.63:1 on the dark one.
+
+   The text is "Admin Portal", not the registered company name. That name is
+   26 characters; measured, it overflowed its box by 11px and was clipped by
+   .sb-logo's own overflow:hidden, so the rail shipped a truncated legal
+   entity. It belongs on the login footer, where it now is — and naming the
+   app instead tells you WHICH of the three ShipEast products you are in. */
+.sb-logo .sls{font-size:var(--fs-micro);line-height:var(--lh-micro);
+  color:var(--shell-mark);
+  letter-spacing:var(--tr-micro);text-transform:uppercase;font-weight:600;}
+/* Collapsed rail: drop the wordmark, keep the mark centred. */
+.sidebar.collapsed .sb-logo{justify-content:center;padding:var(--sp-4) 0;gap:0;}
+.sidebar.collapsed .sb-word{display:none;}
+
+.sb-nav{flex:1;padding:0 var(--sp-3) var(--sp-3);overflow-y:auto;overflow-x:hidden;}
+/* 600, not 700. An 11px uppercase word in a heavy weight on a saturated
+   ground is a solid bar of colour before it is a word — and there are four
+   of these down the rail, so at 700 they competed with the nav items they
+   are supposed to be quietly organising. */
+.sb-sec{padding:var(--sp-4) var(--sp-3) var(--sp-2);
+  font-size:var(--fs-micro);font-weight:600;letter-spacing:var(--tr-micro);
+  text-transform:uppercase;color:var(--shell-ink-dim);white-space:nowrap;}
+.sidebar.collapsed .sb-sec{opacity:0;height:var(--sp-6);padding:var(--sp-2) 0;}
+
+/* Nav items are PILLS inset from the rail's edge, not full-width strips with a
+   3px rail bolted to the left. The rail-and-tinted-strip pattern is the most
+   recognisable dated-admin shape there is, and it was being repeated on the
+   stat cards and the toast as well. "You are here" is now carried by the pill
+   itself: a filled brand wash, the label at full ink weight, and the icon
+   switching to its solid variant. Three signals, no furniture. */
+/* THE WEIGHT. These fourteen labels are the most-looked-at text in the panel
+   and they were set at 600 — the same weight as a button, on a saturated red
+   ground. Light type on a dark ground gains apparent weight (irradiation:
+   the bright shape bleeds into the dark one, thickening every stem), so 600
+   white on red is optically what 700 black on white would be. Fourteen of
+   those stacked in one column is the "harsh" the rail was accused of.
+
+   500 with a hair of positive tracking is the correction. It measures as the
+   same darkness a 600 label does on a light card, and it leaves 600 free to
+   mean something again on the selected item — which is the whole point of a
+   nav: exactly one row should look heavier than the rest. */
+.ni{
+  position:relative;display:flex;align-items:center;gap:var(--sp-3);
+  padding:var(--sp-3);margin-bottom:var(--sp-half);
+  border-radius:var(--r-md);
+  cursor:pointer;color:var(--shell-ink);
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--tr-rail);
+  white-space:nowrap;user-select:none;
+  transition:color var(--d-fast) var(--ease),background var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease);
+}
+/* Hover brightens to the full tone rather than to #fff — pure white here
+   would put a cold highlight on a warm-white column. */
+.ni:hover{background:var(--shell-hover);color:var(--shell-ink-hi);}
+/* THE white pill. On red chrome, the selected item inverts completely rather
+   than taking a slightly different shade of red — that is what makes it
+   unmissable from the corner of the eye, and it is the one place the panel
+   gets to use its brand red as INK instead of as a fill. --red-700 on white
+   is 6.8:1. It carries the plate treatment too, so the pill reads as lifted
+   out of the rail rather than punched through it. */
+/* 600 against the rail's 500 — one step, which is all a weight change needs
+   to be when a full colour inversion is carrying the state alongside it. At
+   700 against 600 the pill was making the same point twice. The tracking
+   goes back to normal because this label is now dark-on-light, so the
+   irradiation correction --tr-rail exists for does not apply. */
+.ni.active{
+  background:var(--n-0);
+  color:var(--red-700);font-weight:600;letter-spacing:var(--tr-body);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),
+             0 2px 4px rgba(46,5,16,.24),0 8px 18px -6px rgba(46,5,16,.34);
+}
+.ni.active:hover{background:var(--n-0);}
+.ni .ic{color:inherit;}
+/* Spelled out rather than var(--emboss): the pill is white in BOTH themes, so
+   the glyph on it always wants the light-theme relief, not the dark one. */
+.ni.active .ic{filter:drop-shadow(0 1px 1px rgba(74,20,38,.3));}
+.ni .ni-fill{display:none;}
+.ni.active .ni-fill{display:block;}
+.ni.active .ni-line{display:none;}
+.ni .lbl{transition:opacity var(--d-fast) var(--ease);}
+.sidebar.collapsed .lbl,.sidebar.collapsed .sls{opacity:0;pointer-events:none;}
+.sidebar.collapsed .ni{justify-content:center;padding:var(--sp-2) 0;}
+.ndiv{height:1px;background:var(--shell-line);margin:var(--sp-3) var(--sp-2);}
+.sidebar.collapsed .ndiv{margin:var(--sp-3) var(--sp-2);}
+/* Unseen-count badge on a nav item. Sits at the far right of the row; on the
+   collapsed rail it shrinks to a corner dot since the label is hidden. The
+   coloured halo ring is gone — it was the same neon-flare treatment as the old
+   --glow, three times over in the one column. */
+/* Inverted twice over. On the red rail a red badge is invisible, so the
+   resting badge is white with red ink; on the white active pill a white badge
+   is invisible, so it flips back to a red fill. Both states are spelled out
+   because "unseen count" is exactly the thing that must never be missed. */
+.ni-badge{
+  margin-left:auto;min-width:20px;height:20px;padding:0 var(--gap-tight);
+  border-radius:var(--r-full);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:var(--fs-micro);font-weight:700;line-height:1;
+  background:var(--n-0);color:var(--red-700);font-variant-numeric:tabular-nums;
+  box-shadow:0 1px 2px rgba(46,5,16,.3);
+}
+.ni.active .ni-badge{background:var(--accent);color:#fff;box-shadow:none;}
+.ni-badge[data-tone="warning"]{background:var(--warning);color:var(--warning-on);}
+.ni-badge[data-tone="info"]{background:var(--info);color:#fff;}
+.ni-badge[data-tone="success"]{background:var(--success);color:#fff;}
+.sidebar.collapsed .ni-badge{
+  position:absolute;top:var(--gap-tight);right:var(--sp-2);margin:0;
+  min-width:9px;width:9px;height:9px;
+  padding:0;border-radius:50%;font-size:0;box-shadow:0 0 0 2px var(--shell);
+}
+/* The rail is flush to the left edge now, so the content clears exactly its
+   width — no gap on either side of it to add. Its cast shadow falls onto the
+   ground under the topbar, which is what it is for. */
+.main{margin-left:var(--sidebar-w);
+  display:flex;flex-direction:column;
+  min-height:100vh;min-width:0;
+  overflow-x:clip;transition:margin-left var(--d-base) var(--ease);}
+.main.expanded{margin-left:0;}
+
+/* ─────────────── TOPBAR ─────────────── */
+/* Frosted, borderless, and the same colour as the page. It used to be a white
+   bar with a hairline under it, which drew a hard horizontal line across the
+   top of every screen and boxed the content in — the classic dashboard-chrome
+   silhouette. Now it simply IS the top of the page, and the only reason you
+   can tell it is sticky is that content blurs as it passes beneath.
+
+   The blur needs a translucent background to act on, hence --glass; the
+   fallback below it is the opaque ground, so a browser without
+   backdrop-filter still gets a legible bar rather than see-through text. */
+.topbar{
+  background:var(--ground);background:var(--glass);
+  -webkit-backdrop-filter:blur(16px) saturate(180%);
+  backdrop-filter:blur(16px) saturate(180%);
+  min-height:var(--h-topbar);padding:0 var(--pad-page-x);
+  display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);
+  position:sticky;top:0;z-index:50;
+}
+.tb-l{display:flex;align-items:center;gap:var(--sp-4);min-width:0;}
+/* Icon buttons in the topbar sit on the ground rather than on a white bar, so
+   they take a surface of their own to read as controls — a bare glyph floating
+   on the page background reads as an icon, not a button. */
+.iconbtn{
+  width:var(--h-control);height:var(--h-control);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;background:var(--surface);border:none;border-radius:var(--r-md);
+  color:var(--ink-2);flex-shrink:0;box-shadow:var(--ring),var(--e1),var(--lip);
+  transition:background var(--d-fast) var(--ease),color var(--d-fast) var(--ease),
+             box-shadow var(--d-fast) var(--ease),
+             transform var(--d-instant) var(--ease);
+}
+.iconbtn:hover{color:var(--ink);box-shadow:var(--ring-strong),var(--e2);}
+.iconbtn:active{transform:scale(.94);box-shadow:var(--ring),none;}
+/* The topbar's only page label — the page name used to be printed here, again
+   underneath as a second heading, and a third time in .pg-title. It must not
+   wrap, or a two-line crumb pushes the bar out of shape on "Shop & Deliver
+   Requests". */
+.tb-bc{font-size:var(--fs-micro);font-weight:600;letter-spacing:var(--tr-micro);
+  text-transform:uppercase;color:var(--ink-3);
+  display:flex;align-items:center;gap:var(--gap-tight);min-width:0;}
+.tb-bc em{color:var(--accent);font-style:normal;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.tb-bc-root{white-space:nowrap;flex-shrink:0;}
+.tb-bc .ic{width:12px;height:12px;flex-shrink:0;}
+.tb-r{display:flex;align-items:center;gap:var(--sp-3);flex-shrink:0;}
+.tb-date{font-size:var(--fs-caption);color:var(--ink-3);font-weight:500;}
+/* Was --ground with a hairline border — which is now the exact colour of the
+   topbar behind it, so the pill vanished. It takes a surface and a ring, like
+   every other control up here. */
+.ab{display:flex;align-items:center;gap:var(--gap-inline);background:var(--surface);
+  box-shadow:var(--ring),var(--e1);
+  padding:var(--gap-tight) var(--sp-3) var(--gap-tight) var(--gap-tight);
+  border-radius:var(--r-full);}
+/* Deliberately NOT brand red: the only red dot in this corner should be the
+   unread-notification badge, or the eye stops trusting it. Teal used to carry
+   that job but the teal accent is retired, so this is now simply neutral. */
+.av{width:32px;height:32px;background:var(--n-700);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-weight:700;font-size:var(--fs-dense);flex-shrink:0;
+  box-shadow:var(--fill-lip),0 1px 2px rgba(31,25,28,.3);}
+.an{font-size:var(--fs-caption);font-weight:600;color:var(--ink);
+  line-height:1.2;white-space:nowrap;}
+
+/* ─────────────── ACTIVITY BELL ─────────────── */
+.bell-wrap{position:relative;}
+#bell-btn{position:relative;overflow:visible;}
+/* A true circle at one digit, growing into a pill only when the count needs two
+   — the old 5px-radius rounded square read as a misaligned block. It carries
+   `hidden` whenever the unread total is 0 (renderActivity), which actually hides
+   it now; see the [hidden] rule in tokens.css. */
+.bell-badge{
+  position:absolute;top:0;right:0;
+  min-width:18px;height:18px;padding:0 var(--gap-tight);
+  border-radius:var(--r-full);background:var(--accent);color:#fff;
+  font-size:var(--fs-micro);font-weight:600;line-height:1;letter-spacing:var(--tr-body);
+  display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;box-shadow:0 0 0 2px var(--surface);
+  font-variant-numeric:tabular-nums;pointer-events:none;
+}
+.bell-menu{
+  position:absolute;top:calc(100% + 8px);right:0;width:308px;max-width:calc(100vw - 32px);
+  background:var(--surface);border-radius:var(--r-lg);
+  box-shadow:var(--ring),var(--e3),var(--lip);z-index:60;overflow:hidden;
+  opacity:0;visibility:hidden;transform:translateY(-6px);
+  transition:opacity var(--d-fast) var(--ease),transform var(--d-fast) var(--ease),
+             visibility var(--d-fast) var(--ease);
+}
+.bell-menu.open{opacity:1;visibility:visible;transform:none;}
+/* Banded, like a card's table header and for the same reason: the menu opens as
+   a floating white sheet, and without a tinted head the title line and the first
+   notification were the same surface. */
+.bell-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-inline);
+  padding:var(--sp-3) var(--sp-4);background:var(--sunken);
+  border-bottom:1px solid var(--line);
+  font-weight:700;font-size:var(--fs-title);color:var(--ink);}
+.bell-clear{background:none;border:none;cursor:pointer;color:var(--accent);
+  font-size:var(--fs-caption);font-weight:600;padding:var(--sp-half) var(--gap-tight);
+  border-radius:var(--r-xs);}
+.bell-clear:hover{text-decoration:underline;}
+.bell-list{max-height:340px;overflow-y:auto;}
+.bell-item{display:flex;align-items:center;gap:var(--gap-inline);width:100%;text-align:left;
+  padding:var(--sp-3) var(--sp-4);background:none;border:none;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;color:var(--ink);transition:background var(--d-fast) var(--ease);}
+.bell-item:last-child{border-bottom:none;}
+.bell-item:hover{background:var(--accent-wash);}
+.bell-dot{width:9px;height:9px;border-radius:50%;background:var(--accent-quiet);flex-shrink:0;}
+.bell-dot[data-tone="warning"]{background:var(--warning);}
+.bell-dot[data-tone="info"]{background:var(--info);}
+.bell-dot[data-tone="success"]{background:var(--success);}
+.bell-txt{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;}
+.bell-txt b{font-size:var(--fs-dense);font-weight:600;}
+.bell-sub{font-size:var(--fs-caption);color:var(--ink-3);}
+.bell-item>.ic{color:var(--ink-4);width:16px;height:16px;flex-shrink:0;}
+.bell-empty{display:flex;flex-direction:column;align-items:center;gap:var(--gap-inline);
+  padding:var(--sp-7) var(--sp-4);color:var(--ink-3);font-size:var(--fs-dense);
+  text-align:center;}
+.bell-empty .ic{width:28px;height:28px;color:var(--success);}
+
+/* ─────────────── PAGES ─────────────── */
+/* 1560px was wider than the content ever needs, so the stat cards stretched and
+   the tables ran to arm's length on a large monitor. */
+.pw{padding:var(--pad-page-y) var(--pad-page-x);flex:1;
+  max-width:var(--page-max);width:100%;min-width:0;}
+.page{display:none;}
+.page.active{display:block;animation:fadeThrough var(--d-base) var(--ease-in);}
+.pg-hdr{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-4);
+  flex-wrap:wrap;margin-bottom:var(--sp-5);}
+/* Bare text on the page background, deliberately. This used to sit in a tinted
+   band with a border and a red left rail — but a rail on a rounded tinted panel
+   is the most recognisable machine-generated pattern in the file, and the panel
+   was repeating it on the stat cards, the active nav item AND the toast. It
+   stays where it encodes state; a page title needs air, not a container.
+
+   The size is fluid rather than stepped: a fixed 24px turned "Shop & Deliver
+   Requests" into three cramped lines on a phone, and clamp() lets the longest
+   title in the panel settle without a per-page override. */
+/* THE loudest thing on the page. 38px at 800 and -.035em tracking — the
+   weight is the point, not only the size: at 700 in the old face this was
+   the same optical colour as a card title two inches below it, which is
+   what "no bold headings" actually described. Figtree holds its counters
+   at 800, so this is heavy without going solid.
+
+   Fluid rather than stepped, because a fixed size turned "Shop & Deliver
+   Requests" into three cramped lines on a phone; the 24px floor keeps that
+   title on two lines at 360pt. */
+.pg-title{
+  font-size:clamp(24px,1.1rem + 1.9vw,38px);
+  line-height:var(--lh-hero);font-weight:800;letter-spacing:var(--tr-hero);
+  color:var(--ink);min-width:0;text-wrap:balance;
+}
+
+/* ─────────────── MODAL ─────────────── */
+.mbg{position:fixed;inset:0;background:var(--veil);z-index:600;display:none;
+  align-items:center;justify-content:center;padding:var(--sp-4);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
+.mbg.open{display:flex;animation:fade var(--d-fast) var(--ease-in);}
+.mbox{background:var(--surface);border-radius:var(--r-xl);padding:var(--sp-6);width:520px;
+  max-width:100%;max-height:92vh;overflow-y:auto;
+  box-shadow:var(--ring),var(--e4),var(--lip);
+  animation:rise var(--d-base) var(--ease-in);}
+.mbox.wide{width:620px;}
+.mbox.narrow{width:420px;}
+.m-title{font-size:var(--fs-h3);line-height:var(--lh-h3);
+  font-weight:700;letter-spacing:var(--tr-h3);color:var(--ink);margin-bottom:var(--sp-5);}
+.m-body{font-size:var(--fs-body);color:var(--ink-2);line-height:var(--lh-prose);
+  margin-bottom:var(--sp-5);}
+.m-actions{display:flex;gap:var(--gap-inline);justify-content:flex-end;
+  margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--line);}
+/* A plate, at the largest size the panel draws one. See §9 in tokens.css:
+   background-COLOR carries the semantic tint, background-IMAGE lays the sheen
+   over it, and the bevel does the rest — so the two variants below only ever
+   need to name a colour. */
+.m-ico{width:52px;height:52px;border-radius:var(--r-md);display:flex;align-items:center;
+  justify-content:center;margin-bottom:var(--sp-4);box-shadow:var(--plate-bevel);}
+.m-ico .ic{width:28px;height:28px;filter:var(--emboss);}
+.m-ico.danger{background-color:var(--danger-tint);color:var(--danger-ink);}
+.m-ico.warning{background-color:var(--warning-tint);color:var(--warning-ink);}
+
+/* ─────────────── SIDE PANEL ─────────────── */
+#sp-overlay{position:fixed;inset:0;background:var(--veil);z-index:200;opacity:0;
+  pointer-events:none;transition:opacity var(--d-base) var(--ease);}
+#sp-overlay.open{opacity:1;pointer-events:auto;}
+/* Inset and rounded, and it no longer mirrors the sidebar — the rail is flush
+   now and this is not, deliberately. The rail is permanent chrome and owns its
+   edge; the drawer is a TRANSIENT sheet that opens over whatever you were
+   reading, and floating it lets the scrim read around all four sides so it is
+   obvious the thing behind is still there and still yours to go back to. */
+.spanel{position:fixed;
+  inset:var(--drawer-gap) var(--drawer-gap) var(--drawer-gap) auto;
+  width:min(440px,calc(100% - var(--sp-6)));
+  background:var(--surface);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--ring),var(--e4),var(--lip);z-index:201;
+  transform:translateX(calc(100% + var(--drawer-gap)));
+  transition:transform var(--d-slow) var(--ease);display:flex;flex-direction:column;}
+.spanel.open{transform:translateX(0);}
+/* The drawer's header is BRANDED, not another white band with a rule under it.
+   This panel opens over the top of whatever you were reading, so it needs to
+   announce itself; a red head on a light body does that in one glance and
+   ties the drawer to the rail on the opposite edge. Flat --shell, exactly
+   like the rail — the two are the only branded chrome on screen and they
+   have to be the same red, which they were not while both were washed by
+   gradients of different sizes at different angles. */
+.sp-hd{
+  padding:var(--sp-5);display:flex;flex-shrink:0;
+  justify-content:space-between;align-items:center;gap:var(--sp-3);
+  background:var(--shell);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 2px 8px rgba(46,5,16,.2);
+  position:relative;z-index:1;
+}
+.sp-hd-sub{font-size:var(--fs-micro);color:var(--shell-ink-dim);font-weight:600;
+  text-transform:uppercase;letter-spacing:var(--tr-micro);margin-bottom:var(--sp-half);}
+/* 700, matching .card-title and .m-title — this is a title, and 800 is
+   reserved for the four things allowed to be loud (see §5). White on red
+   already gains apparent weight, so 800 here was the heaviest text in the
+   panel after the page title. */
+.sp-hd-title{font-size:var(--fs-h3);line-height:var(--lh-h3);
+  font-weight:700;letter-spacing:var(--tr-h3);color:var(--shell-ink-hi);}
+/* The close button sits on the red head, so it cannot use the topbar's
+   surface-and-ring treatment — it would read as a white tile floating on the
+   brand. Glass instead: a translucent white wash that deepens on hover. */
+.sp-hd .iconbtn{
+  background:rgba(255,255,255,.16);color:var(--shell-ink-hi);box-shadow:none;
+}
+.sp-hd .iconbtn:hover{background:rgba(255,255,255,.28);color:var(--shell-ink-hi);box-shadow:none;}
+#sp-body{padding:var(--sp-5);overflow-y:auto;flex:1;}
+.sp-sec{margin-bottom:var(--sp-6);}
+.sp-sec-title{font-size:var(--fs-micro);font-weight:600;color:var(--ink-2);
+  text-transform:uppercase;letter-spacing:var(--tr-micro);
+  margin-bottom:var(--sp-3);padding-bottom:var(--gap-tight);
+  border-bottom:1px solid var(--line);}
+.sp-row{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-4);
+  padding:var(--sp-2) 0;border-bottom:1px solid var(--line);}
+.sp-row:last-child{border-bottom:none;}
+/* Proof of delivery (P5-06). The driver has photographed every handover since
+   Phase 1; the URL was written to the order and rendered nowhere. Links out to
+   the full-size image, because a thumbnail settles no dispute. */
+.sp-proof{display:block;border-radius:var(--r-md);overflow:hidden;
+  border:1px solid var(--line);}
+.sp-proof img{display:block;width:100%;height:auto;max-height:280px;object-fit:cover;
+  background:var(--sunken);}
+.sp-proof:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.sp-lbl{font-size:var(--fs-dense);color:var(--ink-2);flex-shrink:0;}
+.sp-val{font-size:var(--fs-dense);font-weight:500;color:var(--ink);text-align:right;
+  max-width:240px;overflow-wrap:anywhere;}
+.sp-val.sm{font-size:var(--fs-caption);font-weight:400;}
+/* A value that is missing rather than merely empty — e.g. a merchant with no
+   pickup coordinates, which silently drops it out of nearest-first dispatch. */
+.sp-val.sp-warn{color:var(--warning-ink);font-weight:500;}
+.sp-val.money{font-size:var(--fs-h3);font-weight:800;
+  letter-spacing:var(--tr-h3);color:var(--accent);font-variant-numeric:tabular-nums;}
+.sp-hero{display:flex;align-items:center;gap:var(--sp-4);margin-bottom:var(--sp-5);}
+/* Flat brand fill; the curve comes from the inset pair — a lit top edge and
+   an inner shade rising from the bottom — not from a wash across the face. */
+.sp-avatar{width:60px;height:60px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--fs-h3);font-weight:800;flex-shrink:0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),
+             inset 0 -10px 14px -8px rgba(74,20,38,.45),
+             0 2px 4px rgba(110,26,48,.2),0 8px 18px -6px rgba(110,26,48,.3);}
+.sp-hero-name{font-size:var(--fs-title);font-weight:700;
+  letter-spacing:var(--tr-title);color:var(--ink);}
+
+/* ─────────────── STATUS FLOW STEPPER ─────────────── */
+/* Teal was retired, so a completed step is --success. That is arguably clearer
+   anyway: a delivery step that is done is a good outcome, not a neutral one. */
+.sf{display:flex;align-items:flex-start;margin-bottom:var(--gap-field);}
+.sf-wrap{display:flex;flex-direction:column;align-items:center;gap:var(--gap-tight);
+  flex-shrink:0;}
+.sf-dot{width:14px;height:14px;border-radius:50%;background:var(--line);
+  border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line);
+  transition:background var(--d-base) var(--ease),box-shadow var(--d-base) var(--ease);}
+.sf-dot.done{background:var(--success);box-shadow:0 0 0 1px var(--success);}
+.sf-dot.current{background:var(--success);box-shadow:0 0 0 1px var(--success);
+  animation:pulse 1.8s var(--ease) infinite;}
+.sf-line{flex:1;height:2px;background:var(--line);margin-top:var(--gap-tight);
+  position:relative;overflow:hidden;}
+.sf-line::after{content:'';position:absolute;inset:0;background:var(--success);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform var(--d-deliberate) var(--ease);}
+.sf-line.done::after{transform:scaleX(1);}
+/* Was 9px — below the floor of the scale and genuinely hard to read. At 11px the
+   four labels still fit across a 440px drawer. */
+.sf-lbl{font-size:var(--fs-micro);font-weight:500;color:var(--ink-3);white-space:nowrap;}
+.sf-dot.done+.sf-lbl,.sf-wrap:has(.done) .sf-lbl{color:var(--ink-2);}
+
+/* ─────────────── TOASTS ─────────────── */
+/* Sits just below the topbar so a toast never covers the page title. */
+#toast-host{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:900;
+  display:flex;flex-direction:column;gap:var(--gap-inline);pointer-events:none;
+  width:min(420px,calc(100% - 32px));}
+.toast{
+  display:flex;align-items:flex-start;gap:var(--sp-3);background:var(--surface);
+  border-radius:var(--r-md);
+  padding:var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  box-shadow:var(--ring),var(--e3),var(--lip);pointer-events:auto;overflow:hidden;position:relative;
+  animation:toastIn var(--d-base) var(--ease-in);
+}
+.toast.out{animation:toastOut var(--d-fast) var(--ease-out) forwards;}
+/* Severity stripe — the second surviving accent rail, because it is the only
+   thing distinguishing an error toast from a success one at a glance. */
+.toast::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--sp-1);
+  background:var(--ink-3);}
+/* The whole sheet takes the soft tone, not just the stripe. A toast is on
+   screen for four seconds and is read peripherally, so the faster the colour
+   arrives the better — and at soft-tone saturation the message text is still
+   sitting at 12.5:1 or better. The ring picks the hue up at the edge, which is
+   what keeps a pale sheet from dissolving into the page behind it. */
+.toast.t-success{background:var(--success-soft);box-shadow:var(--ring-success),var(--e3),var(--lip);}
+.toast.t-error{background:var(--danger-soft);box-shadow:var(--ring-danger),var(--e3),var(--lip);}
+.toast.t-warning{background:var(--warning-soft);box-shadow:var(--ring-warning),var(--e3),var(--lip);}
+.toast.t-info{background:var(--info-soft);box-shadow:var(--ring-info),var(--e3),var(--lip);}
+.toast.t-success::before{background:var(--success);}
+.toast.t-error::before{background:var(--danger);}
+.toast.t-warning::before{background:var(--warning);}
+.toast.t-info::before{background:var(--info);}
+.toast .ic{margin-left:var(--sp-4);width:20px;height:20px;}
+.toast.t-success .ic{color:var(--success);}
+.toast.t-error .ic{color:var(--danger);}
+.toast.t-warning .ic{color:var(--warning);}
+.toast.t-info .ic{color:var(--info);}
+.toast-msg{font-size:var(--fs-dense);font-weight:400;color:var(--ink);
+  line-height:var(--lh-dense);flex:1;min-width:0;}
+.toast-msg b{font-weight:600;display:block;margin-bottom:var(--sp-half);}
+
+/* ─────────────── MOBILE OVERLAY ─────────────── */
+#mob-overlay{position:fixed;inset:0;background:var(--veil);z-index:99;opacity:0;
+  pointer-events:none;transition:opacity var(--d-base) var(--ease);}
+#mob-overlay.open{opacity:1;pointer-events:auto;}

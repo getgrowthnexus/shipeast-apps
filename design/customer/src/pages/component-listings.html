@@ -1,0 +1,166 @@
+<!-- card: Merchant listings | group: Components | desc: The browse card, the scan row and the menu line -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Merchant listings</h1>
+    <p>Two listings for two jobs: a <b>card</b> when you are browsing
+      photography, a <b>row</b> when you are scanning names. A 16:9 card per
+      result turns eight results into eight screens of scrolling.
+      From <code>lib/widgets/se_listing.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Merchant card — the browse surface</h2>
+    <div class="wrap g20" style="background:#F8ECF0;padding:20px;border-radius:12px">
+      <div style="width:372px">
+        <div class="mcard">
+          <div class="art">
+            <svg class="i"><use href="#i-storefront"/></svg>
+            <span class="promo">20% OFF</span>
+            <div class="fav"><svg class="i"><use href="#i-heart"/></svg></div>
+          </div>
+          <div class="meta">
+            <div class="mrow">
+              <div class="mname">Island Grill Morant Bay</div>
+              <span class="rating"><svg class="i"><use href="#i-star"/></svg>4.8</span>
+            </div>
+            <div class="bits">
+              <span class="bit"><svg class="i"><use href="#i-clock"/></svg>25–35 min</span>
+              <span class="bit"><svg class="i"><use href="#i-bike"/></svg>$350</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8A7A81">No photo yet — a shallow 3:1 band</div>
+      </div>
+      <div style="width:372px">
+        <div class="mcard">
+          <div class="art art--photo" style="background:linear-gradient(160deg,#F9D7DF,#F2B9C6)">
+            <div class="fav on"><svg class="i"><use href="#i-heartFill"/></svg></div>
+          </div>
+          <div class="meta">
+            <div class="mrow">
+              <div class="mname">Juici Patties</div>
+              <span class="rating"><svg class="i"><use href="#i-star"/></svg>4.6</span>
+            </div>
+            <div class="bits">
+              <span class="bit"><svg class="i"><use href="#i-clock"/></svg>15–25 min</span>
+              <span class="bit"><svg class="i"><use href="#i-bike"/></svg>Free</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8A7A81">With a photo — the full 16:9, favourited</div>
+      </div>
+      <div style="width:372px">
+        <div class="mcard">
+          <div class="art">
+            <svg class="i"><use href="#i-storefront"/></svg>
+            <div class="shut"><span>Closed</span></div>
+          </div>
+          <div class="meta">
+            <div class="mrow">
+              <div class="mname">Devon House I-Scream Morant Bay</div>
+              <span class="rating"><svg class="i"><use href="#i-star"/></svg>4.9</span>
+            </div>
+            <div class="bits">
+              <span class="bit"><svg class="i"><use href="#i-clock"/></svg>30–45 min</span>
+              <span class="bit"><svg class="i"><use href="#i-bike"/></svg>$400</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#8A7A81">Closed — dimmed, and the long name ellipsizes</div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Photo vs none</td><td>16:9 with a photo, <b>3:1 without</b>. Early on most merchants have no
+        photo, and three empty half-screen plates down a list is a lot of nothing to scroll past</td></tr>
+      <tr><td>The photoless plate</td><td>The category hue blended at 10% onto <code>surface0</code> — the same hue as
+        a tint, so a photoless list reads quiet rather than alarming</td></tr>
+      <tr><td>Closed</td><td>Dimmed rather than hidden. Knowing the place exists and shuts at nine is
+        information</td></tr>
+      <tr><td>Promo badge</td><td>Action red, <code>xs</code> radius, 10px weight 700, top-left. Suppressed when closed</td></tr>
+      <tr><td>Scrim</td><td>Photos only — the ink scrim, the single surviving gradient in the system</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Merchant row — the scan surface</h2>
+    <div class="stack g10" style="background:#F8ECF0;padding:20px;border-radius:12px;max-width:412px">
+      <div class="mrow-card">
+        <div class="thumb"><svg class="i"><use href="#i-food"/></svg></div>
+        <div class="body">
+          <div class="nm"><b>Island Grill Morant Bay</b></div>
+          <div class="facts"><svg class="i"><use href="#i-star"/></svg><span class="ell">4.8 · 25–35 min · $350</span></div>
+        </div>
+        <svg class="i caret"><use href="#i-caretRight"/></svg>
+      </div>
+      <div class="mrow-card">
+        <div class="thumb"><svg class="i"><use href="#i-grocery"/></svg></div>
+        <div class="body">
+          <div class="nm"><b>Progressive Foods</b><span class="t-bodyS c-danger">· Closed</span></div>
+          <div class="facts"><svg class="i"><use href="#i-star"/></svg><span class="ell">4.3 · 40–55 min · $500</span></div>
+        </div>
+        <svg class="i caret"><use href="#i-caretRight"/></svg>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>Thumb</td><td>56px at <code>sm</code> radius. With no photo it falls back to the
+        <b>category</b> glyph on <code>surface50</code></td></tr>
+      <tr><td>Facts line</td><td>One line of facts, not a wrap of chips. The category is already implied by
+        where you are; rating, time and fee are what a customer actually chooses on</td></tr>
+      <tr><td>Shared</td><td>Search results and "all merchants" use the same row — two browse surfaces
+        showing the same thing should not look like two different products</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Menu item line</h2>
+    <div style="background:#FFF6F8;border:1px solid #E6DAE0;border-radius:16px;padding:0 14px;max-width:412px">
+      <div class="menu-item" style="border-bottom:1px solid #F0E6EB">
+        <div class="thumb"><svg class="i" style="width:28px;height:28px"><use href="#i-food"/></svg></div>
+        <div class="body">
+          <div class="nm">Curry Goat with Rice &amp; Peas</div>
+          <div class="desc">Slow-cooked goat, rice and peas, steamed cabbage and a slice of avocado.</div>
+          <div class="price tnum">$1,450</div>
+        </div>
+        <div class="act">
+          <div class="qty">
+            <button class="qty-btn qty-btn--sub"><svg class="i"><use href="#i-minus"/></svg></button>
+            <span class="n">2</span>
+            <button class="qty-btn qty-btn--add"><svg class="i"><use href="#i-plus"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <div class="thumb"><svg class="i" style="width:28px;height:28px"><use href="#i-food"/></svg></div>
+        <div class="body">
+          <div class="nm">Festival (2 pcs)</div>
+          <div class="desc">Sweet fried dumplings.</div>
+          <div class="price tnum">$300</div>
+        </div>
+        <div class="act">
+          <button class="qty-btn qty-btn--add qty-btn--solo"><svg class="i"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The small parts</h2>
+    <div class="wrap g24" style="background:#F8ECF0;padding:20px;border-radius:12px;align-items:center">
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:8px">Rating pill</div>
+        <span class="rating"><svg class="i"><use href="#i-star"/></svg>4.8</span>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:8px">Meta bits</div>
+        <div class="hstack g14">
+          <span class="bit"><svg class="i"><use href="#i-clock"/></svg>25–35 min</span>
+          <span class="bit"><svg class="i"><use href="#i-bike"/></svg>$350</span>
+          <span class="bit"><svg class="i"><use href="#i-scales"/></svg>2.4 kg</span>
+        </div>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      The rating pill is the <b>one place gold is allowed</b> in this palette.
+      Everywhere else the old gold was retired into the warning role.</p>
+  </div>
+</div>

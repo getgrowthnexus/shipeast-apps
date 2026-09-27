@@ -6,7 +6,7 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_app_bar.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_button.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_step_tracker.dart';
@@ -87,10 +87,9 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
   Widget build(BuildContext context) {
     final items = _getItems();
 
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      appBar: const SeTopBar(title: 'Pickup'),
-      body: SingleChildScrollView(
+    return SePageScaffold(
+      title: 'Pickup',
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
             SeSpacing.gutter, SeSpacing.x2, SeSpacing.gutter, SeSpacing.x8),
         child: Column(
@@ -114,8 +113,8 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
 
             _addressCard(
               icon: SeIcons.storefront,
-              hue: SeColors.red500,
-              tint: SeColors.red50,
+              hue: SeColors.brand,
+              tint: SeColors.brandSoft,
               eyebrow: 'PICK UP FROM',
               name: _merchantName,
               detail: _merchantAddress,
@@ -153,11 +152,11 @@ class _PickupConfirmationScreenState extends State<PickupConfirmationScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: SeColors.red50,
+                          color: SeColors.brandSoft,
                           borderRadius: SeRadius.all(SeRadius.xs),
                         ),
                         child: const Icon(SeIcons.box,
-                            color: SeColors.red700, size: 18),
+                            color: SeColors.brandInk, size: 18),
                       ),
                       const SizedBox(width: SeSpacing.x3),
                       Text('Check these items', style: SeType.title),

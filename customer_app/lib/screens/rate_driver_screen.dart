@@ -6,10 +6,16 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_card.dart';
 import '../widgets/se_button.dart';
+import '../widgets/se_page.dart';
+import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
 
+/// Rating.
+///
+/// One required question — how was the delivery — and everything else optional
+/// and below it. The follow-up chips change with the score: offering "Friendly"
+/// and "Food was hot" to somebody who just gave one star reads as not listening.
 class RateDriverScreen extends StatefulWidget {
   const RateDriverScreen({super.key});
 
@@ -20,7 +26,7 @@ class RateDriverScreen extends StatefulWidget {
 class _RateDriverScreenState extends State<RateDriverScreen> {
   int _driverRating = 0;
   int _merchantRating = 0;
-  final Set<int> _selectedTags = {};
+  final Set<String> _selectedTags = {};
   final _commentCtrl = TextEditingController();
   bool _submitting = false;
 
@@ -32,7 +38,7 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
   Map<String, dynamic>? _driver;
   StreamSubscription<Map<String, dynamic>?>? _driverSub;
 
-  static const _tags = [
+  static const _goodTags = [
     'Fast delivery',
     'Friendly',
     'Food was hot',
@@ -41,12 +47,24 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
     'On time',
   ];
 
+  static const _badTags = [
+    'Took too long',
+    'Order was cold',
+    'Items missing',
+    'Hard to reach',
+    'Rude or careless',
+    'Wrong address',
+  ];
+
+  bool get _positive => _driverRating >= 4;
+  List<String> get _tags => _positive ? _goodTags : _badTags;
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
   }
 
@@ -77,6 +95,17 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
     super.dispose();
   }
 
+  void _setDriverRating(int stars) {
+    setState(() {
+      final wasPositive = _positive;
+      _driverRating = stars;
+      // The chip list swaps at four stars, so a selection made under the old
+      // list would be submitted against a question that is no longer on screen.
+      if (wasPositive != _positive) _selectedTags.clear();
+    });
+    HapticFeedback.selectionClick();
+  }
+
   Future<void> _submitRating() async {
     if (_driverRating == 0) {
       SeToast.error(context, 'Please rate the driver');
@@ -91,12 +120,12 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
           // null, not 5 — a skipped question is not a five-star review.
           merchantRating: _merchantRating > 0 ? _merchantRating : null,
           comment: _commentCtrl.text.trim(),
-          tags: _selectedTags.map((i) => _tags[i]).toList(),
+          tags: _selectedTags.toList(),
         );
       }
       if (!mounted) return;
-      SeToast.success(context, 'Thank you for your rating!');
-      await Future.delayed(const Duration(milliseconds: 1400));
+      SeToast.success(context, 'Thank you — that helps.');
+      await Future.delayed(const Duration(milliseconds: 1200));
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       }
@@ -110,63 +139,160 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(SeSpacing.gutter),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildDriverRatingCard(),
-                    const SizedBox(height: 14),
-                    _buildTagsCard(),
-                    const SizedBox(height: 14),
-                    _buildMerchantRatingCard(),
-                    const SizedBox(height: 14),
-                    _buildCommentCard(),
-                    const SizedBox(height: 20),
-                    SeButton(
-                      label: 'Submit Rating',
-                      icon: SeIcons.check,
-                      loading: _submitting,
-                      onPressed: _submitting ? null : _submitRating,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+    return SePageScaffold(
+      title: 'How did we do?',
+      subtitle: 'Ten seconds, and it changes who we send next time',
+      bottomBar: SeBottomBar(
+        child: SeButton(
+          label: 'Submit rating',
+          loading: _submitting,
+          onPressed: _submitting ? null : _submitRating,
         ),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 24),
+        children: [
+          _driverPanel(),
+          if (_driverRating > 0) ...[
+            const SizedBox(height: 22),
+            SeSectionTitle(
+                title: _positive ? 'What went well?' : 'What went wrong?'),
+            const SizedBox(height: 10),
+            _tagWrap(),
+          ],
+          const SizedBox(height: 22),
+          const SeSectionTitle(title: 'And the merchant?'),
+          const SizedBox(height: 10),
+          _merchantPanel(),
+          const SizedBox(height: 22),
+          const SeSectionTitle(title: 'Anything else'),
+          const SizedBox(height: 10),
+          SeTextField(
+            controller: _commentCtrl,
+            hint: 'Optional — tell us what happened',
+            icon: SeIcons.chat,
+            minLines: 3,
+            maxLines: 5,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, SeSpacing.gutter, 12),
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(bottom: BorderSide(color: SeColors.ink100)),
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                    color: SeColors.surface50, shape: BoxShape.circle),
-                child: const Icon(SeIcons.arrowLeft,
-                    size: 20, color: SeColors.ink900),
+  Widget _driverPanel() {
+    final driverName = _driver?['name'] as String? ??
+        (_driverId.isNotEmpty ? 'Your driver' : 'Your driver');
+
+    return SePanel(
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+      child: Column(
+        children: [
+          Container(
+            width: 66,
+            height: 66,
+            decoration: const BoxDecoration(
+              color: SeColors.brandSoft,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(SeIcons.user, size: 32, color: SeColors.brandAction),
+          ),
+          const SizedBox(height: 12),
+          Text(driverName,
+              style: SeType.h3, maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 3),
+          Text('Delivered your order',
+              style: SeType.bodyS.copyWith(color: SeColors.ink500)),
+          const SizedBox(height: 18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              5,
+              (i) => _star(i, _driverRating, 36, () => _setDriverRating(i + 1)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Reserved height, so choosing a score does not shove the rest of the
+          // page down under the reader's thumb.
+          SizedBox(
+            height: 20,
+            child: Text(
+              _driverRating == 0 ? 'Tap a star' : _ratingLabel(_driverRating),
+              style: SeType.title.copyWith(
+                fontSize: 15,
+                color:
+                    _driverRating == 0 ? SeColors.ink400 : SeColors.brandInk,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tagWrap() => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: _tags.map((tag) {
+          final selected = _selectedTags.contains(tag);
+          return GestureDetector(
+            onTap: () => setState(() {
+              if (selected) {
+                _selectedTags.remove(tag);
+              } else {
+                _selectedTags.add(tag);
+              }
+            }),
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: selected ? SeColors.brandSoft : SeColors.surface0,
+                borderRadius: SeRadius.pill,
+                border: Border.all(
+                  color: selected ? SeColors.brandAction : SeColors.ink200,
+                ),
+              ),
+              child: Text(tag,
+                  style: SeType.label.copyWith(
+                      color: selected ? SeColors.brandInk : SeColors.ink500)),
+            ),
+          );
+        }).toList(),
+      );
+
+  Widget _merchantPanel() => SePanel(
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: SeColors.brandAction.withValues(alpha: 0.10),
+                borderRadius: SeRadius.all(SeRadius.xs),
+              ),
+              child: const Icon(SeIcons.storefront,
+                  size: 20, color: SeColors.brandAction),
+            ),
             const SizedBox(width: 12),
-            Text('Rate Your Experience', style: SeType.h3),
+            Expanded(
+              child: Text(
+                  _merchantName.isNotEmpty ? _merchantName : 'The merchant',
+                  style: SeType.title.copyWith(fontSize: 15),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                5,
+                (i) => _star(i, _merchantRating, 21,
+                    () => setState(() => _merchantRating = i + 1)),
+              ),
+            ),
           ],
         ),
       );
@@ -174,199 +300,23 @@ class _RateDriverScreenState extends State<RateDriverScreen> {
   Widget _star(int index, int rating, double size, VoidCallback onTap) =>
       GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.symmetric(horizontal: size > 28 ? 5 : 2),
           child: Icon(
             index < rating ? SeIcons.star : SeIcons.starOutline,
             size: size,
-            color: index < rating ? SeColors.gold500 : SeColors.ink300,
+            color: index < rating ? SeColors.star : SeColors.ink300,
           ),
         ),
       );
 
-  Widget _buildDriverRatingCard() {
-    final driverName = _driver?['name'] as String? ??
-        (_driverId.isNotEmpty ? 'Your Driver' : 'Driver');
-
-    return SeCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              gradient: SeColors.emberGradient,
-              borderRadius: SeRadius.all(SeRadius.lg),
-              boxShadow: SeElevation.glow,
-            ),
-            child: const Icon(SeIcons.user, size: 36, color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          Text(driverName, style: SeType.h3),
-          const SizedBox(height: 2),
-          Text('Your delivery driver',
-              style: SeType.bodyS.copyWith(color: SeColors.ink500)),
-          const SizedBox(height: 18),
-          Text('How was your delivery?', style: SeType.title),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-                5,
-                (i) => _star(i, _driverRating, 38,
-                    () => setState(() => _driverRating = i + 1))),
-          ),
-          if (_driverRating > 0) ...[
-            const SizedBox(height: 10),
-            Text(_ratingLabel(_driverRating),
-                style: SeType.title.copyWith(color: SeColors.red500)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTagsCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('What did you love?', style: SeType.title),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _tags.asMap().entries.map((e) {
-                final selected = _selectedTags.contains(e.key);
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    if (selected) {
-                      _selectedTags.remove(e.key);
-                    } else {
-                      _selectedTags.add(e.key);
-                    }
-                  }),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: selected ? SeColors.red50 : SeColors.surface50,
-                      borderRadius: SeRadius.pill,
-                      border: Border.all(
-                        color: selected ? SeColors.red500 : SeColors.ink200,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Text(e.value,
-                        style: SeType.label.copyWith(
-                            color: selected
-                                ? SeColors.red700
-                                : SeColors.ink500,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildMerchantRatingCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: SeColors.red50,
-                borderRadius: SeRadius.all(SeRadius.sm),
-              ),
-              child: const Icon(SeIcons.storefront,
-                  size: 22, color: SeColors.red500),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_merchantName.isNotEmpty ? _merchantName : 'Restaurant',
-                      style: SeType.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text('Rate the merchant',
-                      style: SeType.bodyS.copyWith(color: SeColors.ink400)),
-                ],
-              ),
-            ),
-            Row(
-              children: List.generate(
-                  5,
-                  (i) => _star(i, _merchantRating, 22,
-                      () => setState(() => _merchantRating = i + 1))),
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildCommentCard() => SeCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(SeIcons.chat, size: 16, color: SeColors.ink700),
-                const SizedBox(width: 8),
-                Text('Leave a comment (optional)', style: SeType.title),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: SeColors.surface50,
-                borderRadius: SeRadius.inputRadius,
-                border: Border.all(color: SeColors.ink200, width: 1.5),
-              ),
-              child: TextField(
-                controller: _commentCtrl,
-                maxLines: 3,
-                style: SeType.body.copyWith(color: SeColors.ink900),
-                cursorColor: SeColors.red500,
-                decoration: InputDecoration(
-                  hintText: 'Tell us more about your experience...',
-                  hintStyle: SeType.body.copyWith(color: SeColors.ink400),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-  String _ratingLabel(int rating) {
-    switch (rating) {
-      case 1:
-        return 'Poor';
-      case 2:
-        return 'Fair';
-      case 3:
-        return 'Good';
-      case 4:
-        return 'Great';
-      case 5:
-        return 'Excellent!';
-      default:
-        return '';
-    }
-  }
+  String _ratingLabel(int rating) => switch (rating) {
+        1 => 'Poor',
+        2 => 'Not great',
+        3 => 'Fine',
+        4 => 'Good',
+        5 => 'Excellent',
+        _ => '',
+      };
 }

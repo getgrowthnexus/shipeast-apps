@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -7,18 +9,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dev/dev_emulators.dart';
 import 'theme/app_theme.dart';
-import 'theme/se_colors.dart';
-import 'theme/se_icons.dart';
-import 'theme/se_motion.dart';
-import 'theme/se_spacing.dart';
-import 'theme/se_typography.dart';
 import 'firebase_options.dart';
+import 'screens/dashboard_host.dart';
 import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/earnings_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/history_screen.dart';
-import 'screens/pending_approval_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'services/driver_firestore_service.dart';
 
 @pragma('vm:entry-point')
@@ -39,6 +35,12 @@ Future<void> _initFirebase() async {
   }
 }
 
+/// Registers for push, and asks for the OS permission that goes with it.
+///
+/// Deliberately NOT awaited before `runApp`. The permission sheet used to be
+/// raised over the blank window the OS hands a launching app, because this ran
+/// ahead of the first frame; now it lands on the splash screen, which at least
+/// says whose app is asking.
 Future<void> _initFCM() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await FirebaseMessaging.instance.requestPermission(
@@ -64,21 +66,6 @@ Future<void> _initFCM() async {
   });
 }
 
-Future<Widget> _resolveHome() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return const LoginScreen();
-  try {
-    final doc = await FirebaseFirestore.instance
-        .collection('drivers')
-        .doc(user.uid)
-        .get();
-    if (doc.exists && doc.data()?['status'] == 'approved') {
-      return const DriverShell();
-    }
-  } catch (_) {}
-  return const PendingApprovalScreen();
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initFirebase();
@@ -90,18 +77,23 @@ void main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
+
+  // The first frame goes up HERE, before anything that touches the network.
+  // This used to sit behind a push-permission prompt and a Firestore read of
+  // the driver's approval status, both awaited, so a cold start on a weak
+  // signal showed an empty OS window for as long as the round trip took.
+  // SplashScreen owns that wait now and looks like the product while it runs.
+  runApp(const ShipEastDriverApp());
+
   // Skipped on web: FCM there needs a service worker and a VAPID key that
   // this project has never registered, so requestPermission/getToken would
   // throw and take the whole launch down. The local preview is for looking at
   // screens; push is not one of the things it can honestly show.
-  if (!kIsWeb) await _initFCM();
-  final home = await _resolveHome();
-  runApp(ShipEastDriverApp(home: home));
+  if (!kIsWeb) unawaited(_initFCM());
 }
 
 class ShipEastDriverApp extends StatelessWidget {
-  final Widget home;
-  const ShipEastDriverApp({super.key, required this.home});
+  const ShipEastDriverApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -122,134 +114,13 @@ class ShipEastDriverApp extends StatelessWidget {
       // is no dark design in this app, so there is nothing to lose.
       darkTheme: AppTheme.theme,
       themeMode: ThemeMode.light,
-      home: home,
+      home: const SplashScreen(),
       routes: {
+        '/welcome': (_) => const WelcomeScreen(),
         '/login': (_) => const LoginScreen(),
+        '/register': (_) => const RegisterScreen(),
         '/dashboard': (_) => const DriverShell(),
       },
-    );
-  }
-}
-
-class DriverShell extends StatefulWidget {
-  const DriverShell({super.key});
-
-  @override
-  State<DriverShell> createState() => _DriverShellState();
-}
-
-class _DriverShellState extends State<DriverShell> {
-  int _selectedIndex = 0;
-  final ValueNotifier<String> _driverNameNotifier =
-      ValueNotifier<String>('Driver');
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDriverName();
-  }
-
-  Future<void> _loadDriverName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('drivers')
-          .doc(user.uid)
-          .get();
-      if (doc.exists && mounted) {
-        _driverNameNotifier.value =
-            doc.data()?['name'] as String? ?? 'Driver';
-      }
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _driverNameNotifier.dispose();
-    super.dispose();
-  }
-
-  static const List<Map<String, dynamic>> _navItems = [
-    {'label': 'Home', 'icon': SeIcons.home, 'active': SeIcons.homeFill},
-    {'label': 'History', 'icon': SeIcons.history, 'active': SeIcons.history},
-    {
-      'label': 'Earnings',
-      'icon': SeIcons.wallet,
-      'active': SeIcons.walletFill
-    },
-    {'label': 'Profile', 'icon': SeIcons.user, 'active': SeIcons.userFill},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          DashboardScreen(
-            onTabSwitch: (i) => setState(() => _selectedIndex = i),
-            driverNameNotifier: _driverNameNotifier,
-          ),
-          const HistoryScreen(),
-          const EarningsScreen(),
-          ProfileScreen(driverNameNotifier: _driverNameNotifier),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: SeColors.surface0,
-          border: Border(top: BorderSide(color: SeColors.ink200, width: 1)),
-          boxShadow: SeElevation.e2,
-        ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              children: List.generate(_navItems.length, (i) {
-                final active = _selectedIndex == i;
-                return Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _selectedIndex = i);
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // The icon lifts a couple of pixels and swaps to its
-                        // filled variant on selection.
-                        AnimatedSlide(
-                          offset: Offset(0, active ? -0.06 : 0),
-                          duration: SeMotion.fast,
-                          curve: SeMotion.emphasized,
-                          child: Icon(
-                            (active
-                                ? _navItems[i]['active']
-                                : _navItems[i]['icon']) as IconData,
-                            size: 24,
-                            color: active ? SeColors.red500 : SeColors.ink400,
-                          ),
-                        ),
-                        const SizedBox(height: SeSpacing.x1),
-                        Text(
-                          _navItems[i]['label'] as String,
-                          style: SeType.eyebrow.copyWith(
-                            color: active ? SeColors.red500 : SeColors.ink400,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 name: Build Driver APK
 
-# Builds an installable (debug-signed) release APK of the ShipEast driver app
+# Builds an installable release APK of the ShipEast driver app
 # on GitHub's servers, uploads it as a run artifact, and publishes it to the
 # "driver-latest" GitHub Release so there is a stable download link.
 
@@ -59,8 +59,54 @@ jobs:
 
       # Analysis and tests now run in the `verify` job this build depends on,
       # where they are a real gate rather than informational (P0-03).
+      # A release APK that anyone can download must be signed with the REAL key.
+      # This used to build with no keystore at all, which silently fell through to
+      # the debug key — and a `CN=Android Debug` APK is exactly what Play Protect
+      # blocks with a "for security" message on someone else's phone. If the
+      # secrets are configured we sign for real; if not we still publish, but the
+      # build has to say so out loud and the release notes have to warn people.
+      - name: Restore release keystore
+        id: signing
+        env:
+          KEYSTORE_B64: ${{ secrets.DRIVER_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.DRIVER_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DRIVER_KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "signed=debug" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Debug-signed APK::No DRIVER_KEYSTORE_BASE64 secret is set, so this APK is signed with the Android debug key. It will NOT install as an update over a properly-signed ShipEast, and Play Protect blocks debug-signed sideloads on many phones. Add the keystore secrets to publish a real build."
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          umask 077
+          {
+            echo "storeFile=$RUNNER_TEMP/release.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=${KEY_ALIAS:-shipeast-driver}"
+            echo "keyPassword=$STORE_PASSWORD"
+          } > android/key.properties
+          echo "signed=release" >> "$GITHUB_OUTPUT"
+
       - name: Build release APK
+        env:
+          # Only set when there is no keystore — without it the build now refuses
+          # to produce a debug-signed "release" APK. See android/app/build.gradle.kts.
+          SHIPEAST_ALLOW_DEBUG_SIGNING: ${{ steps.signing.outputs.signed == 'debug' }}
         run: flutter build apk --release
+
+      - name: Confirm what it was signed with
+        run: |
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          "$BT/apksigner" verify --min-sdk-version 21 --print-certs -v "$APK"
+          # v1 must be present: v2/v3 cover the whole archive, so any hop that
+          # re-zips the file leaves the phone with nothing it can verify.
+          unzip -l "$APK" | grep -q 'META-INF/MANIFEST.MF' \
+            || { echo "::error::APK has no v1 JAR signature"; exit 1; }
+
+      - name: Shred the keystore
+        if: always()
+        run: rm -f android/key.properties "$RUNNER_TEMP/release.jks"
 
       - name: Stage APK
         run: cp build/app/outputs/flutter-apk/app-release.apk shipeast-driver.apk
@@ -77,7 +123,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ "${{ steps.signing.outputs.signed }}" = "release" ]; then
+            SIGNED="Release-signed APK. Installs in place over any earlier ShipEast Driver build."
+          else
+            SIGNED="** DEBUG-SIGNED test build — do not send this to clients.** It cannot update a properly-signed install, and Play Protect blocks debug-signed sideloads on many phones."
+          fi
           gh release delete driver-latest --yes --cleanup-tag || true
           gh release create driver-latest shipeast-driver.apk \
             --title "ShipEast Driver (latest)" \
-            --notes "Debug-signed APK for sideloading onto Android phones. Built from commit ${GITHUB_SHA}. Enable 'Install unknown apps' for your browser/Files app, then open the APK to install."
+            --notes "$SIGNED
+
+          Built from commit ${GITHUB_SHA}. Enable 'Install unknown apps' for your browser or Files app, then open the APK to install."

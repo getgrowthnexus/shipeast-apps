@@ -8,12 +8,13 @@ import '../theme/se_motion.dart';
 enum SeButtonVariant { primary, secondary, ghost, destructive }
 enum SeButtonSize { large, medium, small }
 
-/// SEDS button — one button for the whole app (SEDS §1.4 / §1.7).
+/// SEDS button — one button for the whole app.
 ///
-/// - `primary`: Ember gradient + red glow (the signature CTA).
-/// - `secondary`: tinted red fill, no glow.
+/// 2026 restyle: flat, pill-shaped, no gradients.
+/// - `primary`: flat ACTION red (#E30D3B, white text 4.79:1) + a restrained lift.
+/// - `secondary`: brand-soft fill, brand-ink text, no lift.
 /// - `ghost`: bordered, transparent.
-/// - `destructive`: danger-tinted ghost.
+/// - `destructive`: danger-soft fill, deep-maroon text.
 ///
 /// Press feedback: scale 0.97 + light haptic, honouring reduced-motion.
 class SeButton extends StatefulWidget {
@@ -63,32 +64,31 @@ class _SeButtonState extends State<SeButton> {
 
     final Color fg = switch (v) {
       SeButtonVariant.primary => Colors.white,
-      SeButtonVariant.secondary => SeColors.red700,
+      SeButtonVariant.secondary => SeColors.brandInk,
       SeButtonVariant.ghost => SeColors.ink700,
       SeButtonVariant.destructive => SeColors.danger,
     };
 
+    // Buttons are PILLS now, and flat: the signature CTA is the ACTION red as a
+    // solid fill with a restrained lift — no ember gradient, no neon glow.
     final BoxDecoration deco = switch (v) {
       SeButtonVariant.primary => BoxDecoration(
-          gradient: _enabled
-              ? SeColors.emberGradient
-              : const LinearGradient(
-                  colors: [SeColors.red200, SeColors.red200]),
-          borderRadius: SeRadius.all(SeRadius.md),
+          color: _enabled ? SeColors.brandAction : SeColors.red200,
+          borderRadius: SeRadius.pill,
           boxShadow: _enabled && !_down ? SeElevation.glow : SeElevation.e0,
         ),
-      SeButtonVariant.secondary => BoxDecoration(
-          color: SeColors.red50,
-          borderRadius: SeRadius.all(SeRadius.md),
+      SeButtonVariant.secondary => const BoxDecoration(
+          color: SeColors.brandSoft,
+          borderRadius: SeRadius.pill,
         ),
       SeButtonVariant.ghost => BoxDecoration(
           color: Colors.transparent,
-          borderRadius: SeRadius.all(SeRadius.md),
+          borderRadius: SeRadius.pill,
           border: Border.all(color: SeColors.ink200, width: 1.5),
         ),
-      SeButtonVariant.destructive => BoxDecoration(
-          color: SeColors.dangerTint,
-          borderRadius: SeRadius.all(SeRadius.md),
+      SeButtonVariant.destructive => const BoxDecoration(
+          color: SeColors.dangerSoft,
+          borderRadius: SeRadius.pill,
         ),
     };
 
@@ -113,7 +113,8 @@ class _SeButtonState extends State<SeButton> {
                 child: Text(
                   widget.label,
                   overflow: TextOverflow.ellipsis,
-                  style: SeType.jakarta(_fontSize, FontWeight.w700, color: fg),
+                  // Weight ladder: buttons sit at 600 (see SeType).
+                  style: SeType.jakarta(_fontSize, FontWeight.w600, color: fg),
                 ),
               ),
             ],

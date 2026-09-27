@@ -28,6 +28,13 @@
 ///
 /// So the promise on this screen is exactly the one the business can keep:
 /// tell us what to buy, and a person will come back to you with the total.
+///
+/// ## Shape
+///
+/// The longest form in the app, so it is cut into three titled groups — reach
+/// you / receives it / what to buy — and the action is docked. Before this it
+/// was one 300dp card of stacked inputs with the submit button at the very
+/// bottom of a very long scroll.
 library;
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -39,10 +46,9 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
-import '../widgets/se_app_bar.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_button.dart';
-import '../widgets/se_card.dart';
+import '../widgets/se_page.dart';
 import '../widgets/se_text_field.dart';
 import '../widgets/se_toast.dart';
 
@@ -76,12 +82,6 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
   /// Empty until the customer taps submit. Errors that appear while somebody is
   /// still typing the first field read as nagging, not help.
   Map<String, String> _errors = const {};
-
-  static const LinearGradient _oceanGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF0E9488), Color(0xFF0B6E66)],
-  );
 
   @override
   void initState() {
@@ -170,6 +170,7 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
       _recipientPhone.clear();
       _recipientAddress.clear();
       _description.clear();
+      _store.clear();
       _budget.clear();
       _notes.clear();
       _parish = '';
@@ -182,37 +183,29 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          const SeGradientHeader(
-            title: 'Send to Family in Jamaica',
-            subtitle: 'We shop locally & deliver to them',
-            gradient: _oceanGradient,
-            trailing: Icon(SeIcons.packages, size: 24, color: Colors.white),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(SeSpacing.gutter),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _explainer(),
-                  const SizedBox(height: 14),
-                  if (_submittedId != null)
-                    _confirmation(_submittedId!)
-                  else
-                    _form(),
-                  if (uid != null) ...[
-                    const SizedBox(height: 14),
-                    _myInquiries(uid),
-                  ],
-                  const SizedBox(height: 24),
-                ],
+    final sent = _submittedId != null;
+
+    return SePageScaffold(
+      title: 'Send to family in Jamaica',
+      subtitle: 'We shop locally and deliver to them',
+      bottomBar: sent
+          ? null
+          : SeBottomBar(
+              child: SeButton(
+                label: _submitting ? 'Sending…' : 'Send request',
+                icon: SeIcons.send,
+                loading: _submitting,
+                onPressed: _submitting ? null : _submit,
               ),
             ),
-          ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 20, SeSpacing.gutter, 28),
+        children: [
+          _explainer(),
+          const SizedBox(height: 20),
+          if (sent) _confirmation(_submittedId!) else ..._form(),
+          if (uid != null) _myInquiries(uid),
         ],
       ),
     );
@@ -220,21 +213,19 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
 
   // ── Sections ───────────────────────────────────────────────────────────────
 
-  Widget _explainer() => Container(
+  Widget _explainer() => SePanel(
+        color: SeColors.infoSoft,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: SeColors.oceanTint,
-          borderRadius: SeRadius.all(SeRadius.md),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(SeIcons.info, size: 20, color: SeColors.ocean500),
+                const Icon(SeIcons.info, size: 18, color: SeColors.info),
                 const SizedBox(width: 8),
                 Text('How this works',
-                    style: SeType.title.copyWith(color: SeColors.ocean500)),
+                    style: SeType.title
+                        .copyWith(fontSize: 15, color: SeColors.infoInk)),
               ],
             ),
             const SizedBox(height: 8),
@@ -244,213 +235,214 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
               'drop it to your family. The total depends on the store and the '
               'day’s prices, so a member of the team will confirm it with you '
               'first — nothing is charged until you agree to it.',
-              style: SeType.bodyS.copyWith(color: const Color(0xFF0B6E66)),
+              style: SeType.bodyS
+                  .copyWith(color: SeColors.infoInk, height: 1.5),
             ),
           ],
         ),
       );
 
-  Widget _form() => SeCard(
+  List<Widget> _form() => [
+        const SeSectionTitle(title: 'Where we reach you'),
+        const SizedBox(height: 10),
+        SePanel(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              SeTextField(
+                controller: _email,
+                label: 'Your email',
+                hint: 'you@example.com',
+                icon: SeIcons.envelope,
+                keyboardType: TextInputType.emailAddress,
+                errorText: _errors['contactEmail'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _phone,
+                label: 'Your phone',
+                hint: '+1 555 123 4567',
+                icon: SeIcons.phone,
+                keyboardType: TextInputType.phone,
+                errorText: _errors['contactPhone'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _origin,
+                label: 'Where you’re based',
+                hint: 'City and country, e.g. Brooklyn, USA',
+                icon: SeIcons.location,
+                errorText: _errors['originCountry'],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        const SeSectionTitle(title: 'Who receives it in Jamaica'),
+        const SizedBox(height: 10),
+        SePanel(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              SeTextField(
+                controller: _recipientName,
+                label: 'Recipient name',
+                hint: 'Full name',
+                icon: SeIcons.user,
+                errorText: _errors['recipientName'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _recipientPhone,
+                label: 'Recipient phone',
+                hint: '876 000 0000',
+                icon: SeIcons.phone,
+                keyboardType: TextInputType.phone,
+                errorText: _errors['recipientPhone'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _recipientAddress,
+                label: 'Delivery address',
+                hint: 'Street, town, any landmark',
+                icon: SeIcons.location,
+                keyboardType: TextInputType.streetAddress,
+                minLines: 2,
+                maxLines: 3,
+                errorText: _errors['recipientAddress'],
+              ),
+              const SizedBox(height: 14),
+              _pickerField(
+                label: 'Parish',
+                value: _parish,
+                hint: 'Choose a parish',
+                icon: SeIcons.locationLine,
+                options: JamaicaParish.all,
+                error: _errors['recipientParish'],
+                onPick: (v) => setState(() => _parish = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        const SeSectionTitle(title: 'What to buy'),
+        const SizedBox(height: 10),
+        SePanel(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              _pickerField(
+                label: 'Category',
+                value: _category,
+                hint: 'Choose a category',
+                icon: SeIcons.packages,
+                options: OverseasItemCategory.all,
+                error: _errors['itemCategory'],
+                onPick: (v) => setState(() => _category = v),
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _description,
+                label: 'Shopping list',
+                hint: 'One item per line, e.g.\n3 tins of ackee\n2 packs of rice\n1 box of milk',
+                icon: SeIcons.note,
+                minLines: 3,
+                maxLines: 6,
+                errorText: _errors['itemDescription'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _store,
+                label: 'Preferred store (optional)',
+                hint: 'e.g. PriceSmart, or “any supermarket”',
+                icon: SeIcons.storefront,
+                errorText: _errors['requestedStore'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _budget,
+                label: 'Approximate budget (optional)',
+                hint: 'e.g. J\$10,000 or US\$70',
+                icon: SeIcons.scales,
+                errorText: _errors['budgetRaw'],
+              ),
+              const SizedBox(height: 14),
+              SeTextField(
+                controller: _notes,
+                label: 'Anything else (optional)',
+                hint: 'Timing, fragile items, questions',
+                icon: SeIcons.chat,
+                minLines: 2,
+                maxLines: 4,
+                errorText: _errors['notes'],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        // Said before submitting, so a customer knows what to expect. We buy
+        // ordinary retail goods; alcohol, tobacco, prescription drugs and
+        // anything a store won't sell us are the exceptions, and it is kinder
+        // to say so here than on the phone afterwards.
+        SeNotice.info(
+          'We shop for everyday supermarket and hardware goods. Alcohol, '
+          'tobacco, prescription medicine and anything a store cannot legally '
+          'sell us are the exceptions — we’ll tell you if something on your '
+          'list is a problem.',
+        ),
+        const SizedBox(height: 22),
+      ];
+
+  Widget _confirmation(String id) {
+    final ref =
+        id.length <= 6 ? id.toUpperCase() : id.substring(0, 6).toUpperCase();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: SePanel(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Your request', style: SeType.h3),
-            const SizedBox(height: 4),
-            Text(
-              'Everything here is something we need before we can shop for you.',
-              style: SeType.bodyS.copyWith(color: SeColors.ink500),
-            ),
-
-            _sectionLabel('Where we reach you'),
-            SeTextField(
-              controller: _email,
-              label: 'Your email',
-              hint: 'you@example.com',
-              icon: SeIcons.envelope,
-              keyboardType: TextInputType.emailAddress,
-              errorText: _errors['contactEmail'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _phone,
-              label: 'Your phone',
-              hint: '+1 555 123 4567',
-              icon: SeIcons.phone,
-              keyboardType: TextInputType.phone,
-              errorText: _errors['contactPhone'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _origin,
-              label: 'Where you’re based',
-              hint: 'City and country, e.g. Brooklyn, USA',
-              icon: SeIcons.location,
-              errorText: _errors['originCountry'],
-            ),
-
-            _sectionLabel('Who receives it in Jamaica'),
-            SeTextField(
-              controller: _recipientName,
-              label: 'Recipient name',
-              hint: 'Full name',
-              icon: SeIcons.user,
-              errorText: _errors['recipientName'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _recipientPhone,
-              label: 'Recipient phone',
-              hint: '876 000 0000',
-              icon: SeIcons.phone,
-              keyboardType: TextInputType.phone,
-              errorText: _errors['recipientPhone'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _recipientAddress,
-              label: 'Delivery address',
-              hint: 'Street, town, any landmark',
-              icon: SeIcons.location,
-              keyboardType: TextInputType.streetAddress,
-              minLines: 2,
-              maxLines: 3,
-              errorText: _errors['recipientAddress'],
-            ),
-            const SizedBox(height: 14),
-            _pickerField(
-              label: 'Parish',
-              value: _parish,
-              hint: 'Choose a parish',
-              icon: SeIcons.locationLine,
-              options: JamaicaParish.all,
-              error: _errors['recipientParish'],
-              onPick: (v) => setState(() => _parish = v),
-            ),
-
-            _sectionLabel('What to buy'),
-            _pickerField(
-              label: 'Category',
-              value: _category,
-              hint: 'Choose a category',
-              icon: SeIcons.packages,
-              options: OverseasItemCategory.all,
-              error: _errors['itemCategory'],
-              onPick: (v) => setState(() => _category = v),
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _description,
-              label: 'Shopping list',
-              hint: 'One item per line, e.g.\n3 tins of ackee\n2 packs of rice\n1 box of milk',
-              icon: SeIcons.note,
-              minLines: 3,
-              maxLines: 6,
-              errorText: _errors['itemDescription'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _store,
-              label: 'Preferred store (optional)',
-              hint: 'e.g. PriceSmart, or “any supermarket”',
-              icon: SeIcons.storefront,
-              errorText: _errors['requestedStore'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _budget,
-              label: 'Approximate budget (optional)',
-              hint: 'e.g. J\$10,000 or US\$70',
-              icon: SeIcons.scales,
-              errorText: _errors['budgetRaw'],
-            ),
-            const SizedBox(height: 14),
-            SeTextField(
-              controller: _notes,
-              label: 'Anything else (optional)',
-              hint: 'Timing, fragile items, questions',
-              icon: SeIcons.chat,
-              minLines: 2,
-              maxLines: 4,
-              errorText: _errors['notes'],
-            ),
-
-            const SizedBox(height: 12),
-            // Said before submitting, so a customer knows what to expect. We
-            // buy ordinary retail goods; alcohol, tobacco, prescription drugs
-            // and anything a store won't sell us are the exceptions, and it is
-            // kinder to say so here than on the phone afterwards.
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(SeIcons.info, size: 16, color: SeColors.ocean500),
-                const SizedBox(width: 8),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: const BoxDecoration(
+                    color: SeColors.successSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(SeIcons.checkCircle,
+                      size: 22, color: SeColors.success),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'We shop for everyday supermarket and hardware goods. '
-                    'Alcohol, tobacco, prescription medicine and anything a '
-                    'store cannot legally sell us are the exceptions — we’ll '
-                    'tell you if something on your list is a problem.',
-                    style: SeType.bodyS.copyWith(color: SeColors.ink500),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Request sent',
+                          style: SeType.title.copyWith(fontSize: 15)),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Reference #$ref. We will reply to '
+                        '${_email.text.trim()} with the total.',
+                        style: SeType.bodyS
+                            .copyWith(color: SeColors.ink500, height: 1.4),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             SeButton(
-              label: _submitting ? 'Sending…' : 'Send Request',
-              icon: SeIcons.send,
-              loading: _submitting,
-              onPressed: _submitting ? null : _submit,
+              label: 'Send another request',
+              icon: SeIcons.plus,
+              variant: SeButtonVariant.secondary,
+              onPressed: _startAnother,
             ),
           ],
         ),
-      );
-
-  Widget _confirmation(String id) {
-    final ref = id.length <= 6 ? id.toUpperCase() : id.substring(0, 6).toUpperCase();
-    return SeCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: const BoxDecoration(
-                  color: SeColors.successTint,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(SeIcons.checkCircle,
-                    size: 22, color: SeColors.success),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Request sent', style: SeType.title),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Reference #$ref. We will reply to '
-                      '${_email.text.trim()} with the total.',
-                      style: SeType.bodyS.copyWith(color: SeColors.ink500),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SeButton(
-            label: 'Send Another Request',
-            icon: SeIcons.plus,
-            variant: SeButtonVariant.secondary,
-            onPressed: _startAnother,
-          ),
-        ],
       ),
     );
   }
@@ -464,16 +456,15 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
         builder: (context, snap) {
           final list = snap.data ?? const <OverseasInquiry>[];
           if (list.isEmpty) return const SizedBox.shrink();
-          return SeCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Your requests', style: SeType.h3),
-                const SizedBox(height: 10),
-                for (final inquiry in list) _inquiryRow(inquiry),
-              ],
-            ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SeSectionTitle(title: 'Your requests'),
+              const SizedBox(height: 10),
+              SeRowGroup(
+                children: [for (final inquiry in list) _inquiryRow(inquiry)],
+              ),
+            ],
           );
         },
       );
@@ -484,14 +475,14 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
     // `completed` is the one terminal state that is good news.
     final failed = OverseasStatus.isUnsuccessful(inquiry.status);
     final tint = failed
-        ? SeColors.dangerTint
-        : (open ? SeColors.oceanTint : SeColors.successTint);
+        ? SeColors.dangerSoft
+        : (open ? SeColors.infoSoft : SeColors.successSoft);
     final ink = failed
-        ? SeColors.danger
-        : (open ? SeColors.ocean500 : SeColors.success);
+        ? SeColors.dangerInk
+        : (open ? SeColors.infoInk : SeColors.successInk);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -501,32 +492,37 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
                 child: Text(
                   '#${inquiry.shortId} · ${inquiry.itemCategory}',
                   style: SeType.title.copyWith(fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 10),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: tint,
-                  borderRadius: SeRadius.all(SeRadius.sm),
+                  borderRadius: SeRadius.pill,
                 ),
                 child: Text(
                   OverseasStatus.label(inquiry.status),
-                  style: SeType.label.copyWith(color: ink, fontSize: 11),
+                  style: SeType.eyebrow.copyWith(color: ink),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             'To ${inquiry.recipientName}'
             '${inquiry.recipientParish.isEmpty ? '' : ', ${inquiry.recipientParish}'}',
             style: SeType.bodyS.copyWith(color: SeColors.ink500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
             OverseasStatus.explain(inquiry.status),
-            style: SeType.bodyS.copyWith(color: SeColors.ink400, fontSize: 12),
+            style: SeType.bodyS.copyWith(color: SeColors.ink400),
           ),
         ],
       ),
@@ -534,12 +530,6 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
   }
 
   // ── Building blocks ────────────────────────────────────────────────────────
-
-  Widget _sectionLabel(String text) => Padding(
-        padding: const EdgeInsets.only(top: 20, bottom: 12),
-        child: Text(text.toUpperCase(),
-            style: SeType.eyebrow.copyWith(color: SeColors.ink400)),
-      );
 
   /// A read-only field that opens a sheet of choices.
   ///
@@ -561,13 +551,15 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
       children: [
         Text(label, style: SeType.label.copyWith(color: SeColors.ink700)),
         const SizedBox(height: 7),
-        InkWell(
-          borderRadius: SeRadius.inputRadius,
+        GestureDetector(
           onTap: () => _openPicker(label, options, value, onPick),
+          behavior: HitTestBehavior.opaque,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
             decoration: BoxDecoration(
-              color: SeColors.surface50,
+              // Same well as SeTextField at rest, so a picker and an input read
+              // as the same kind of thing until you touch them.
+              color: SeColors.field,
               borderRadius: SeRadius.inputRadius,
               border: Border.all(
                 color: error != null ? SeColors.danger : SeColors.ink200,
@@ -594,8 +586,17 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
         if (error != null)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(error,
-                style: SeType.bodyS.copyWith(color: SeColors.danger)),
+            child: Row(
+              children: [
+                const Icon(SeIcons.warningCircle,
+                    size: 14, color: SeColors.danger),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(error,
+                      style: SeType.bodyS.copyWith(color: SeColors.danger)),
+                ),
+              ],
+            ),
           ),
       ],
     );
@@ -621,19 +622,20 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SeSheetHandle(),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(title, style: SeType.h3),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Flexible(
               child: SingleChildScrollView(
                 child: Column(
                   children: options.map((option) {
                     final selected = option == current;
-                    return InkWell(
+                    return GestureDetector(
                       onTap: () {
                         onPick(option);
                         Navigator.pop(ctx);
                       },
+                      behavior: HitTestBehavior.opaque,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         child: Row(
@@ -642,12 +644,16 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
                               selected ? SeIcons.checkCircle : SeIcons.radioOff,
                               size: 20,
                               color: selected
-                                  ? SeColors.ocean500
+                                  ? SeColors.brandAction
                                   : SeColors.ink300,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text(option, style: SeType.body),
+                              child: Text(option,
+                                  style: SeType.body.copyWith(
+                                      color: selected
+                                          ? SeColors.ink900
+                                          : SeColors.ink700)),
                             ),
                           ],
                         ),

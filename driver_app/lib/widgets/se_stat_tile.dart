@@ -4,7 +4,11 @@ import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../theme/se_motion.dart';
 
-/// Stat tile with count-up value and a tinted icon chip (SEDS §1.7).
+/// Stat tile with a count-up value and a tinted icon plate.
+///
+/// 2026 restyle: flat + hairline (it sits inside the lifted sheet), and the
+/// icon rides a rounded SQUARE plate rather than a circle — the same plate
+/// shape [SeRow] uses, so a figure and a menu row read as one family.
 class SeStatTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -16,6 +20,14 @@ class SeStatTile extends StatelessWidget {
   final String prefix;
   final String suffix;
   final int decimals;
+
+  /// Group the whole part with thousands separators.
+  ///
+  /// On by default, because every figure this tile carries is money or a count
+  /// and both are read faster grouped. Without it a week's earnings rendered as
+  /// `$18640`, which is the one number on the screen you have to stop and
+  /// count digits in — and it disagreed with `Money.format` everywhere else.
+  final bool grouped;
   final Color hue;
   final Color tint;
 
@@ -27,8 +39,9 @@ class SeStatTile extends StatelessWidget {
     this.prefix = '',
     this.suffix = '',
     this.decimals = 0,
-    this.hue = SeColors.red500,
-    this.tint = SeColors.red50,
+    this.grouped = true,
+    this.hue = SeColors.brandAction,
+    this.tint = SeColors.brandSoft,
   });
 
   @override
@@ -40,7 +53,6 @@ class SeStatTile extends StatelessWidget {
         color: scheme.surface,
         borderRadius: SeRadius.all(SeRadius.md),
         border: Border.all(color: SeColors.ink200, width: 1),
-        boxShadow: SeElevation.e1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,13 +60,17 @@ class SeStatTile extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: tint,
+              borderRadius: SeRadius.all(SeRadius.xs),
+            ),
             child: Icon(icon, size: 20, color: hue),
           ),
           const SizedBox(height: 12),
           _CountUp(
             value: value.toDouble(),
             decimals: decimals,
+            grouped: grouped,
             builder: (v) => Text(
               '$prefix$v$suffix',
               style: SeType.tabular(SeType.h2).copyWith(color: SeColors.ink900),
@@ -73,9 +89,14 @@ class SeStatTile extends StatelessWidget {
 class _CountUp extends StatefulWidget {
   final double value;
   final int decimals;
+  final bool grouped;
   final Widget Function(String formatted) builder;
-  const _CountUp(
-      {required this.value, required this.decimals, required this.builder});
+  const _CountUp({
+    required this.value,
+    required this.decimals,
+    required this.grouped,
+    required this.builder,
+  });
 
   @override
   State<_CountUp> createState() => _CountUpState();
@@ -116,8 +137,21 @@ class _CountUpState extends State<_CountUp>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, _) =>
-          widget.builder(_anim.value.toStringAsFixed(widget.decimals)),
+      builder: (_, _) => widget.builder(_format(_anim.value)),
     );
+  }
+
+  String _format(double v) {
+    final text = v.toStringAsFixed(widget.decimals);
+    if (!widget.grouped) return text;
+    final dot = text.indexOf('.');
+    final whole = dot == -1 ? text : text.substring(0, dot);
+    final rest = dot == -1 ? '' : text.substring(dot);
+    final buf = StringBuffer();
+    for (var i = 0; i < whole.length; i++) {
+      if (i > 0 && (whole.length - i) % 3 == 0) buf.write(',');
+      buf.write(whole[i]);
+    }
+    return '$buf$rest';
   }
 }

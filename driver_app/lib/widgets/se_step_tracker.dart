@@ -15,8 +15,10 @@ class SeStep {
 /// Vertical progress tracker (PLAN §3.2 — Pending approval, delivery flow).
 ///
 /// The connector between nodes fills as the step advances rather than snapping,
-/// so an approval landing while the screen is open reads as forward motion. The
-/// active node carries a soft brand halo; completed nodes go solid success.
+/// so an approval landing while the screen is open reads as forward motion.
+/// Completed nodes go solid success; the active node is a brand-soft disc
+/// inside a brand ring, with a breathing dot at its centre — no halo, because
+/// the tracker always sits on the sheet, which is already a lifted surface.
 class SeStepTracker extends StatelessWidget {
   final List<SeStep> steps;
 
@@ -43,19 +45,13 @@ class SeStepTracker extends StatelessWidget {
         final active = !allComplete && i == current;
         final last = i == steps.length - 1;
 
-        final Color hue = done
-            ? SeColors.success
-            : active
-                ? SeColors.red500
-                : SeColors.ink300;
-
         return IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
                 children: [
-                  _Node(hue: hue, done: done, active: active, reduced: reduced),
+                  _Node(done: done, active: active, reduced: reduced),
                   if (!last)
                     Expanded(
                       child: AnimatedContainer(
@@ -111,13 +107,11 @@ class SeStepTracker extends StatelessWidget {
 }
 
 class _Node extends StatelessWidget {
-  final Color hue;
   final bool done;
   final bool active;
   final bool reduced;
 
   const _Node({
-    required this.hue,
     required this.done,
     required this.active,
     required this.reduced,
@@ -131,10 +125,10 @@ class _Node extends StatelessWidget {
       width: 30,
       height: 30,
       decoration: BoxDecoration(
-        color: done ? SeColors.success : (active ? SeColors.red50 : SeColors.ink100),
+        color:
+            done ? SeColors.success : (active ? SeColors.brandSoft : SeColors.ink100),
         shape: BoxShape.circle,
-        border: active ? Border.all(color: SeColors.red500, width: 2.5) : null,
-        boxShadow: active ? SeElevation.glowColor(hue, opacity: 0.22) : null,
+        border: active ? Border.all(color: SeColors.brand, width: 2.5) : null,
       ),
       child: done
           ? const Icon(SeIcons.check, size: 17, color: Colors.white)
@@ -180,7 +174,7 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
           height: 10,
           child: DecoratedBox(
             decoration:
-                BoxDecoration(color: SeColors.red500, shape: BoxShape.circle),
+                BoxDecoration(color: SeColors.brandAction, shape: BoxShape.circle),
           ),
         ),
       );
@@ -195,7 +189,7 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
             height: 10,
             child: DecoratedBox(
               decoration:
-                  BoxDecoration(color: SeColors.red500, shape: BoxShape.circle),
+                  BoxDecoration(color: SeColors.brandAction, shape: BoxShape.circle),
             ),
           ),
         ),

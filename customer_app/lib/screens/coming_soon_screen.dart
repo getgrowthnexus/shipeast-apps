@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
-import '../widgets/se_app_bar.dart';
+import '../theme/se_spacing.dart';
 import '../widgets/se_empty_state.dart';
+import '../widgets/se_page.dart';
 
 class ComingSoonScreen extends StatelessWidget {
   final String title;
@@ -11,24 +11,19 @@ class ComingSoonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SeColors.surface50,
-      body: Column(
-        children: [
-          SeGradientHeader(title: title),
-          Expanded(
-            child: Center(
-              child: SeEmptyState(
-                icon: SeIcons.rocket,
-                title: 'Coming Soon',
-                message:
-                    'This feature is on the way — available in a future update.',
-                ctaLabel: 'Go Back',
-                onCta: () => Navigator.pop(context),
-              ),
-            ),
+    return SePageScaffold(
+      title: title,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(SeSpacing.gutter),
+          child: SeEmptyState(
+            icon: SeIcons.rocket,
+            title: 'Coming soon',
+            message: 'This one is on the way — it will arrive in an update.',
+            ctaLabel: 'Go back',
+            onCta: () => Navigator.pop(context),
           ),
-        ],
+        ),
       ),
     );
   }

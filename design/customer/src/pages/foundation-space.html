@@ -1,0 +1,124 @@
+<!-- card: Space, radius & elevation | group: Foundations | desc: 4pt grid, the pill-first radius scale, and rose-black shadows -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Space, radius &amp; elevation</h1>
+    <p>A strict 4pt grid, a radius scale where <b>buttons are pills</b>, and
+      shadows cast in rose-black rather than neutral.
+      From <code>lib/theme/se_spacing.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Spacing — strict 4pt grid</h2>
+    <table>
+      <tr><td>x1 · 4px</td><td><div style="background:#F72B54;height:12px;width:4px"></div></td></tr>
+      <tr><td>x2 · 8px</td><td><div style="background:#F72B54;height:12px;width:8px"></div></td></tr>
+      <tr><td>x3 · 12px</td><td><div style="background:#F72B54;height:12px;width:12px"></div></td></tr>
+      <tr><td>x4 · 16px — card padding</td><td><div style="background:#F72B54;height:12px;width:16px"></div></td></tr>
+      <tr><td>x5 · 20px — <b>the screen gutter</b></td><td><div style="background:#E30D3B;height:12px;width:20px"></div></td></tr>
+      <tr><td>x6 · 24px</td><td><div style="background:#F72B54;height:12px;width:24px"></div></td></tr>
+      <tr><td>x8 · 32px</td><td><div style="background:#F72B54;height:12px;width:32px"></div></td></tr>
+      <tr><td>x10 · 40px</td><td><div style="background:#F72B54;height:12px;width:40px"></div></td></tr>
+      <tr><td>x12 · 48px</td><td><div style="background:#F72B54;height:12px;width:48px"></div></td></tr>
+      <tr><td>x16 · 64px</td><td><div style="background:#F72B54;height:12px;width:64px"></div></td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Radius — and why buttons became pills</h2>
+    <p style="margin:0 0 14px;font-size:13px;line-height:19px;color:#6E5F66">
+      Next to a pill chip, a pill tab and a pill toggle, a chamfered button was
+      the odd one out. <code>full</code> stays for genuine circles — avatars,
+      dots, the FAB — <i>and</i> for buttons.</p>
+    <div class="wrap g14">
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:8px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">xs · 8px</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:12px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">sm · 12px</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:16px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">md · 16px</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:22px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">lg · 22px</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:28px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">xl · 28px</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:84px;height:64px;background:#FFF0F4;border:1.5px solid #E6DAE0;border-radius:999px"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:6px">full · pills</div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>xs · 8px</td><td>Small chips, tiny controls, icon plates</td></tr>
+      <tr><td>sm · 12px</td><td>Inputs, list rows, thumbnails</td></tr>
+      <tr><td>md · 16px</td><td>Cards, panels, tiles</td></tr>
+      <tr><td>lg · 22px</td><td>Large cards</td></tr>
+      <tr><td>xl · 28px</td><td>The sheet's top edge, bottom sheets</td></tr>
+      <tr><td>full · 999px</td><td>Buttons, chips, avatars, the FAB</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Elevation — rose-black, never neutral</h2>
+    <p style="margin:0 0 16px;font-size:13px;line-height:19px;color:#6E5F66">
+      Over a blush ground a neutral shadow turns <b>grey</b> and fights the
+      palette, so every shadow is cast in rose-black (110,26,48). Each level
+      pairs a tight contact shadow with a wider soft pool, and the pool carries a
+      negative spread so it stays under the card instead of haloing sideways.</p>
+    <div class="wrap g20" style="background:#F8ECF0;padding:24px;border-radius:12px">
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#FFF6F8;border-radius:16px;border:1px solid #E6DAE0"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">e0 + hairline<br>the resting card</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#FFF6F8;border-radius:16px;box-shadow:var(--e1)"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">e1</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#FFF6F8;border-radius:16px;box-shadow:var(--e2)"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">e2</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#FFF6F8;border-radius:16px;box-shadow:var(--e3)"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">e3 — toasts</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#FFF6F8;border-radius:16px;box-shadow:var(--e4)"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">e4</div>
+      </div>
+      <div style="text-align:center">
+        <div style="width:110px;height:70px;background:#E30D3B;border-radius:999px;box-shadow:var(--glow)"></div>
+        <div style="font-size:12px;color:#8A7A81;margin-top:8px">glow — the one<br>hero action</div>
+      </div>
+    </div>
+    <table style="margin-top:14px">
+      <tr><td>The flat tier</td><td>A card in the sheet is <b>flat + hairlined</b>, never shadowed. The sheet is
+        already a lifted surface, and stacking shadows on it is what made screens look like a pile of receipts</td></tr>
+      <tr><td>glow</td><td>0 8px 18px −4px rgba(227,13,59,.20). The old neon halo was the biggest
+        "generated UI" tell in the app; this is a restrained brand-tinted drop that reads as a lift</td></tr>
+      <tr><td>The sheet's shadow</td><td>0 −8px 28px rgba(70,8,24,.22), cast <b>upward</b> onto the red. That is what
+        makes the sheet look like a card lying on the brand rather than a region where the colour stops</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Motion</h2>
+    <table>
+      <tr><td>instant · 100ms</td><td>Press feedback (scale 0.97)</td></tr>
+      <tr><td>fast · 180ms</td><td>State changes on a control</td></tr>
+      <tr><td>base · 240ms</td><td>Most transitions</td></tr>
+      <tr><td>slow · 360ms</td><td>Sheet entrances</td></tr>
+      <tr><td>deliberate · 520ms</td><td>Full-screen changes</td></tr>
+      <tr><td>emphasized</td><td>cubic-bezier(.2, 0, 0, 1) — the default curve</td></tr>
+      <tr><td>decelerate / accelerate</td><td>cubic-bezier(0,0,0,1) entering · cubic-bezier(.4,0,1,1) exiting</td></tr>
+      <tr><td>Reduced motion</td><td>Honoured at every call site — the press scale and every entrance drop out</td></tr>
+    </table>
+  </div>
+</div>

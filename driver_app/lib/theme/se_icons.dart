@@ -67,12 +67,21 @@ class SeIcons {
   static const IconData close = Icons.close_rounded;
   static const IconData check = Icons.check_rounded;
   static const IconData checkCircle = Icons.check_circle_rounded;
+  static const IconData refresh = Icons.refresh_rounded; // reorder / retry
+
+  /// Unselected state for the cancellation reason picker (P5-03). Paired
+  /// with [checkCircle] rather than a Material Radio so the row stays one
+  /// tappable surface instead of a small circle beside dead text.
+  static const IconData radioOff = Icons.radio_button_unchecked;
   static const IconData trash = Icons.delete_outline_rounded;
   static const IconData edit = Icons.edit_rounded;
   static const IconData camera = Icons.photo_camera_rounded;
   static const IconData phone = Icons.phone_rounded;
   static const IconData copy = Icons.content_copy_rounded;
   static const IconData share = Icons.share_rounded;
+  // Submitting a request to a person rather than to a queue — the overseas
+  // enquiry form, where nothing is bought and something is sent.
+  static const IconData send = Icons.send_rounded;
 
   // Chevrons / arrows
   static const IconData caretRight = Icons.chevron_right_rounded;
@@ -123,8 +132,12 @@ class SeIcons {
   static const IconData chartBar = Icons.bar_chart_rounded;
   static const IconData badge = Icons.badge_outlined;
   static const IconData car = Icons.directions_car_rounded;
+  // The other two things a driver can sign up on. They were being written as
+  // raw `Icons.*` inline in the registration form, which is how an icon set
+  // stops being a set.
+  static const IconData van = Icons.airport_shuttle_rounded;
+  static const IconData truck = Icons.local_shipping_rounded;
   static const IconData handshake = Icons.volunteer_activism_rounded;
-  static const IconData refresh = Icons.refresh_rounded;
   static const IconData image = Icons.image_outlined;
   static const IconData retake = Icons.replay_rounded;
   static const IconData hourglass = Icons.hourglass_top_rounded;

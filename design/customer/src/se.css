@@ -1,0 +1,736 @@
+/* ShipEast Customer — design-system mirror.
+ *
+ * Every value here is transcribed from the Dart that ships in the APK:
+ *
+ *   customer_app/lib/theme/se_colors.dart      -> the ramps and roles
+ *   customer_app/lib/theme/se_typography.dart  -> the one-face weight ladder
+ *   customer_app/lib/theme/se_spacing.dart     -> 4pt grid, radii, elevation
+ *   customer_app/lib/widgets/se_*.dart         -> the components below
+ *
+ * Nothing is invented and nothing is "close enough": when a rule here and the
+ * Dart disagree, the Dart is right and this file is a bug. That is the whole
+ * point — a mirror you can edit that a screenshot can be diffed against.
+ *
+ * Sizes are in px against a 412x892 phone at 1x, which is the viewport the
+ * Flutter screenshot harness uses (test/preview/harness.dart), so a rendered
+ * page and a rendered screen can be laid side by side.
+ */
+
+/* @font-face-inject */
+
+:root {
+  /* ═══ Red ramp — two-tier (se_colors.dart) ═══════════════════════════════
+     red500 is the IDENTITY: large fills, plates, accents, focus rings. It
+     never carries small white text. red600 is the ACTION tone — the one that
+     takes white at 4.79:1. `shell` is the deep tone for big brand surfaces. */
+  --red-50: #FFE8EE;
+  --red-100: #FFD8E1;
+  --red-200: #FEC3CF;
+  --red-300: #FC92A6;
+  --red-400: #FA5775;
+  --red-500: #F72B54;
+  --red-600: #E30D3B;
+  --red-700: #B60C31;
+  --red-800: #890B28;
+  --red-900: #5C0A1F;
+
+  --brand: var(--red-500);
+  --brand-action: var(--red-600);
+  --brand-ink: var(--red-700);
+
+  /* The shell: a big FLAT brand surface. Warm white on it reads 7.12:1. */
+  --shell: #B00D33;
+  --shell-ink: #FFF4F7;
+  --shell-mark: #FFC9D6;
+
+  /* ═══ Semantic ═══════════════════════════════════════════════════════════ */
+  --star: #E8A317;
+  --success: #1C8252;
+  --success-tint: #E4F6EC;
+  --success-ink: #196B45;
+  --warning: #D37A0D;
+  --warning-tint: #FCEFDC;
+  --warning-ink: #AD640B;
+  --danger: #A51D2F;         /* deep maroon — deliberately NOT brand red */
+  --danger-tint: #FCE6E9;
+  --danger-ink: #821725;
+  --info: #1F6BC1;
+  --info-tint: #E6F0FB;
+  --info-ink: #1A579E;
+
+  /* Soft tones — quieter than the *-tint badges, and safe to set text on. */
+  --brand-soft: #FFF0F4;
+  --success-soft: #EFF8F2;
+  --warning-soft: #FDF4E7;
+  --info-soft: #EFF4FC;
+  --danger-soft: #FDEFF1;
+
+  /* ═══ Neutrals — rose-tinted, so they read warm rather than coloured ═════ */
+  --ink-900: #33292E;
+  --ink-700: #463940;
+  --ink-500: #79676F;
+  --ink-400: #9C8B93;
+  --ink-300: #C9BAC1;
+  --ink-200: #E6DAE0;
+  --ink-100: #F0E6EB;
+  --surface-50: #F8ECF0;     /* page ground inside the sheet */
+  --surface-0: #FFF6F8;      /* cards */
+  --surface-raised: #FFFFFF; /* lifted OFF a card: a focused field, a pill */
+  --field: #FBEFF4;          /* a well you type into */
+
+  /* Category hues */
+  --cat-food: var(--red-500);
+  --cat-food-tint: var(--brand-soft);
+  --cat-grocery: var(--success);
+  --cat-grocery-tint: var(--success-soft);
+  --cat-pharmacy: var(--info);
+  --cat-pharmacy-tint: var(--info-soft);
+  --cat-packages: var(--warning);
+  --cat-packages-tint: var(--warning-soft);
+
+  /* ═══ Spacing — strict 4pt grid ══════════════════════════════════════════ */
+  --x1: 4px;  --x2: 8px;  --x3: 12px; --x4: 16px; --x5: 20px;
+  --x6: 24px; --x8: 32px; --x10: 40px; --x12: 48px; --x16: 64px;
+  --gutter: 20px;
+
+  /* ═══ Radius — buttons are PILLS since the 2026 restyle ══════════════════ */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-full: 999px;
+
+  /* ═══ Elevation — layered ROSE-BLACK, never neutral ══════════════════════
+     Over a blush ground a neutral shadow turns grey and fights the palette. */
+  --e1: 0 1px 2px rgba(110,26,48,.05), 0 2px 6px -2px rgba(110,26,48,.07);
+  --e2: 0 1px 2px rgba(110,26,48,.05), 0 6px 12px -3px rgba(110,26,48,.08),
+        0 14px 28px -10px rgba(110,26,48,.09);
+  --e3: 0 2px 4px rgba(110,26,48,.06), 0 12px 24px -6px rgba(110,26,48,.11),
+        0 28px 56px -18px rgba(110,26,48,.15);
+  --e4: 0 4px 8px rgba(110,26,48,.07), 0 20px 40px -8px rgba(110,26,48,.15),
+        0 48px 88px -28px rgba(110,26,48,.24);
+  /* The lift under the ONE hero action per screen. Not a glow. */
+  --glow: 0 8px 18px -4px rgba(227,13,59,.20);
+
+  /* Device metrics — matches harness.dart's phone + FakeViewPadding. */
+  --safe-top: 38px;
+  --safe-bottom: 24px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Figtree, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--ink-900);
+  background: var(--surface-50);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: normal;
+}
+
+/* Icons come from a sprite of the REAL glyph outlines, pulled out of the same
+   MaterialIcons-Regular.otf the APK bundles (see tool/extract_icons.py). They
+   are not lookalikes. */
+.i { width: 24px; height: 24px; fill: currentColor; flex: none; display: block; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPE — one face (Figtree), hierarchy carried by the WEIGHT LADDER
+     800 display / page titles      700 card + section titles
+     600 all emphasis below title   500 secondary values     400 body
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.t-display { font-size: 32px; line-height: 38px; font-weight: 800; letter-spacing: -.7px; }
+.t-h1      { font-size: 26px; line-height: 32px; font-weight: 800; letter-spacing: -.6px; }
+.t-h2      { font-size: 22px; line-height: 28px; font-weight: 800; letter-spacing: -.5px; }
+.t-h3      { font-size: 18px; line-height: 24px; font-weight: 700; letter-spacing: -.3px; }
+.t-section { font-size: 19px; line-height: 24px; font-weight: 800; letter-spacing: -.4px; }
+.t-title   { font-size: 16px; line-height: 22px; font-weight: 700; letter-spacing: -.2px; }
+.t-body    { font-size: 15px; line-height: 22px; font-weight: 400; color: var(--ink-700); }
+.t-bodyS   { font-size: 13px; line-height: 18px; font-weight: 400; color: var(--ink-500); }
+.t-label   { font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: .3px; }
+.t-eyebrow { font-size: 11px; line-height: 14px; font-weight: 600; letter-spacing: .7px;
+             color: var(--ink-500); }
+
+/* Prices, stats and timers hold a fixed figure width so they stop jittering. */
+.tnum { font-variant-numeric: tabular-nums; }
+
+.ink-900 { color: var(--ink-900); } .ink-700 { color: var(--ink-700); }
+.ink-500 { color: var(--ink-500); } .ink-400 { color: var(--ink-400); }
+.ink-300 { color: var(--ink-300); } .c-brand { color: var(--brand-action); }
+.c-danger { color: var(--danger); } .c-success { color: var(--success); }
+.c-star { color: var(--star); }
+
+/* The wordmark: one face, two tones. Tracking tightens as the mark grows,
+   which is what keeps it looking drawn rather than typed. */
+.wordmark { font-weight: 800; line-height: 1.1; letter-spacing: -.032em; }
+.wordmark .east { color: var(--red-500); }
+.on-shell .wordmark { color: var(--shell-ink); }
+.on-shell .wordmark .east { color: var(--shell-mark); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE PHONE FRAME — 412x892 at 1x, the harness viewport
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.phone {
+  width: 412px;
+  height: 892px;
+  position: relative;
+  overflow: hidden;
+  background: var(--shell);
+  display: flex;
+  flex-direction: column;
+  color: var(--ink-900);
+}
+
+/* ── The cap: a flat brand surface that never scrolls ────────────────────── */
+.cap {
+  padding: calc(var(--safe-top) + 12px) var(--gutter) 22px;
+  flex: none;
+  color: var(--shell-ink);
+}
+.cap.has-back { padding-top: calc(var(--safe-top) + 6px); }
+.cap.has-bottom { padding-bottom: 16px; }
+.cap-title { font-size: 26px; line-height: 1.15; font-weight: 800;
+             letter-spacing: -.6px; color: var(--shell-ink); }
+.cap-sub { font-size: 13px; line-height: 1.4; margin-top: 5px;
+           color: rgba(255,244,247,.76); }
+.cap-row { display: flex; align-items: center; gap: 12px; }
+.cap-row > :first-child { flex: 1; min-width: 0; }
+
+/* A control that has to survive on the red: a translucent well, not a bare
+   glyph, so it stays legible without punching a white hole in the brand. */
+.cap-btn {
+  width: 40px; height: 40px; border-radius: var(--r-full);
+  background: rgba(255,255,255,.14);
+  display: grid; place-items: center; color: var(--shell-ink);
+  position: relative; margin-bottom: 14px;
+}
+.cap-btn .i { width: 20px; height: 20px; }
+.cap-btn .badge {
+  position: absolute; top: -2px; right: -2px; min-width: 18px;
+  padding: 2px 5px; border-radius: var(--r-full);
+  background: var(--shell-mark); border: 1.5px solid var(--shell);
+  color: var(--shell); font-size: 9px; font-weight: 800; line-height: 1;
+  text-align: center; font-variant-numeric: tabular-nums;
+}
+
+/* The sheet. Its top radius and its UPWARD shadow are the whole trick: the
+   shadow is cast onto the red, which makes the sheet look like a card lying on
+   the brand rather than a region where the colour stops. */
+.sheet {
+  flex: 1; min-height: 0;
+  background: var(--surface-50);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: 0 -8px 28px rgba(70,8,24,.22);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.sheet-body { flex: 1; min-height: 0; overflow: hidden; padding: 22px 0 24px; }
+.sheet-body.pad { padding-left: var(--gutter); padding-right: var(--gutter); }
+
+/* The docked bar paints the gesture inset in its OWN colour — a bar sitting on
+   a stripe of slightly different pink reads as a rendering fault. */
+.bottom-bar {
+  flex: none; background: var(--surface-0);
+  border-top: 1px solid var(--ink-200);
+  padding: 14px var(--gutter) calc(14px + var(--safe-bottom));
+}
+
+/* ── The shell field: a white pill ON the cap ────────────────────────────── */
+.shell-field {
+  height: 48px; border-radius: var(--r-full); background: var(--surface-raised);
+  padding: 0 16px; display: flex; align-items: center; gap: 10px;
+  color: var(--ink-400);
+}
+.shell-field .i { width: 20px; height: 20px; }
+.shell-field span { font-size: 15px; }
+
+.shell-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px;
+  padding: 0 13px; border-radius: var(--r-full);
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+  color: var(--shell-ink); font-size: 12px; font-weight: 600; letter-spacing: .3px;
+}
+.shell-chip .i { width: 14px; height: 14px; color: var(--shell-mark); }
+.shell-chip.on { background: var(--shell-ink); border-color: transparent;
+                 color: var(--shell); }
+.shell-chip.on .i { color: var(--shell); }
+
+/* One track, no shadows, no lift animation. */
+.shell-tabs { display: flex; padding: 4px; border-radius: var(--r-full);
+              background: rgba(0,0,0,.12); }
+.shell-tabs > div {
+  flex: 1; text-align: center; padding: 7px 0; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 600; letter-spacing: .3px;
+  color: rgba(255,244,247,.82);
+}
+.shell-tabs > div.on { background: var(--shell-ink); color: var(--shell);
+                       font-weight: 700; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BOTTOM NAVIGATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.navbar {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--surface-0);
+  border-top: 1px solid var(--ink-200);
+  padding: 8px var(--x2) calc(8px + var(--safe-bottom));
+  display: flex; box-shadow: 0 -2px 16px rgba(110,26,48,.06);
+}
+.navbar > div {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--ink-400); font-size: 11px; font-weight: 600; position: relative;
+}
+.navbar > div.on { color: var(--brand-action); }
+.navbar .i { width: 24px; height: 24px; }
+.navbar .dot {
+  position: absolute; top: -1px; right: 22px; width: 8px; height: 8px;
+  border-radius: var(--r-full); background: var(--brand-action);
+  border: 1.5px solid var(--surface-0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTONS — flat, pill-shaped, no gradients
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.btn {
+  height: 50px; border-radius: var(--r-full); border: 0;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: inherit; font-size: 16px; font-weight: 600;
+  padding: 0 20px; width: 100%; cursor: pointer;
+}
+.btn .i { width: 20px; height: 20px; }
+.btn--md { height: 44px; font-size: 15px; }
+.btn--sm { height: 36px; font-size: 13px; }
+.btn--sm .i { width: 17px; height: 17px; }
+.btn--auto { width: auto; }
+
+.btn--primary { background: var(--brand-action); color: #fff; box-shadow: var(--glow); }
+.btn--secondary { background: var(--brand-soft); color: var(--brand-ink); }
+.btn--ghost { background: transparent; color: var(--ink-700);
+              border: 1.5px solid var(--ink-200); }
+.btn--destructive { background: var(--danger-soft); color: var(--danger); }
+.btn--disabled { background: var(--red-200); color: #fff; box-shadow: none; opacity: .6; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIELDS — a field is a sunken well that LIFTS to white on focus
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.field-label { font-size: 12px; font-weight: 600; letter-spacing: .3px;
+               color: var(--ink-700); margin-bottom: 7px; display: block; }
+.field {
+  background: var(--field); border: 1.5px solid var(--ink-200);
+  border-radius: var(--r-sm); display: flex; align-items: center;
+  padding: 14px; gap: 10px; min-height: 52px;
+}
+.field .i { width: 20px; height: 20px; color: var(--ink-400); }
+.field .val { flex: 1; font-size: 15px; color: var(--ink-900); min-width: 0; }
+.field .ph { flex: 1; font-size: 15px; color: var(--ink-400); min-width: 0; }
+.field--multi { align-items: flex-start; min-height: 84px; }
+.field--focus {
+  background: var(--surface-raised); border: 2px solid var(--brand-action);
+  box-shadow: 0 0 0 3px rgba(227,13,59,.12); padding: 13.5px;
+}
+.field--focus .i { color: var(--brand-action); }
+.field--error { border: 2px solid var(--danger); padding: 13.5px; }
+.field--disabled { background: var(--surface-50); }
+.field-err { display: flex; align-items: center; gap: 5px; margin-top: 6px;
+             font-size: 13px; color: var(--danger); }
+.field-err .i { width: 14px; height: 14px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SURFACES IN THE SHEET
+   The sheet is already a lifted surface, so cards on it are FLAT + hairlined.
+   Stacking shadows on a lifted surface is what makes screens look like a pile
+   of receipts.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.panel { background: var(--surface-0); border: 1px solid var(--ink-200);
+         border-radius: var(--r-md); padding: 14px; }
+
+.row-group { background: var(--surface-0); border: 1px solid var(--ink-200);
+             border-radius: var(--r-md); overflow: hidden; }
+/* The divider is inset past the glyph, so the icons form a column. */
+.row-group > .row + .row { border-top: 1px solid var(--ink-100); }
+.row-group > .row + .row::before {
+  content: ""; position: absolute; left: 0; top: -1px; width: 54px; height: 1px;
+  background: var(--surface-0);
+}
+
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+       position: relative; }
+.row .plate {
+  width: 34px; height: 34px; border-radius: var(--r-xs); flex: none;
+  display: grid; place-items: center;
+  background: rgba(227,13,59,.10); color: var(--brand-action);
+}
+.row .plate .i { width: 18px; height: 18px; }
+.row .rbody { flex: 1; min-width: 0; }
+.row .rlabel { font-size: 15px; font-weight: 700; letter-spacing: -.2px;
+               line-height: 22px; }
+.row .rsub { font-size: 13px; line-height: 18px; color: var(--ink-400);
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .rval { font-size: 13px; color: var(--ink-500); }
+.row > .i.caret { width: 18px; height: 18px; color: var(--ink-300); }
+.row--danger .plate { background: rgba(165,29,47,.10); color: var(--danger); }
+.row--danger .rlabel { color: var(--danger); }
+
+.section-title { display: flex; align-items: center; gap: 8px; }
+.section-title h2 { margin: 0; flex: 1; font-size: 19px; line-height: 24px;
+                    font-weight: 800; letter-spacing: -.4px; }
+.section-title a { display: inline-flex; align-items: center;
+                   color: var(--brand-action); font-size: 12px; font-weight: 600;
+                   letter-spacing: .3px; text-decoration: none; }
+.section-title a .i { width: 15px; height: 15px; }
+
+/* A label/amount line — shared by every total block so a subtotal looks the
+   same in the cart, at checkout and on a receipt. */
+.money { display: flex; align-items: center; padding: 3px 0; }
+.money .lbl { flex: 1; font-size: 13px; color: var(--ink-500); }
+.money .amt { font-size: 13px; color: var(--ink-700); font-variant-numeric: tabular-nums; }
+.money--strong .lbl { font-size: 16px; font-weight: 700; letter-spacing: -.2px;
+                      color: var(--ink-900); }
+.money--strong .amt { font-size: 16px; font-weight: 700; letter-spacing: -.2px;
+                      color: var(--ink-900); }
+
+/* The app's one shape for "read this before you continue". */
+.notice { display: flex; gap: 10px; padding: 13px; border-radius: var(--r-md);
+          background: var(--info-soft); color: var(--info-ink); }
+.notice .i { width: 17px; height: 17px; flex: none; }
+.notice p { margin: 0; font-size: 13px; line-height: 1.45; }
+.notice--warning { background: var(--warning-soft); color: var(--warning-ink); }
+.notice--danger { background: var(--danger-soft); color: var(--danger-ink); }
+.notice--success { background: var(--success-soft); color: var(--success-ink); }
+
+.stat { background: var(--surface-0); border: 1px solid var(--ink-200);
+        border-radius: var(--r-md); padding: 13px 12px; flex: 1; min-width: 0; }
+.stat .i { width: 18px; height: 18px; }
+.stat .v { font-size: 21px; font-weight: 800; letter-spacing: -.5px;
+           line-height: 28px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 13px; line-height: 18px; color: var(--ink-500);
+           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHIPS & CATEGORY TILES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+        border-radius: var(--r-full); background: var(--surface-raised);
+        color: var(--ink-700); font-size: 12px; font-weight: 600;
+        letter-spacing: .3px; }
+.chip .i { width: 14px; height: 14px; }
+.chip--on { border: 1.5px solid var(--brand); padding: 5.5px 10.5px; }
+.chip--success { background: var(--success-tint); color: var(--success); }
+.chip--warning { background: var(--warning-tint); color: var(--warning); }
+.chip--danger { background: var(--danger-tint); color: var(--danger); }
+.chip--info { background: var(--info-tint); color: var(--info); }
+.chip--brand { background: var(--brand-soft); color: var(--brand-ink); }
+
+/* A squircle tile, not a bare floating circle: an unselected tile carries a
+   soft tint + hairline so it reads as a surface on the page. */
+.cat { display: flex; flex-direction: column; align-items: center; gap: 8px;
+       flex: 1; min-width: 0; }
+.cat .plate { width: 58px; height: 58px; border-radius: var(--r-md);
+              display: grid; place-items: center; }
+.cat .plate .i { width: 26px; height: 26px; }
+.cat .lbl { font-size: 11.5px; line-height: 16px; font-weight: 600;
+            color: var(--ink-500); max-width: 100%; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; }
+.cat--on .lbl { color: var(--ink-900); font-weight: 700; }
+.cat--on .plate { color: #fff; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MERCHANT LISTINGS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* The browse card. A merchant WITH a photo gets the full 16:9; one without
+   gets a shallow 3:1 band — three empty half-screen plates down a list is a
+   lot of nothing to scroll past. */
+.mcard { background: var(--surface-0); border: 1px solid var(--ink-200);
+         border-radius: var(--r-md); overflow: hidden; margin-bottom: 14px; }
+.mcard .art { position: relative; aspect-ratio: 3 / 1; display: grid;
+              place-items: center; background: #FDECF0; }
+.mcard .art--photo { aspect-ratio: 16 / 9; }
+.mcard .art .i { width: 34px; height: 34px; color: rgba(247,43,84,.55); }
+.mcard .promo { position: absolute; top: 10px; left: 10px; padding: 4px 9px;
+                border-radius: var(--r-xs); background: var(--brand-action);
+                color: #fff; font-size: 10px; font-weight: 700; }
+.mcard .fav { position: absolute; top: 8px; right: 8px; width: 34px;
+              height: 34px; border-radius: var(--r-full);
+              background: rgba(255,255,255,.92); display: grid;
+              place-items: center; color: var(--ink-500); }
+.mcard .fav .i { width: 18px; height: 18px; }
+.mcard .fav.on { color: var(--red-500); }
+/* A closed merchant is dimmed rather than hidden: knowing the place exists and
+   shuts at nine is information. */
+.mcard .shut { position: absolute; inset: 0; background: rgba(20,15,18,.45);
+               display: grid; place-items: center; }
+.mcard .shut span { background: var(--surface-raised); color: var(--ink-900);
+                    padding: 6px 12px; border-radius: var(--r-full);
+                    font-size: 12px; font-weight: 600; letter-spacing: .3px; }
+.mcard .meta { padding: 12px 14px 13px; }
+.mcard .mrow { display: flex; align-items: center; gap: 8px; }
+.mcard .mname { flex: 1; min-width: 0; font-size: 16px; font-weight: 700;
+                letter-spacing: -.2px; white-space: nowrap; overflow: hidden;
+                text-overflow: ellipsis; }
+.mcard .bits { display: flex; gap: 14px; margin-top: 7px; }
+
+/* The compact listing — a square thumb and two lines. Used where the job is
+   scanning names, not browsing photography. */
+.mrow-card { background: var(--surface-0); border: 1px solid var(--ink-200);
+             border-radius: var(--r-md); padding: 12px; display: flex;
+             align-items: center; gap: 12px; }
+.mrow-card .thumb { width: 56px; height: 56px; border-radius: var(--r-sm);
+                    flex: none; background: var(--surface-50); display: grid;
+                    place-items: center; color: var(--ink-400); }
+.mrow-card .thumb .i { width: 24px; height: 24px; }
+.mrow-card .body { flex: 1; min-width: 0; }
+.mrow-card .nm { display: flex; align-items: baseline; gap: 6px; }
+.mrow-card .nm b { font-size: 16px; font-weight: 700; letter-spacing: -.2px;
+                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow-card .facts { display: flex; align-items: center; gap: 3px; margin-top: 5px;
+                    font-size: 13px; color: var(--ink-500); }
+.mrow-card .facts .i { width: 13px; height: 13px; color: var(--star); }
+.mrow-card > .i.caret { width: 18px; height: 18px; color: var(--ink-300); }
+
+/* Star + number. The one place gold is allowed in this palette. */
+.rating { display: inline-flex; align-items: center; gap: 3px; font-size: 13px;
+          font-weight: 700; color: var(--ink-900); font-variant-numeric: tabular-nums; }
+.rating .i { width: 15px; height: 15px; color: var(--star); }
+
+.bit { display: inline-flex; align-items: center; gap: 5px; font-size: 13px;
+       color: var(--ink-500); }
+.bit .i { width: 14px; height: 14px; color: var(--ink-400); }
+
+/* One line on a menu: thumbnail, name, description, price, add control. */
+.menu-item { display: flex; gap: 12px; padding: 14px 0; align-items: flex-start; }
+.menu-item .thumb { width: 76px; height: 76px; border-radius: var(--r-sm);
+                    flex: none; background: var(--surface-50); display: grid;
+                    place-items: center; color: var(--ink-300); }
+.menu-item .body { flex: 1; min-width: 0; }
+.menu-item .nm { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+.menu-item .desc { font-size: 13px; line-height: 18px; color: var(--ink-500);
+                   margin-top: 3px; }
+.menu-item .price { font-size: 15px; font-weight: 700; margin-top: 8px;
+                    font-variant-numeric: tabular-nums; }
+.menu-item .act { display: flex; align-items: flex-end; align-self: stretch; }
+
+/* At zero, one square "+" — one target, no ambiguity. Above zero, a stepper. */
+.qty { display: inline-flex; align-items: center; }
+.qty .n { padding: 0 11px; font-size: 16px; font-weight: 700;
+          font-variant-numeric: tabular-nums; }
+.qty-btn { width: 30px; height: 30px; border-radius: var(--r-xs); display: grid;
+           place-items: center; border: 0; }
+.qty-btn .i { width: 16px; height: 16px; }
+.qty-btn--add { background: var(--brand-action); color: #fff; }
+.qty-btn--sub { background: var(--surface-50); color: var(--ink-700); }
+.qty-btn--solo { width: 34px; height: 34px; border-radius: var(--r-sm); }
+.qty-btn--solo .i { width: 18px; height: 18px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATES — empty, loading, feedback
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A layered medallion, not a flat grey glyph. */
+.empty { padding: 40px var(--gutter); text-align: center;
+         display: flex; flex-direction: column; align-items: center; }
+.empty .medal { width: 116px; height: 116px; border-radius: var(--r-full);
+                background: var(--red-50); display: grid; place-items: center; }
+.empty .medal > div { width: 74px; height: 74px; border-radius: var(--r-full);
+                      background: rgba(247,43,84,.14); display: grid;
+                      place-items: center; color: var(--red-500); }
+.empty .medal .i { width: 38px; height: 38px; }
+.empty h3 { margin: 20px 0 0; font-size: 18px; line-height: 24px;
+            font-weight: 700; letter-spacing: -.3px; }
+.empty p { margin: 6px 0 0; font-size: 15px; line-height: 22px;
+           color: var(--ink-500); }
+.empty .btn { margin-top: 20px; }
+
+/* The skeleton breathes the whole subtree's opacity in unison, 1 -> .5 -> 1. */
+.shimmer { animation: se-breathe 1.2s ease-in-out infinite; }
+@keyframes se-breathe { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+.skel { background: var(--ink-200); border-radius: var(--r-xs); }
+.skel--circle { border-radius: var(--r-full); }
+
+/* Toasts dock under the status bar. They are the app's entire feedback
+   vocabulary, so they belong in the system even though no screenshot of a
+   screen can contain one. */
+.toast { display: flex; align-items: stretch; background: var(--surface-0);
+         border-radius: var(--r-md); box-shadow: var(--e3); overflow: hidden; }
+.toast .bar { width: 5px; flex: none; background: var(--success); }
+.toast .badge { margin: 10px; width: 34px; height: 34px; flex: none;
+                border-radius: var(--r-full); display: grid; place-items: center;
+                background: var(--success-tint); color: var(--success); }
+.toast .badge .i { width: 19px; height: 19px; }
+.toast p { flex: 1; margin: 0; padding: 12px 14px 12px 0; font-size: 15px;
+           line-height: 22px; font-weight: 500; color: var(--ink-900); }
+.toast--error .bar { background: var(--danger); }
+.toast--error .badge { background: var(--danger-tint); color: var(--danger); }
+.toast--info .bar { background: var(--info); }
+.toast--info .badge { background: var(--info-tint); color: var(--info); }
+.toast--brand .bar { background: var(--brand); }
+.toast--brand .badge { background: var(--brand-soft); color: var(--brand); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHEETS & OVERLAYS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.scrim { position: absolute; inset: 0; background: rgba(20,15,18,.55); }
+.modal { position: absolute; left: 0; right: 0; bottom: 0;
+         background: var(--surface-0);
+         border-radius: var(--r-xl) var(--r-xl) 0 0;
+         padding: 4px var(--gutter) calc(28px + var(--safe-bottom)); }
+.handle { width: 40px; height: 4px; border-radius: 2px; background: var(--ink-200);
+          margin: 10px auto 6px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTH — the branded ember screens
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.auth { background: var(--shell); color: var(--shell-ink); height: 100%;
+        display: flex; flex-direction: column; }
+.auth .hero { padding: calc(var(--safe-top) + 28px) var(--gutter) 26px;
+              position: relative; overflow: hidden; }
+.auth .card { flex: 1; background: var(--surface-0); color: var(--ink-900);
+              border-radius: var(--r-xl) var(--r-xl) 0 0;
+              box-shadow: 0 -8px 28px rgba(70,8,24,.22);
+              padding: 26px var(--gutter) 0; overflow: hidden; }
+/* Quiet geometry: soft discs bleeding off the edges. Depth without a gradient,
+   per the 2026 tokens. */
+.disc { position: absolute; border-radius: var(--r-full); background: #fff; }
+
+/* The welcome screen's courier. Painted as an alpha MASK over a solid fill
+   rather than as an image: the source art is a flat white silhouette, so the
+   colour channels carry nothing, and this way the mark recolours from a token.
+   The data URI arrives once, on `--rider`, because repeating it for the
+   -webkit- prefix would double the page's weight. */
+.rider {
+  position: absolute;
+  background: var(--shell-ink);
+  -webkit-mask-image: var(--rider); mask-image: var(--rider);
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: right bottom; mask-position: right bottom;
+}
+
+.divider-or { display: flex; align-items: center; gap: 12px; color: var(--ink-400);
+              font-size: 12px; font-weight: 600; letter-spacing: .3px; }
+.divider-or::before, .divider-or::after { content: ""; flex: 1; height: 1px;
+                                          background: var(--ink-200); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORDER TRACKING — the progress spine
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.spine .step { display: flex; gap: 14px; position: relative; padding-bottom: 12px; }
+.spine .step:last-child { padding-bottom: 0; }
+/* The connector runs between the pucks, not behind them, and it stays neutral
+   even under a completed step — the dot carries the state, and a second
+   coloured element per step turns the column into a stripe. */
+.spine .step::before {
+  content: ""; position: absolute; left: 21px; top: 48px; bottom: 2px;
+  width: 2px; background: var(--ink-200);
+}
+.spine .step:last-child::before { display: none; }
+.spine .dot { width: 44px; height: 44px; flex: none; border-radius: var(--r-full);
+              background: var(--ink-100); display: grid; place-items: center;
+              color: var(--ink-300); }
+.spine .dot .i { width: 20px; height: 20px; }
+.spine .step.done .dot { background: var(--brand-action); color: #fff; }
+.spine .step.now .dot { background: var(--brand-action); color: #fff;
+                        box-shadow: 0 0 0 5px rgba(227,13,59,.14); }
+.spine .ttl { font-size: 17px; font-weight: 700; letter-spacing: -.3px;
+              line-height: 24px; }
+.spine .sub { font-size: 15px; line-height: 22px; color: var(--ink-500); }
+.spine .step.todo .ttl { color: var(--ink-400); }
+.spine .step.todo .sub { color: var(--ink-400); }
+
+/* The live rail in the cap: a puck on a track, both on the red. The puck is a
+   white disc inside a translucent well, the same "control on the brand"
+   language as the cap button. */
+.rail { display: flex; align-items: center; }
+.rail .puck { width: 52px; height: 52px; border-radius: var(--r-full);
+              background: rgba(255,255,255,.14); display: grid;
+              place-items: center; flex: none; margin-left: -6px; }
+.rail .puck > span { width: 34px; height: 34px; border-radius: var(--r-full);
+                     background: var(--surface-raised); color: var(--brand-action);
+                     display: grid; place-items: center; }
+.rail .puck .i { width: 18px; height: 18px; }
+.rail .track { flex: 1; height: 3px; border-radius: 2px;
+               background: rgba(0,0,0,.10); margin-left: -4px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES — layout only, no new design decisions
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.stack { display: flex; flex-direction: column; }
+.hstack { display: flex; align-items: center; }
+.between { display: flex; align-items: center; justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.wrap { display: flex; flex-wrap: wrap; }
+.pad { padding-left: var(--gutter); padding-right: var(--gutter); }
+.center { text-align: center; }
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g2 { gap: 2px; } .g4 { gap: 4px; } .g6 { gap: 6px; } .g8 { gap: 8px; }
+.g10 { gap: 10px; } .g12 { gap: 12px; } .g14 { gap: 14px; } .g16 { gap: 16px; }
+.g20 { gap: 20px; } .g24 { gap: 24px; }
+.mt2 { margin-top: 2px; } .mt4 { margin-top: 4px; } .mt6 { margin-top: 6px; }
+.mt8 { margin-top: 8px; } .mt10 { margin-top: 10px; } .mt12 { margin-top: 12px; }
+.mt14 { margin-top: 14px; } .mt16 { margin-top: 16px; } .mt20 { margin-top: 20px; }
+.mt22 { margin-top: 22px; } .mt24 { margin-top: 24px; } .mt28 { margin-top: 28px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE CARD PAGE — chrome around a preview, never part of the design
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ds-page { background: #F4EFF1; min-height: 100vh; padding: 28px;
+           display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.ds-head { max-width: 720px; text-align: center; }
+.ds-head h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.5px;
+              color: #2A2226; }
+.ds-head p { margin: 6px 0 0; font-size: 14px; line-height: 20px; color: #6E5F66; }
+.ds-frame { border-radius: 26px; overflow: hidden; box-shadow: var(--e3);
+            flex: none; }
+.ds-grid { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center;
+           align-items: flex-start; }
+.ds-spec { background: #fff; border: 1px solid #E4DADF; border-radius: 14px;
+           padding: 18px 20px; max-width: 860px; width: 100%; }
+.ds-spec h2 { margin: 0 0 10px; font-size: 13px; font-weight: 700;
+              letter-spacing: .6px; text-transform: uppercase; color: #6E5F66; }
+.ds-spec table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ds-spec td { padding: 5px 8px 5px 0; border-bottom: 1px solid #F1EAED;
+              color: #453A3F; vertical-align: top; }
+.ds-spec td:first-child { font-weight: 600; white-space: nowrap; width: 190px; }
+.ds-spec tr:last-child td { border-bottom: 0; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px;
+          border: 1px solid rgba(0,0,0,.12); vertical-align: -2px;
+          margin-right: 6px; }
+
+@media (prefers-color-scheme: dark) {
+  .ds-page { background: #191317; }
+  .ds-head h1 { color: #F5EBEF; }
+  .ds-head p { color: #B0A0A7; }
+  .ds-spec { background: #241C21; border-color: #3C3237; }
+  .ds-spec h2 { color: #B0A0A7; }
+  .ds-spec td { color: #E4D8DE; border-bottom-color: #332A2E; }
+}
+:root[data-theme="dark"] .ds-page { background: #191317; }
+:root[data-theme="dark"] .ds-head h1 { color: #F5EBEF; }
+:root[data-theme="dark"] .ds-head p { color: #B0A0A7; }
+:root[data-theme="dark"] .ds-spec { background: #241C21; border-color: #3C3237; }
+:root[data-theme="dark"] .ds-spec h2 { color: #B0A0A7; }
+:root[data-theme="dark"] .ds-spec td { color: #E4D8DE; border-bottom-color: #332A2E; }
+:root[data-theme="light"] .ds-page { background: #F4EFF1; }
+:root[data-theme="light"] .ds-head h1 { color: #2A2226; }
+:root[data-theme="light"] .ds-head p { color: #6E5F66; }
+:root[data-theme="light"] .ds-spec { background: #fff; border-color: #E4DADF; }
+:root[data-theme="light"] .ds-spec td { color: #453A3F; border-bottom-color: #F1EAED; }

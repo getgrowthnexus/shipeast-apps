@@ -1,0 +1,99 @@
+<!-- card: Buttons | group: Components | desc: Four variants, three sizes, all pills -->
+<div class="ds-page">
+  <div class="ds-head">
+    <h1>Buttons</h1>
+    <p>One button for the whole app: flat, pill-shaped, no gradients. A screen
+      gets <b>one</b> filled pill and the rest of its affordances are words.
+      From <code>lib/widgets/se_button.dart</code>.</p>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Variants</h2>
+    <div class="stack g14" style="max-width:340px">
+      <button class="btn btn--primary">Place order</button>
+      <button class="btn btn--secondary"><svg class="i"><use href="#i-plus"/></svg>Add another address</button>
+      <button class="btn btn--ghost">Not now</button>
+      <button class="btn btn--destructive"><svg class="i"><use href="#i-trash"/></svg>Cancel order</button>
+      <button class="btn btn--primary btn--disabled">Place order</button>
+    </div>
+    <table style="margin-top:16px">
+      <tr><td>primary</td><td>Flat <b>action</b> red #E30D3B, white label at 4.79:1, plus a restrained lift
+        (<code>glow</code>). Never the identity red — white on #F72B54 fails AA</td></tr>
+      <tr><td>secondary</td><td><code>brandSoft</code> #FFF0F4 fill, <code>brandInk</code> #B60C31 label. No lift</td></tr>
+      <tr><td>ghost</td><td>Transparent, 1.5px <code>ink200</code> border, <code>ink700</code> label</td></tr>
+      <tr><td>destructive</td><td><code>dangerSoft</code> fill, deep-maroon label — visibly not the primary action</td></tr>
+      <tr><td>disabled</td><td><code>red200</code> fill at 60% opacity, no shadow</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Sizes</h2>
+    <div class="wrap g14" style="align-items:center">
+      <button class="btn btn--primary btn--auto">Large · 50px · 16px</button>
+      <button class="btn btn--primary btn--auto btn--md">Medium · 44px · 15px</button>
+      <button class="btn btn--primary btn--auto btn--sm">Small · 36px · 13px</button>
+    </div>
+    <table style="margin-top:16px">
+      <tr><td>Label weight</td><td>600 at every size — buttons sit on the "all emphasis below title" rung</td></tr>
+      <tr><td>Icon size</td><td>font size + 4px, set 8px before the label</td></tr>
+      <tr><td>Width</td><td>Full-bleed by default; <code>expand: false</code> gives 20px side padding instead</td></tr>
+      <tr><td>Radius</td><td><code>full</code>. Buttons became pills in the 2026 restyle — next to a pill chip,
+        a pill tab and a pill toggle, a chamfered button was the odd one out</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>Press &amp; loading</h2>
+    <div class="wrap g14" style="align-items:center">
+      <button class="btn btn--primary btn--auto" style="transform:scale(.97);box-shadow:none">Pressed · scale .97</button>
+      <button class="btn btn--primary btn--auto">
+        <span style="width:20px;height:20px;border:2.4px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:999px;display:block"></span>
+      </button>
+    </div>
+    <table style="margin-top:16px">
+      <tr><td>Press</td><td>Scale 0.97 over 100ms plus a light haptic. The shadow drops on the way down</td></tr>
+      <tr><td>Reduced motion</td><td>The scale is skipped; the haptic is not</td></tr>
+      <tr><td>Loading</td><td>A 20px spinner replaces the label. The button keeps its width, so the layout
+        does not jump when the request returns</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The cap button — a control that has to survive on the red</h2>
+    <div class="on-shell" style="background:#B00D33;border-radius:12px;padding:20px" class="hstack">
+      <div class="hstack g16">
+        <div class="cap-btn" style="margin:0"><svg class="i"><use href="#i-arrowLeft"/></svg></div>
+        <div class="cap-btn" style="margin:0"><svg class="i"><use href="#i-cart"/></svg><span class="badge">3</span></div>
+        <div class="cap-btn" style="margin:0"><svg class="i"><use href="#i-bell"/></svg><span class="badge">9+</span></div>
+      </div>
+    </div>
+    <table style="margin-top:12px">
+      <tr><td>Why a well</td><td>A translucent 14% white disc rather than a bare glyph, so it stays legible
+        without punching a white hole in the brand surface</td></tr>
+      <tr><td>Badge</td><td><code>shellMark</code> pill with a 1.5px shell-coloured ring, so it reads as
+        lifted off the button. Caps at "9+"</td></tr>
+    </table>
+  </div>
+
+  <div class="ds-spec">
+    <h2>The quantity stepper</h2>
+    <div class="hstack g24" style="background:#F8ECF0;padding:18px;border-radius:12px">
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:8px">At zero</div>
+        <button class="qty-btn qty-btn--add qty-btn--solo"><svg class="i"><use href="#i-plus"/></svg></button>
+      </div>
+      <div>
+        <div style="font-size:12px;color:#8A7A81;margin-bottom:8px">Above zero</div>
+        <div class="qty">
+          <button class="qty-btn qty-btn--sub"><svg class="i"><use href="#i-minus"/></svg></button>
+          <span class="n">2</span>
+          <button class="qty-btn qty-btn--add"><svg class="i"><use href="#i-plus"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <p style="margin:12px 0 0;font-size:13px;line-height:19px;color:#6E5F66">
+      At zero it is a single square "+" — one target, no ambiguity. The menu and
+      the cart share this control; they used to carry near-identical copies with
+      different sizes and different corner radii on the same button.</p>
+  </div>
+</div>
