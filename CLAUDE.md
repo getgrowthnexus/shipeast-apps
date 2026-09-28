@@ -52,6 +52,14 @@ delivery photos, push notifications). The owner has decided to move the
 project to the Blaze plan and deploy `functions/` and `storage.rules`; until
 that is done, treat those features as broken.
 
+## Platforms
+
+Both apps must ship on **Android and iOS** — that is why they are Flutter.
+Only Android has been built so far. iOS is not configured yet (no Firebase
+iOS app, missing Info.plist permission strings, no iOS CI); the checklist is
+in `docs/IOS-STATUS.md`. Keep new code platform-neutral, and when a feature
+needs a native permission, add it for both platforms.
+
 ## Build, test, release — all in GitHub Actions
 
 The owner does not run Flutter locally; CI is the build machine.
