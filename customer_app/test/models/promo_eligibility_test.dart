@@ -227,7 +227,17 @@ void main() {
       expect(elig.customerIds, ['cust-1']);
       expect(elig.discountBase, DiscountBase.deliveryFee);
       expect(elig.orderKinds, [OrderKind.shopDeliver]);
-      expect(checkEligibility(elig, ctx(customerId: 'cust-1', orderKind: OrderKind.shopDeliver)).eligible, isTrue);
+      // firstOrderOnly is set, so the customer must have no prior orders — the
+      // helper's default of 3 would (correctly) be rejected as notFirstOrder.
+      expect(
+          checkEligibility(
+                  elig,
+                  ctx(
+                      customerId: 'cust-1',
+                      priorOrderCount: 0,
+                      orderKind: OrderKind.shopDeliver))
+              .eligible,
+          isTrue);
     });
 
     test('an unrecognised customerScope string is ignored, not thrown', () {
