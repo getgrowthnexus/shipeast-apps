@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../theme/se_colors.dart';
+import '../utils/category.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
@@ -178,12 +179,8 @@ class _MerchantMenuScreenState extends State<MerchantMenuScreen> {
 
   // Mirrors the home-screen category palette so a merchant's hero reads in the
   // same hue as the chip that led here. Star-gold stays reserved for ratings.
-  Color get _heroHue => switch (_merchantCategory) {
-        'Grocery' => SeColors.catGrocery,
-        'Pharmacy' => SeColors.catPharmacy,
-        'Packages' => SeColors.catPackages,
-        _ => SeColors.catFood,
-      };
+  Color get _heroHue =>
+      MerchantCategory.of(_merchantCategory)?.hue ?? SeColors.catFood;
 
   @override
   Widget build(BuildContext context) {

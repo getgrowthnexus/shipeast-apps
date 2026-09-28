@@ -53,6 +53,30 @@ void main() {
     test('passes every other category through', () {
       expect(MerchantCategory.label('Food'), 'Food');
       expect(MerchantCategory.label('Pharmacy'), 'Pharmacy');
+      expect(MerchantCategory.label('Something new'), 'Something new');
+    });
+
+    test('home tiles and the More list follow the client checklist', () {
+      expect(MerchantCategory.primary.map((c) => c.display),
+          ['Food', 'Groceries', 'Packages']);
+      expect(MerchantCategory.more.map((c) => c.display), [
+        'Pharmacy',
+        'Cooking Gas',
+        'Hardware',
+        'Errands',
+        'Gifts/Balloons',
+        'Pickup & Delivery',
+        'Business Services',
+      ]);
+    });
+
+    test('every stored value is unique and resolves back to itself', () {
+      final values = MerchantCategory.all.map((c) => c.value).toList();
+      expect(values.toSet().length, values.length);
+      for (final c in MerchantCategory.all) {
+        expect(MerchantCategory.of(c.value), same(c));
+      }
+      expect(MerchantCategory.of('Nope'), isNull);
     });
   });
 }

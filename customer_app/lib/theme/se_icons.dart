@@ -37,6 +37,14 @@ class SeIcons {
   static const IconData groceryFill = Icons.shopping_basket_rounded;
   static const IconData packagesFill = Icons.inventory_2_rounded;
   static const IconData pharmacyFill = Icons.local_pharmacy_rounded;
+  // "More" categories (client checklist, Sep 2026).
+  static const IconData cookingGas = Icons.local_fire_department_outlined;
+  static const IconData hardware = Icons.hardware_outlined;
+  static const IconData errands = Icons.directions_run_rounded;
+  static const IconData balloons = Icons.celebration_outlined;
+  static const IconData pickupDelivery = Icons.local_shipping_outlined;
+  static const IconData business = Icons.business_center_outlined;
+  static const IconData more = Icons.grid_view_rounded;
 
   // Home / merchant
   static const IconData location = Icons.location_on_outlined;

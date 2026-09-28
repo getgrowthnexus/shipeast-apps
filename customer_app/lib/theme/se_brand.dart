@@ -7,7 +7,7 @@ class SeBrand {
   SeBrand._();
 
   /// Keep in lockstep with pubspec `version:` (before the `+build`).
-  static const String version = '1.2.3';
+  static const String version = '1.2.4';
   static const String tagline = 'Packages • Groceries • Errands';
 
   /// The registered company, spelled the way it is on paper. Set under the

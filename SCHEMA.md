@@ -324,7 +324,7 @@ panel reads `o.hours||o.deliveryTime` (`app.js:325`). Both are specified below, 
 | Field | Type | Required | Written by | Read by | Notes |
 |---|---|---|---|---|---|
 | `name` | string | ✅ | admin | all | |
-| `category` | string | ✅ | admin | customer, admin | `'Food'` \| `'Grocery'` \| `'Pharmacy'`. |
+| `category` | string | ✅ | admin | customer, admin | `'Food'` \| `'Grocery'` (shown as "Groceries") \| `'Packages'` \| `'Pharmacy'` \| `'Cooking Gas'` \| `'Hardware'` \| `'Errands'` \| `'Gifts/Balloons'` \| `'Pickup & Delivery'` \| `'Business Services'`. Stored value ≠ label — see `customer_app/lib/utils/category.dart` and `catLabel()` in `admin_panel/app.js`. |
 | `owner` | string \| null | — | admin | admin | |
 | `phone` | string \| null | — | admin | admin | |
 | `email` | string \| null | — | admin | admin | |

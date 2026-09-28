@@ -340,6 +340,9 @@ function catIcon(cat,size){
   return '<div class="cat-ico '+(size==='lg'?'lg ':'')+c.cls+'">'+icon(c.ic)+'</div>';
 }
 function catCard(cat){ return (CATS[cat]||{card:'mc-other'}).card; }
+/* Stored category value → the word shown. Merchants keep 'Grocery' (the
+   customer app queries on it); the client asked for "Groceries" on screen. */
+function catLabel(cat){ return cat==='Grocery'?'Groceries':(cat||''); }
 function merchantMedia(m,size){
   if(m.imageUrl) return '<img class="thumb'+(size==='lg'?' lg':'')+'" src="'+esc(m.imageUrl)+'" alt="" '+
     'onerror="this.outerHTML=this.dataset.fb" data-fb="'+esc(catIcon(m.category,size))+'">';
@@ -2961,7 +2964,7 @@ function renderMerchants(){
       '<div class="mcd-body">'+
         '<div class="mcd-id">'+
           '<h3 class="mcd-name" title="'+esc(m.name)+'">'+esc(m.name)+'</h3>'+
-          '<span class="bdg bg-info plain bdg-cap mcd-cat">'+esc(m.category)+'</span>'+
+          '<span class="bdg bg-info plain bdg-cap mcd-cat">'+esc(catLabel(m.category))+'</span>'+
         '</div>'+
         // Glyph-led, because a card has no column header to name the value and
         // an uppercase caption would cost another line to say what a phone
@@ -3295,7 +3298,7 @@ function openMerchantPanel(id){
     '<div class="sp-hero">'+merchantMedia(m,'lg')+
       '<div><div class="sp-hero-name">'+esc(m.name)+'</div><div style="margin-top:5px">'+badge(m.open?'Open':'Closed')+'</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Business Details</div>'+
-      row('Category','<span class="bdg bg-info plain">'+esc(m.category)+'</span>')+
+      row('Category','<span class="bdg bg-info plain">'+esc(catLabel(m.category))+'</span>')+
       row('Owner',esc(m.owner))+
       row('Opening Hours','<span class="sp-val sm">'+esc(m.openingHours||'—')+'</span>',true)+
       row('Delivery ETA','<span class="sp-val sm">'+esc(m.deliveryTime||'—')+'</span>')+
@@ -3718,7 +3721,7 @@ function populateEligPickers(){
     if(catSel){
       var catPrev=selVals(catSel);
       catSel.innerHTML=Object.keys(cats).sort().map(function(c){
-        return '<option value="'+esc(c)+'"'+(catPrev.indexOf(c)>-1?' selected':'')+'>'+esc(c)+'</option>';
+        return '<option value="'+esc(c)+'"'+(catPrev.indexOf(c)>-1?' selected':'')+'>'+esc(catLabel(c))+'</option>';
       }).join('');
     }
   }

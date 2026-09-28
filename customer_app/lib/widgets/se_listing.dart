@@ -5,6 +5,7 @@ import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../utils/money.dart';
+import '../utils/category.dart';
 import 'app_image.dart';
 import 'se_skeleton.dart';
 
@@ -218,13 +219,8 @@ class SeMerchantRow extends StatelessWidget {
     required this.onTap,
   });
 
-  static IconData iconFor(String category) => switch (category) {
-        'Food' => SeIcons.food,
-        'Grocery' => SeIcons.grocery,
-        'Pharmacy' => SeIcons.pharmacy,
-        'Packages' => SeIcons.packages,
-        _ => SeIcons.storefront,
-      };
+  static IconData iconFor(String category) =>
+      MerchantCategory.of(category)?.icon ?? SeIcons.storefront;
 
   @override
   Widget build(BuildContext context) => GestureDetector(

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import '../theme/se_colors.dart';
 import '../utils/category.dart';
 import '../theme/se_icons.dart';
@@ -8,6 +9,7 @@ import '../services/firestore_service.dart';
 import '../widgets/se_empty_state.dart';
 import '../widgets/se_listing.dart';
 import '../widgets/se_page.dart';
+import '../widgets/se_toast.dart';
 import '../widgets/se_skeleton.dart';
 
 /// Search.
@@ -35,12 +37,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
   bool _argsApplied = false;
 
-  static const List<(String, IconData, Color)> _quickCats = [
-    ('Food', SeIcons.food, SeColors.catFood),
-    ('Grocery', SeIcons.grocery, SeColors.catGrocery),
-    ('Pharmacy', SeIcons.pharmacy, SeColors.catPharmacy),
-    ('Packages', SeIcons.packages, SeColors.catPackages),
-  ];
+  // Client checklist filters: "Nearest, Highest rated, Lowest delivery fee,
+  // Free delivery, Open now". The three sorts are exclusive; the two
+  // conditions narrow the list and combine with anything.
+  _Sort? _sort;
+  bool _freeOnly = false;
+  bool _openOnly = false;
+
+  /// The phone's position, fetched once when "Nearest" is first chosen.
+  Position? _here;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -79,20 +85,114 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  /// The typed query and the category chips narrow the same list, so picking
-  /// "Grocery" and typing "hi-lo" composes instead of one replacing the other.
+  /// The typed query, the category chips and the filter chips all narrow the
+  /// same list, so picking "Groceries", "Open now" and typing "hi-lo" composes
+  /// instead of one replacing another.
   List<Map<String, dynamic>> get _results {
     final q = _query.trim().toLowerCase();
-    return _allMerchants.where((m) {
+    final list = _allMerchants.where((m) {
       final name = (m['name'] as String? ?? '').toLowerCase();
       final cat = (m['category'] as String? ?? '');
       if (_category.isNotEmpty && cat != _category) return false;
+      if (_freeOnly && _fee(m) != 0) return false;
+      if (_openOnly && !(m['isOpen'] as bool? ?? true)) return false;
       if (q.isEmpty) return true;
-      return name.contains(q) || cat.toLowerCase().contains(q);
+      return name.contains(q) ||
+          cat.toLowerCase().contains(q) ||
+          MerchantCategory.label(cat).toLowerCase().contains(q);
     }).toList();
+
+    switch (_sort) {
+      case _Sort.nearest:
+        // Merchants with no pickup coordinates (admin never set a location)
+        // sort after every one we can measure.
+        list.sort((a, b) =>
+            (_distance(a) ?? double.infinity)
+                .compareTo(_distance(b) ?? double.infinity));
+      case _Sort.rated:
+        list.sort((a, b) => _rating(b).compareTo(_rating(a)));
+      case _Sort.fee:
+        list.sort((a, b) => _fee(a).compareTo(_fee(b)));
+      case null:
+        break;
+    }
+    return list;
   }
 
-  bool get _filtering => _query.trim().isNotEmpty || _category.isNotEmpty;
+  static int _fee(Map<String, dynamic> m) =>
+      (m['deliveryFee'] as num?)?.toInt() ?? 0;
+
+  /// SCHEMA.md §merchants: `averageRating` is the field of record; older
+  /// documents carry `rating`. Unrated merchants sort last.
+  static double _rating(Map<String, dynamic> m) =>
+      ((m['averageRating'] ?? m['rating']) as num?)?.toDouble() ?? 0;
+
+  /// Metres from the phone to the merchant, or null when either is unknown.
+  double? _distance(Map<String, dynamic> m) {
+    final here = _here;
+    final lat = (m['lat'] as num?)?.toDouble();
+    final lng = (m['lng'] as num?)?.toDouble();
+    if (here == null || lat == null || lng == null) return null;
+    return Geolocator.distanceBetween(
+        here.latitude, here.longitude, lat, lng);
+  }
+
+  bool get _filtering =>
+      _query.trim().isNotEmpty ||
+      _category.isNotEmpty ||
+      _sort != null ||
+      _freeOnly ||
+      _openOnly;
+
+  Future<void> _toggleSort(_Sort s) async {
+    if (_sort == s) {
+      setState(() => _sort = null);
+      return;
+    }
+    if (s == _Sort.nearest && _here == null) {
+      final pos = await _locate();
+      if (pos == null) return;
+      _here = pos;
+    }
+    if (mounted) setState(() => _sort = s);
+  }
+
+  /// Asks for the phone's location once; explains itself if it cannot.
+  Future<Position?> _locate() async {
+    if (_locating) return null;
+    setState(() => _locating = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        if (mounted) {
+          SeToast.info(context, 'Turn on location to sort by nearest.');
+        }
+        return null;
+      }
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        if (mounted) {
+          SeToast.info(context,
+              'Allow location access to see the nearest merchants first.');
+        }
+        return null;
+      }
+      return await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+    } catch (_) {
+      if (mounted) {
+        SeToast.info(context, 'Could not get your location. Try again.');
+      }
+      return null;
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
 
   void _openMerchant(Map<String, dynamic> m) {
     final rating = m['rating'];
@@ -176,25 +276,60 @@ class _SearchScreenState extends State<SearchScreen> {
             },
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 32,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _quickCats.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final (label, icon, _) = _quickCats[i];
-                final on = _category == label;
-                return SeShellChip(
-                  label: MerchantCategory.label(label),
-                  icon: icon,
-                  selected: on,
-                  onTap: () => setState(() => _category = on ? '' : label),
-                );
-              },
+          _chipRow([
+            for (final c in MerchantCategory.all)
+              SeShellChip(
+                label: c.display,
+                icon: c.icon,
+                selected: _category == c.value,
+                onTap: () => setState(
+                    () => _category = _category == c.value ? '' : c.value),
+              ),
+          ]),
+          const SizedBox(height: 8),
+          _chipRow([
+            SeShellChip(
+              label: _locating ? 'Locating…' : 'Nearest',
+              icon: SeIcons.location,
+              selected: _sort == _Sort.nearest,
+              onTap: () => _toggleSort(_Sort.nearest),
             ),
-          ),
+            SeShellChip(
+              label: 'Highest rated',
+              icon: SeIcons.star,
+              selected: _sort == _Sort.rated,
+              onTap: () => _toggleSort(_Sort.rated),
+            ),
+            SeShellChip(
+              label: 'Lowest delivery fee',
+              icon: SeIcons.bike,
+              selected: _sort == _Sort.fee,
+              onTap: () => _toggleSort(_Sort.fee),
+            ),
+            SeShellChip(
+              label: 'Free delivery',
+              icon: SeIcons.gift,
+              selected: _freeOnly,
+              onTap: () => setState(() => _freeOnly = !_freeOnly),
+            ),
+            SeShellChip(
+              label: 'Open now',
+              icon: SeIcons.clock,
+              selected: _openOnly,
+              onTap: () => setState(() => _openOnly = !_openOnly),
+            ),
+          ]),
         ],
+      );
+
+  Widget _chipRow(List<Widget> chips) => SizedBox(
+        height: 32,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: chips.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (_, i) => chips[i],
+        ),
       );
 
   Widget _loadingList() => SeShimmer(
@@ -229,10 +364,15 @@ class _SearchScreenState extends State<SearchScreen> {
               ? SeEmptyState(
                   icon: SeIcons.search,
                   title: 'Nothing matched',
-                  message: _query.trim().isEmpty
-                      ? 'No ${MerchantCategory.label(_category)} merchants are listed yet.'
-                      : 'No merchants match “${_query.trim()}”. '
-                          'Try a shorter word.',
+                  message: _query.trim().isNotEmpty
+                      ? 'No merchants match “${_query.trim()}”. '
+                          'Try a shorter word.'
+                      : (_freeOnly || _openOnly)
+                          ? 'No merchants match these filters right now.'
+                          : _category.isNotEmpty
+                              ? 'No ${MerchantCategory.label(_category)} '
+                                  'merchants are listed yet.'
+                              : 'No merchants are listed yet.',
                   hue: SeColors.ink500,
                   tint: SeColors.surface0,
                 )
@@ -245,3 +385,6 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       );
 }
+
+/// The exclusive sort chips on the search screen.
+enum _Sort { nearest, rated, fee }

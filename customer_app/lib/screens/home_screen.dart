@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/se_colors.dart';
 import '../utils/names.dart';
+import '../utils/category.dart';
 import '../utils/money.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
@@ -47,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _areaPrefKey = 'deliveryArea';
   String _area = _areas.first;
 
-  int _selectedCategory = 0;
   String _userName = '';
   String? _avatarUrl;
   final Set<String> _favourites = {};
@@ -62,20 +62,17 @@ class _HomeScreenState extends State<HomeScreen> {
   PackagePricing? _packagePricing;
   bool _packagePricingLoaded = false;
 
-  // Firestore merchants by category index
-  final Map<int, List<Map<String, dynamic>>> _firestoreMerchants = {};
-  final Map<int, bool> _merchantsLoaded = {};
-  final Map<int, StreamSubscription<List<Map<String, dynamic>>>> _subs = {};
+  // Firestore merchants, keyed by the stored category value. A "More"
+  // category is only subscribed once the customer picks it.
+  final Map<String, List<Map<String, dynamic>>> _firestoreMerchants = {};
+  final Map<String, bool> _merchantsLoaded = {};
+  final Map<String, StreamSubscription<List<Map<String, dynamic>>>> _subs = {};
 
-  static const _categoryLabels = ['Food', 'Grocery', 'Packages', 'Pharmacy'];
+  /// The selected category (tiles: Food · Groceries · Packages · More).
+  MerchantCategory _cat = MerchantCategory.food;
 
-  // Category tile spec: icon + per-category hue (SEDS §1.5).
-  static const List<Map<String, dynamic>> _categories = [
-    {'icon': SeIcons.food, 'label': 'Food', 'hue': SeColors.catFood, 'tint': SeColors.catFoodTint},
-    {'icon': SeIcons.grocery, 'label': 'Groceries', 'hue': SeColors.catGrocery, 'tint': SeColors.catGroceryTint},
-    {'icon': SeIcons.packages, 'label': 'Packages', 'hue': SeColors.catPackages, 'tint': SeColors.catPackagesTint},
-    {'icon': SeIcons.pharmacy, 'label': 'Pharmacy', 'hue': SeColors.catPharmacy, 'tint': SeColors.catPharmacyTint},
-  ];
+  bool get _isPackages => _cat == MerchantCategory.packages;
+  bool get _isMoreCategory => MerchantCategory.more.contains(_cat);
 
   // Package-type accents drawn from the brand palette (no off-palette hues).
   static const List<Map<String, dynamic>> _packageCategories = [
@@ -97,9 +94,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserName();
     _loadArea();
     _loadPackagePricing();
-    _subscribeMerchants(0);
-    _subscribeMerchants(1);
-    _subscribeMerchants(3);
+    _subscribeMerchants(MerchantCategory.food);
+    _subscribeMerchants(MerchantCategory.grocery);
   }
 
   @override
@@ -111,14 +107,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _subscribeMerchants(int catIndex) {
-    final label = _categoryLabels[catIndex];
-    _subs[catIndex] =
-        FirestoreService.merchantsByCategory(label).listen((merchants) {
+  void _subscribeMerchants(MerchantCategory cat) {
+    final key = cat.value;
+    if (_subs.containsKey(key)) return;
+    _subs[key] =
+        FirestoreService.merchantsByCategory(key).listen((merchants) {
       if (mounted) {
         setState(() {
-          _firestoreMerchants[catIndex] = merchants;
-          _merchantsLoaded[catIndex] = true;
+          _firestoreMerchants[key] = merchants;
+          _merchantsLoaded[key] = true;
         });
       }
     });
@@ -154,9 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _goToProfile() => Navigator.pushNamed(context, '/profile');
 
   // Returns null when still loading, empty list when loaded but no merchants
-  List<Map<String, dynamic>>? _merchantsFor(int catIndex) {
-    if (_merchantsLoaded[catIndex] != true) return null;
-    return _firestoreMerchants[catIndex] ?? [];
+  List<Map<String, dynamic>>? _merchantsFor(MerchantCategory cat) {
+    if (_merchantsLoaded[cat.value] != true) return null;
+    return _firestoreMerchants[cat.value] ?? [];
   }
 
   void _toggleFavourite(String id) {
@@ -436,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _categoryRow(),
           const SizedBox(height: 24),
-          if (_selectedCategory == 2) _packagesGrid() else _merchantList(),
+          if (_isPackages) _packagesGrid() else _merchantList(),
         ],
       ),
     );
@@ -608,25 +605,86 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _categoryRow() => Padding(
         padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
         child: Row(
-          children: List.generate(_categories.length, (i) {
-            final c = _categories[i];
+          children: [
             // Equal slots, not intrinsic widths — see SeCategoryTile.
-            return Expanded(
-              child: SeCategoryTile(
-                label: c['label'] as String,
-                icon: c['icon'] as IconData,
-                hue: c['hue'] as Color,
-                tint: c['tint'] as Color,
-                selected: _selectedCategory == i,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedCategory = i);
-                },
+            for (final c in MerchantCategory.primary)
+              Expanded(
+                child: SeCategoryTile(
+                  label: c.display,
+                  icon: c.icon,
+                  hue: c.hue,
+                  tint: c.tint,
+                  selected: _cat == c,
+                  onTap: () => _selectCategory(c),
+                ),
               ),
-            );
-          }),
+            // Client checklist: "Food · Groceries · Packages · More". While a
+            // More category is showing, the tile carries its name and icon so
+            // the list below is never unexplained.
+            Expanded(
+              child: SeCategoryTile(
+                label: _isMoreCategory ? _cat.display : 'More',
+                icon: _isMoreCategory ? _cat.icon : SeIcons.more,
+                hue: _isMoreCategory ? _cat.hue : SeColors.ink500,
+                tint: _isMoreCategory ? _cat.tint : SeColors.ink100,
+                selected: _isMoreCategory,
+                onTap: _openMoreCategories,
+              ),
+            ),
+          ],
         ),
       );
+
+  void _selectCategory(MerchantCategory c) {
+    HapticFeedback.selectionClick();
+    if (c != MerchantCategory.packages) _subscribeMerchants(c);
+    setState(() => _cat = c);
+  }
+
+  void _openMoreCategories() {
+    HapticFeedback.selectionClick();
+    showSeBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: SeSpacing.gutter,
+          right: SeSpacing.gutter,
+          bottom: MediaQuery.of(ctx).padding.bottom + SeSpacing.x5,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SeSheetHandle(),
+            const SizedBox(height: SeSpacing.x3),
+            Text('More categories', style: SeType.h3),
+            const SizedBox(height: SeSpacing.x3),
+            for (final c in MerchantCategory.more)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: c.tint,
+                    borderRadius: SeRadius.all(SeRadius.sm),
+                  ),
+                  child: Icon(c.icon, color: c.hue, size: 22),
+                ),
+                title: Text(c.display, style: SeType.title),
+                trailing: c == _cat
+                    ? const Icon(SeIcons.check, color: SeColors.brand)
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _selectCategory(c);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _overseasCard() => Padding(
         padding: const EdgeInsets.fromLTRB(SeSpacing.gutter, 0, SeSpacing.gutter, 24),
@@ -739,7 +797,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
 
   Widget _merchantList() {
-    final merchants = _merchantsFor(_selectedCategory);
+    final merchants = _merchantsFor(_cat);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -747,13 +805,14 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
           child: SeSectionTitle(
-            title: 'Popular in Kingston & St. Thomas',
+            title: _isMoreCategory
+                ? '${_cat.display} in Kingston & St. Thomas'
+                : 'Popular in Kingston & St. Thomas',
             actionLabel: 'See all',
             onAction: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => AllMerchantsScreen(
-                    category: _categoryLabels[_selectedCategory]),
+                builder: (_) => AllMerchantsScreen(category: _cat.value),
               ),
             ),
           ),
@@ -773,8 +832,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: 'No merchants yet',
                       message:
                           'We are onboarding partners near you — check back soon.',
-                      hue: _categories[_selectedCategory]['hue'] as Color,
-                      tint: _categories[_selectedCategory]['tint'] as Color,
+                      hue: _cat.hue,
+                      tint: _cat.tint,
                     )
                   : Column(
                       children: [
@@ -813,8 +872,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-  Color _catHue(int i) => (_categories[i]['hue'] as Color);
-
   Widget _merchantCard(Map<String, dynamic> m) {
     final rating = m['rating'];
     final ratingStr = rating is double
@@ -835,7 +892,7 @@ class _HomeScreenState extends State<HomeScreen> {
       deliveryFee: deliveryFee,
       isOpen: isOpen,
       promo: m['promo'] as String?,
-      hue: _catHue(_selectedCategory),
+      hue: _cat.hue,
       favourite: _favourites.contains(id),
       onFavourite: () => _toggleFavourite(id),
       onTap: () {
@@ -844,7 +901,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'name': m['name'] ?? '',
           'emoji': m['emoji'] as String? ?? '🍽️',
           'imageUrl': m['imageUrl'] as String? ?? '',
-          'category': _categoryLabels[_selectedCategory],
+          'category': _cat.value,
           'rating': ratingStr,
           'deliveryTime': m['deliveryTime'] ?? '25–35 min',
           'deliveryFee': deliveryFee,
