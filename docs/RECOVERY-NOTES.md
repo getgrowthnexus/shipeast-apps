@@ -88,5 +88,6 @@ enforced in rules, admin disable-customer message). These do not yet:
 | Delivery proof photo | Cloud Storage | Delivery saves, photo is dropped (toast says so) |
 | Push notifications, scheduled sends (NT-3) | Functions | Admin can compose; nothing is sent |
 
-Fix either by moving the project to Blaze and deploying `functions/` +
-`storage.rules`, or by porting each row to a Spark-only design.
+Options: move the project to Blaze and deploy `functions/` + `storage.rules`,
+port each row to a Spark-only design, or move to a different backend. As of
+2026-09-28 the owner is evaluating other backends; no decision yet.

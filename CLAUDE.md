@@ -48,9 +48,10 @@ workarounds: merchant/menu photos stored inline in Firestore as compressed
 `confirmDelivery` function. Features that still depend on Functions/Storage and
 therefore do not work in production are listed in `docs/RECOVERY-NOTES.md`
 (driver registration documents, promo redemption, ratings, profile and
-delivery photos, push notifications). The owner has decided to move the
-project to the Blaze plan and deploy `functions/` and `storage.rules`; until
-that is done, treat those features as broken.
+delivery photos, push notifications). Treat those features as broken for now.
+The owner is **evaluating moving off Firebase** to another backend (as of
+2026-09-28, undecided) — do not upgrade the Firebase plan, deploy functions,
+or add new Firebase-specific dependencies without asking first.
 
 ## Platforms
 
