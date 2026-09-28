@@ -294,7 +294,13 @@ P4-05 (`createDriverAccount` Cloud Function); mitigated in the interim by removi
 | `onlineSince` | Timestamp \| null | — | driver | driver, admin | `serverTimestamp()` when the driver toggles online; `FieldValue.delete()` on toggle-off. Drives the driver dashboard's "Online since 2:45 PM" line and the admin driver card's session age. Absent = not currently online (or a legacy session that predates this field). |
 | `onDelivery` | bool | — | driver | admin | Derived-ish; admin reads it (`app.js:308`). |
 | `fcmToken` | string \| null | — | driver | functions | Written by the driver app. Read by the fan-out functions (P4-04), which **delete it** when FCM reports the token unregistered — an uninstalled app otherwise leaves a corpse that fails every future send. |
-| `avatarUrl` | string \| null | — | driver | customer, admin | |
+| `avatarUrl` | string \| null | — | driver | customer, admin | Profile photo, required at registration (client checklist, Sep 2026). A small inline `data:image/jpeg;base64,…` URL (≈400px) — free plan, no Cloud Storage. Older drivers may carry an `http(s)` URL; readers handle both. |
+| `vehicleYear` | int | ✅ (since Sep 2026) | driver @ register, admin | admin | 1980 … next year. |
+| `serviceAreas` | array\<string\> | ✅ (since Sep 2026) | driver @ register, admin | admin | Subset of `['St. Thomas', 'Kingston']`. |
+| `licenceExpiresAt` | Timestamp | ✅ (since Sep 2026) | driver | driver, admin | On the parent (not private) so the admin roster can flag expiry without reading private docs. Flag rule: expired, or ≤30 days away — `DocExpiry` (driver app) / `docState()` (admin). |
+| `insuranceExpiresAt` | Timestamp | ✅ (since Sep 2026) | driver | driver, admin | As `licenceExpiresAt`. |
+| `documentsUpdatedAt` | Timestamp | — | driver | admin | Set when a driver replaces a document in *My documents*; tells the admin to re-check. |
+| `agreedToTermsAt` | Timestamp | ✅ (since Sep 2026) | driver @ register | admin | When the applicant ticked the driver terms. |
 | `totalTrips` | int | ✅ | **server only** (P3-04) | all | Lifetime. Stored (does not reset). |
 | `totalRatings` | int | ✅ | server @ rating | — | Sum of stars, for the average. |
 | `ratingCount` | int | ✅ | server @ rating | admin | Number of ratings. |
@@ -501,7 +507,10 @@ PII kept off the parent document, which **every signed-in user can read** (P4-05
 | Field | Type | Required | Written by | Read by | Notes |
 |---|---|---|---|---|---|
 | `licenceNumber` | string | ✅ | driver, admin | driver, admin | British spelling (§c). Was on `drivers/{uid}` until P4-05, where every customer who had placed an order could read it. |
-| `documents` | map \| null | — | driver @ register | driver, admin | Client checklist DV-5. Storage download URLs for the credential photos a driver uploads at registration: `{licence: url, vehicle: url}` (more keys may be added). Kept here, **not on the parent**, for the same reason as `licenceNumber` — the parent is world-readable to signed-in users and a licence photo is not. The admin document-review flow reads this doc when opening a pending driver. `null` / absent for a driver who registered before this existed; the review UI says so rather than showing a broken image. Storage path `drivers/{uid}/documents/{key}.jpg` (read: admin or self). |
+| `trn` | string | ✅ (since Sep 2026) | driver @ register, admin | driver, admin | Tax Registration Number, stored `000-000-000`. |
+| `bank` | map | ✅ (since Sep 2026) | driver @ register, admin | driver, admin | `{bankName, accountName, accountNumber, branch}` — where earnings are paid. |
+| `references` | array\<map\> | ✅ (since Sep 2026) | driver @ register, admin | driver, admin | Two `{name, phone}` entries. |
+| `documents` | map \| null | — | driver @ register | driver, admin | **Since Sep 2026** the values are ids of sibling docs holding each photo inline — `{licence: 'doc_licence', insurance: 'doc_insurance', vehicle: 'doc_vehicle'}` → `drivers/{uid}/private/doc_*` = `{image: data URL, expiresAt?, updatedAt}` (free plan: no Cloud Storage; one photo per doc keeps each under 1 MiB). Before that: Client checklist DV-5. Storage download URLs for the credential photos a driver uploads at registration: `{licence: url, vehicle: url}` (more keys may be added). Kept here, **not on the parent**, for the same reason as `licenceNumber` — the parent is world-readable to signed-in users and a licence photo is not. The admin document-review flow reads this doc when opening a pending driver. `null` / absent for a driver who registered before this existed; the review UI says so rather than showing a broken image. Storage path `drivers/{uid}/documents/{key}.jpg` (read: admin or self). |
 | `updatedAt` | Timestamp | — | driver, admin | — | |
 
 ---

@@ -24,6 +24,7 @@ import 'new_order_screen.dart';
 import 'pending_approval_screen.dart';
 import 'pickup_confirmation_screen.dart';
 import 'delivery_confirmation_screen.dart';
+import 'documents_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final void Function(int) onTabSwitch;
@@ -47,6 +48,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   /// 2:45 PM" on the ready card). Null while offline or before the server
   /// timestamp resolves.
   DateTime? _onlineSince;
+
+  /// Licence and insurance expiry, for the reminder above the toggle.
+  DateTime? _licenceExpiry;
+  DateTime? _insuranceExpiry;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -146,6 +151,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           isOnline = newOnline;
           _onlineSince =
               (newOnline && since is Timestamp) ? since.toDate() : null;
+          _licenceExpiry = (data['licenceExpiresAt'] as Timestamp?)?.toDate();
+          _insuranceExpiry =
+              (data['insuranceExpiresAt'] as Timestamp?)?.toDate();
         });
         if (newOnline && !wasOnline) {
           if (_activeOrder == null) _startListening();
@@ -540,6 +548,28 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  /// Client checklist: expired documents are flagged. Danger once a licence
+  /// or insurance has expired, a warning inside the 30-day window.
+  Widget? _docReminder() {
+    final problems = <String>[];
+    var expired = false;
+    for (final (name, at) in [
+      ('licence', _licenceExpiry),
+      ('insurance', _insuranceExpiry),
+    ]) {
+      final state = DocExpiry.of(at);
+      if (state == DocState.expired) {
+        expired = true;
+        problems.add('Your $name expired ${SeDate.long(at!)}.');
+      } else if (state == DocState.expiringSoon) {
+        problems.add('Your $name expires ${SeDate.long(at!)}.');
+      }
+    }
+    if (problems.isEmpty) return null;
+    final message = '${problems.join(' ')} Tap to upload a new one.';
+    return expired ? SeNotice.danger(message) : SeNotice.warning(message);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SePageScaffold(
@@ -582,6 +612,18 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Expired / expiring documents ────────────────────────────────
+            if (_docReminder() != null) ...[
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DocumentsScreen()),
+                ),
+                child: _docReminder()!,
+              ),
+              const SizedBox(height: SeSpacing.x4),
+            ],
+
             // ── Hero presence control ───────────────────────────────────────
             SeOnlineToggle(
               presence: _presence,

@@ -59,6 +59,43 @@ class Money {
   }
 }
 
+/// Dates as "July 31, 2026" — the one format the client asked for across the
+/// apps. Mirrors `SeDate.long` in `customer_app/lib/utils/dates.dart`.
+class SeDate {
+  SeDate._();
+
+  static const _months = [
+    'January', 'February', 'March', 'April', 'May', 'June', 'July',
+    'August', 'September', 'October', 'November', 'December',
+  ];
+
+  static String long(DateTime dt) {
+    final d = dt.toLocal();
+    return '${_months[d.month - 1]} ${d.day}, ${d.year}';
+  }
+}
+
+/// Where a licence or insurance stands against its expiry date (client
+/// checklist: "make sure expired documents can be flagged"). Mirrors
+/// `docFlag()` in `admin_panel/app.js` — same 30-day warning window.
+enum DocState { missing, expired, expiringSoon, valid }
+
+class DocExpiry {
+  DocExpiry._();
+
+  static const int warnDays = 30;
+
+  static DocState of(DateTime? expiresAt, {DateTime? now}) {
+    if (expiresAt == null) return DocState.missing;
+    final t = now ?? DateTime.now();
+    final today = DateTime(t.year, t.month, t.day);
+    final day = DateTime(expiresAt.year, expiresAt.month, expiresAt.day);
+    if (day.isBefore(today)) return DocState.expired;
+    if (day.difference(today).inDays <= warnDays) return DocState.expiringSoon;
+    return DocState.valid;
+  }
+}
+
 /// A driver's unique ID for people to quote — "D-7F3K2A" (client checklist:
 /// "Give each rider/driver a unique id #"). Derived from the auth uid, the same
 /// way order numbers are, so it is never stored and cannot drift. Mirror in

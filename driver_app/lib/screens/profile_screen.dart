@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../driver_constants.dart';
+import '../services/inline_image.dart';
+import 'documents_screen.dart';
 import '../services/driver_firestore_service.dart';
 import '../theme/se_brand.dart';
 import '../theme/se_colors.dart';
@@ -149,7 +151,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 85);
+    final picked = await picker.pickImage(
+        source: source,
+        maxWidth: InlineImage.avatarMaxWidth,
+        imageQuality: InlineImage.avatarQuality);
     if (picked == null) return;
 
     final user = FirebaseAuth.instance.currentUser;
@@ -164,6 +169,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .doc(user.uid)
           .update({'avatarUrl': url});
       if (mounted) setState(() => _avatarUrl = url);
+    } on InlineImageTooLarge catch (e) {
+      if (mounted) SeToast.error(context, e.toString());
     } catch (_) {
       if (mounted) SeToast.error(context, 'Photo upload failed. Try again.');
     } finally {
@@ -377,6 +384,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             if (_isEditing) _editForm() else _viewMode(),
             const SizedBox(height: SeSpacing.x4),
+            // Licence and insurance on file, with expiry — and where a driver
+            // replaces one (client checklist: expired documents flagged).
+            SeButton(
+              label: 'My documents',
+              icon: SeIcons.badge,
+              variant: SeButtonVariant.secondary,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DocumentsScreen()),
+              ),
+            ),
+            const SizedBox(height: SeSpacing.x4),
             _settingsCard(),
             const SizedBox(height: SeSpacing.x4),
             SeButton(
@@ -412,9 +431,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             )
           : ClipOval(
-              child: _avatarUrl != null
-                  ? Image.network(
-                      _avatarUrl!,
+              child: InlineImage.provider(_avatarUrl) != null
+                  ? Image(
+                      image: InlineImage.provider(_avatarUrl)!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => const Icon(
                           SeIcons.userFill,

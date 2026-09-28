@@ -662,6 +662,13 @@ function startListeners(){
             ratingCounts:o.ratingCounts||o.ratingBreakdown||null,
             ratingTotal:o.ratingCount!=null?o.ratingCount:null,
             avatarUrl:o.avatarUrl||'',onlineSince:onlineSince,
+            // Client checklist (driver round): application details and the
+            // two expiry dates the roster flags.
+            vehicleYear:o.vehicleYear||'',serviceAreas:Array.isArray(o.serviceAreas)?o.serviceAreas:[],
+            licenceExp:o.licenceExpiresAt&&o.licenceExpiresAt.toDate?o.licenceExpiresAt.toDate():null,
+            insuranceExp:o.insuranceExpiresAt&&o.insuranceExpiresAt.toDate?o.insuranceExpiresAt.toDate():null,
+            docsUpdatedAt:o.documentsUpdatedAt&&o.documentsUpdatedAt.toDate?o.documentsUpdatedAt.toDate():null,
+            termsAt:o.agreedToTermsAt&&o.agreedToTermsAt.toDate?o.agreedToTermsAt.toDate():null,
             status:statusLbl,rawStatus:rawStatus,approved:approved,
             // Available = approved, online, and not currently on a delivery.
             available:approved&&o.isOnline&&!o.onDelivery,
@@ -1426,6 +1433,7 @@ function driverInBucket(d,b){
   if(b==='paused') return d.rawStatus==='paused';
   if(b==='suspended') return d.rawStatus==='suspended';
   if(b==='rejected') return d.rawStatus==='rejected';
+  if(b==='docs') return docFlags(d).length>0;
   return true;
 }
 function driverMatchesSearch(d,q){
@@ -1531,6 +1539,7 @@ function driverCard(d){
     '</div>'+
     '<div class="dc-line"><span class="num">'+esc(driverNo(d.id))+'</span> • '+esc(d.vtype)+' • Plate '+esc(d.plate)+'</div>'+
     '<div class="dc-line dc-stats">'+stats+'</div>'+
+    (docFlags(d).length?'<div class="dc-line">'+docFlagsHtml(d)+'</div>':'')+
     '<div class="dc-line">'+availLine+'</div>'+
     '<div class="dc-acts">'+acts+'</div>'+
   '</div>';
@@ -2024,7 +2033,45 @@ function assignFromDriver(id){
 }
 
 // ── DV-5: review a pending driver's uploaded credentials ──────────────
+/* Client checklist: "make sure expired documents can be flagged". Same rule as
+   DocExpiry in the driver app — expired, or expiring within 30 days. */
+var DOC_WARN_DAYS=30;
+function docState(at){
+  if(!at) return 'missing';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var day=new Date(at.getFullYear(),at.getMonth(),at.getDate());
+  if(day<today) return 'expired';
+  return (day-today)/86400000<=DOC_WARN_DAYS?'soon':'valid';
+}
+function longDate(at){ return at?at.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—'; }
+/* The flags a driver card and panel show: [{text, cls}] — empty when fine. */
+function docFlags(d){
+  var out=[];
+  [['Licence',d.licenceExp],['Insurance',d.insuranceExp]].forEach(function(p){
+    var st=docState(p[1]);
+    if(st==='expired') out.push({text:p[0]+' expired '+longDate(p[1]),cls:'bg-danger'});
+    else if(st==='soon') out.push({text:p[0]+' expires '+longDate(p[1]),cls:'bg-warning'});
+  });
+  return out;
+}
+function docFlagsHtml(d){
+  return docFlags(d).map(function(x){ return '<span class="bdg '+x.cls+' plain sm">'+esc(x.text)+'</span>'; }).join(' ');
+}
 var DRIVER_DOC_LABELS={licence:'Driver\'s licence',vehicle:'Vehicle photo',insurance:'Insurance',registration:'Vehicle registration'};
+/* TRN, bank details and references from drivers/{uid}/private/identity. */
+function renderIdentity(data){
+  var slot=$('identity-slot'); if(!slot) return;
+  var bank=data.bank||{}, refs=Array.isArray(data.references)?data.references:[];
+  var html=row('Licence No.','<span class="num">'+esc(data.licenceNumber||'—')+'</span>')+
+    row('TRN','<span class="num">'+esc(data.trn||'—')+'</span>')+
+    row('Bank',esc(bank.bankName||'—')+(bank.branch?' — '+esc(bank.branch):''))+
+    row('Account holder',esc(bank.accountName||'—'))+
+    row('Account no.','<span class="num">'+esc(bank.accountNumber||'—')+'</span>')+
+    refs.map(function(r,i){
+      return row('Reference '+(i+1),esc(r&&r.name||'—')+' · <span class="num">'+esc(phoneFmt(r&&r.phone||''))+'</span>');
+    }).join('');
+  slot.outerHTML=html;
+}
 function reviewDriverDocs(id){
   var d=drivers.find(function(x){ return x.id===id; }); if(!d) return;
   $('sp-sub').textContent='Document review';
@@ -2033,7 +2080,15 @@ function reviewDriverDocs(id){
     row('Driver ID','<span class="num">'+esc(driverNo(d.id))+'</span>')+
     row('Vehicle',esc(d.vtype)+' • '+esc(d.plate))+
     row('Phone','<span class="num">'+esc(phoneFmt(d.phone))+'</span>')+
-    row('Licence No.','<span class="num">'+esc(d.dlicence)+'</span>')+'</div>';
+    row('Vehicle year',esc(String(d.vehicleYear||'—')))+
+    row('Service areas',esc(d.serviceAreas.length?d.serviceAreas.join(', '):'—'))+
+    row('Licence expires',esc(longDate(d.licenceExp))+(docState(d.licenceExp)==='expired'?' <span class="bdg bg-danger plain sm">Expired</span>':''))+
+    row('Insurance expires',esc(longDate(d.insuranceExp))+(docState(d.insuranceExp)==='expired'?' <span class="bdg bg-danger plain sm">Expired</span>':''))+
+    row('Agreed to terms',d.termsAt?esc(longDate(d.termsAt)):'—')+
+    '</div>'+
+    // Filled from the private identity doc once it loads.
+    '<div class="sp-sec"><div class="sp-sec-title">Private details</div>'+
+    '<div class="empty-copy" id="identity-slot">Loading…</div></div>';
   var decision='<div class="sp-sec"><div class="sp-sec-title">Decision</div>'+
     '<div class="m-actions" style="justify-content:flex-start">'+
       '<button class="btn btn-success" data-action="approve-driver" data-id="'+esc(d.id)+'">'+icon('check')+'Approve driver</button>'+
@@ -2047,18 +2102,40 @@ function reviewDriverDocs(id){
   // on the world-readable parent — same rule as the licence number.
   getDoc(doc(db,'drivers',id,'private','identity')).then(function(s){
     var slot=$('doc-review-slot'); if(!slot) return;
-    var docs=s.exists()?(s.data().documents||null):null;
+    var data=s.exists()?s.data():{};
+    renderIdentity(data);
+    var docs=data.documents||null;
     if(docs&&typeof docs==='object'&&Object.keys(docs).length){
+      // A value is either an older Storage URL, or (since documents moved into
+      // Firestore — free plan, no Cloud Storage) the id of a private doc that
+      // holds the photo inline: drivers/{uid}/private/doc_{key}.
       slot.outerHTML=Object.keys(docs).map(function(k){
-        var url=docs[k]; if(!url) return '';
-        return '<div class="doc-view"><div class="doc-view-lbl">'+esc(DRIVER_DOC_LABELS[k]||k)+'</div>'+
-          '<a href="'+esc(url)+'" target="_blank" rel="noopener"><img src="'+esc(url)+'" alt="'+esc(DRIVER_DOC_LABELS[k]||k)+'" loading="lazy"/></a></div>';
+        var ref=docs[k]; if(!ref) return '';
+        var lbl=esc(DRIVER_DOC_LABELS[k]||k);
+        if(String(ref).indexOf('doc_')===0){
+          return '<div class="doc-view"><div class="doc-view-lbl">'+lbl+'</div>'+
+            '<div class="empty-copy" data-doc-slot="'+esc(ref)+'">Loading photo…</div></div>';
+        }
+        return '<div class="doc-view"><div class="doc-view-lbl">'+lbl+'</div>'+
+          '<a href="'+esc(ref)+'" target="_blank" rel="noopener"><img src="'+esc(ref)+'" alt="'+lbl+'" loading="lazy"/></a></div>';
       }).join('');
+      Object.keys(docs).forEach(function(k){
+        var ref=String(docs[k]||''); if(ref.indexOf('doc_')!==0) return;
+        getDoc(doc(db,'drivers',id,'private',ref)).then(function(ds){
+          var el=document.querySelector('[data-doc-slot="'+ref+'"]'); if(!el) return;
+          var img=ds.exists()?ds.data().image:'';
+          if(!img||String(img).indexOf('data:image/')!==0){ el.textContent='Photo missing.'; return; }
+          el.outerHTML='<img src="'+esc(img)+'" alt="'+esc(DRIVER_DOC_LABELS[k]||k)+'"/>';
+        }).catch(function(){
+          var el=document.querySelector('[data-doc-slot="'+ref+'"]'); if(el) el.textContent='Could not load this photo.';
+        });
+      });
     }else{
       slot.textContent='This driver registered before in-app document upload existed, so there is nothing to view here. Verify the licence number against a physical or emailed copy before approving.';
     }
   }).catch(function(){
     var slot=$('doc-review-slot'); if(slot) slot.textContent='Could not load the documents for this driver.';
+    var idSlot=$('identity-slot'); if(idSlot) idSlot.textContent='Could not load private details.';
   });
 }
 function openDriverPanel(id){
@@ -2099,9 +2176,18 @@ function openDriverPanel(id){
     '<div class="sp-sec"><div class="sp-sec-title">Vehicle</div>'+
       row('Type',esc(d.vtype))+row('Model',esc(d.vehicle))+
       row('Plate','<span class="num">'+esc(d.plate)+'</span>')+
+      row('Year',esc(String(d.vehicleYear||'—')))+
+      row('Service areas',esc(d.serviceAreas.length?d.serviceAreas.join(', '):'—'))+
       row('Licence No.','<span class="num">'+esc(d.dlicence)+'</span>')+'</div>'+
+    '<div class="sp-sec"><div class="sp-sec-title">Documents</div>'+
+      row('Licence expires',esc(longDate(d.licenceExp)))+
+      row('Insurance expires',esc(longDate(d.insuranceExp)))+
+      (docFlags(d).length?'<div class="sp-row">'+docFlagsHtml(d)+'</div>':'')+
+      (d.docsUpdatedAt?'<div class="sc-sub">Driver uploaded new documents '+esc(longDate(d.docsUpdatedAt))+'.</div>':'')+
+      '<button class="btn btn-outline btn-block" style="margin-top:8px" data-action="driver-review" data-id="'+esc(d.id)+'">'+icon('view')+'Review documents</button>'+
+    '</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Performance</div>'+
-      '<div class="sp-row"><span class="sp-lbl">Total Trips</span><span class="sp-val money">'+d.trips+'</span></div>'+
+      '<div class="sp-row"><span class="sp-lbl">Total Deliveries</span><span class="sp-val money">'+d.trips+'</span></div>'+
       row('Avg Rating',driverStars(d),false)+
       row('Account',badge(d.rawStatus))+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Rating Breakdown</div>'+rh+'</div>'+

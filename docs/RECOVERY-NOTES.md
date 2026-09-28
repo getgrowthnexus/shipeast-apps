@@ -81,10 +81,10 @@ enforced in rules, admin disable-customer message). These do not yet:
 
 | Feature | Uses | Effect today |
 |---|---|---|
-| Driver registration documents (DV-5, required) | Cloud Storage | **Driver sign-up fails**, after the auth account is created |
+| ~~Driver registration documents~~ | ~~Cloud Storage~~ | **Fixed Sep 2026:** photos stored inline in Firestore (`drivers/{uid}/private/doc_*`) |
 | Promo code redemption (`redeemPromo`) | Function | Every order silently falls back to full price |
 | Ratings (`submitRating`) | Function | Rating submit fails |
-| Customer & driver profile photos | Cloud Storage | Upload fails |
+| Customer profile photos | Cloud Storage | Upload fails (driver profile photos fixed Sep 2026 — stored inline) |
 | Delivery proof photo | Cloud Storage | Delivery saves, photo is dropped (toast says so) |
 | Push notifications, scheduled sends (NT-3) | Functions | Admin can compose; nothing is sent |
 

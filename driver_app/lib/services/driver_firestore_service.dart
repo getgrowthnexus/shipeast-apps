@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../driver_constants.dart';
+import 'inline_image.dart';
 import '../models/order_status.dart';
 
 class DriverFirestoreService {
@@ -194,20 +195,33 @@ class DriverFirestoreService {
     });
   }
 
-  static Future<String> uploadProfilePhoto(String uid, File file) async {
-    final ref = FirebaseStorage.instance.ref('drivers/$uid/avatar.jpg');
-    await ref.putFile(file);
-    return ref.getDownloadURL();
-  }
+  /// The profile photo as a `data:` URL for `drivers/{uid}.avatarUrl`.
+  /// Stored inline — the free Spark plan has no Cloud Storage bucket, so the
+  /// old Storage upload failed every time. Pick it small
+  /// ([InlineImage.avatarMaxWidth]): the driver document is read often.
+  static Future<String> uploadProfilePhoto(String uid, File file) =>
+      InlineImage.encode(file);
 
-  /// Uploads one credential photo for the admin document-review flow (DV-5).
-  /// [key] is `licence`, `vehicle`, … and becomes the field name under
-  /// `drivers/{uid}.documents`.
+  /// Saves one credential photo for admin document review (DV-5, client
+  /// checklist). Each photo is its own document,
+  /// `drivers/{uid}/private/doc_{key}` — `licence`, `vehicle`, `insurance` —
+  /// so no single document nears Firestore's 1 MiB cap, and it sits in the
+  /// private subcollection only the driver and admins can read. Returns the
+  /// document id, which `private/identity.documents` points at.
   static Future<String> uploadDriverDocument(
-      String uid, String key, File file) async {
-    final ref = FirebaseStorage.instance.ref('drivers/$uid/documents/$key.jpg');
-    await ref.putFile(file);
-    return ref.getDownloadURL();
+    String uid,
+    String key,
+    File file, {
+    DateTime? expiresAt,
+  }) async {
+    final image = await InlineImage.encode(file);
+    final id = 'doc_$key';
+    await _db.collection('drivers').doc(uid).collection('private').doc(id).set({
+      'image': image,
+      if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return id;
   }
 
   static Stream<List<Map<String, dynamic>>> driverOrderHistoryStream(
