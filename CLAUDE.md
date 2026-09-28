@@ -19,6 +19,9 @@ ShipEast is a courier and bearer service in St. Thomas and Kingston, Jamaica
   history lines were merged, signing history, and **known gaps**. Read it
   before touching Firebase-dependent features.
 - `docs/github-archive/pull-requests.md` — descriptions of the old repo's PRs.
+- `docs/PLAN-order-tracking.md` — planned (not started): restaurant stages
+  (confirmed → preparing → ready), rider assignment as a field, and a web
+  merchant portal. Read before touching order statuses.
 - `design-system/DESIGN-SYSTEM.md` and `admin_panel/DESIGN-SPEC.md` — the 2026
   brand: tokens, type (Figtree only), components, and the reasons behind them.
 - Commit messages are detailed and cite checklist IDs (DR-25, PR-5, DV-5,
