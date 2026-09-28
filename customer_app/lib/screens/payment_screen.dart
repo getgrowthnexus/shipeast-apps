@@ -49,6 +49,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   /// line above the discount row; the charged figure is [_finalTotal].
   int _total = 0;
   String _deliveryAddress = '';
+  // The delivery address's map pin, when it has one (live tracking).
+  double? _deliveryLat;
+  double? _deliveryLng;
   bool _argsLoaded = false;
 
   /// Derived from the components, not from the passed-in `_total`, so what is
@@ -84,6 +87,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         _serviceFee = args['serviceFee'] as int? ?? 0;
         _total = args['total'] as int? ?? 0;
         _deliveryAddress = args['deliveryAddress'] as String? ?? '';
+        _deliveryLat = (args['deliveryLat'] as num?)?.toDouble();
+        _deliveryLng = (args['deliveryLng'] as num?)?.toDouble();
       }
     }
   }
@@ -549,6 +554,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           total: total,
           paymentMethod: paymentMethod,
           deliveryAddress: _deliveryAddress,
+          deliveryLat: _deliveryLat,
+          deliveryLng: _deliveryLng,
         );
       } else {
         orderId = '';

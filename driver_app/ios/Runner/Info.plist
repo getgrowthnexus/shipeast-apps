@@ -66,5 +66,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ShipEast shares your location with the customer and dispatch while you are online or delivering.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>ShipEast keeps sharing your location while you use another maps app for directions during a delivery.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>ShipEast uses the camera for your profile photo, documents and delivery photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ShipEast lets you choose your profile photo and documents from your photos.</string>
 </dict>
 </plist>

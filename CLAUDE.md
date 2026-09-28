@@ -44,6 +44,11 @@ ShipEast is a courier and bearer service in St. Thomas and Kingston, Jamaica
   `models/order_status.dart`, `admin_panel/order-status.js`,
   `functions/src/orderStatus.ts`. `tools/check-status-parity.mjs` fails CI if
   they drift; change all four together.
+- Live GPS tracking: `models/tracking.dart` (byte-identical in both apps, also
+  checked by the parity tool) + `admin_panel/tracking.js`; the driver app's
+  `services/location_service.dart` writes `driverLocations/{uid}` and
+  `orders/{id}.driverLoc` / `driverStage`. Maps are OpenStreetMap (flutter_map,
+  Leaflet) — no API key.
 
 ## Firebase plan: Spark (free) — this shapes the code
 

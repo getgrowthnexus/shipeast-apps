@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/firestore_service.dart';
+import '../utils/my_location.dart';
 import '../utils/money.dart';
 import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
@@ -87,6 +88,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return _addresses[_selectedAddress]['text'] as String? ?? '';
   }
 
+  /// The selected address's map pin, if it has one (live tracking).
+  ({double lat, double lng})? get _selectedPin {
+    if (_addresses.isEmpty || _selectedAddress >= _addresses.length) return null;
+    final a = _addresses[_selectedAddress];
+    final lat = (a['lat'] as num?)?.toDouble();
+    final lng = (a['lng'] as num?)?.toDouble();
+    return lat != null && lng != null ? (lat: lat, lng: lng) : null;
+  }
+
+  bool _pinning = false;
+
+  /// "Pin to my location" for an unpinned address, right from checkout.
+  Future<void> _pinSelected() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final id = _addresses[_selectedAddress]['id'] as String?;
+    if (uid == null || id == null) return;
+    setState(() => _pinning = true);
+    final fix = await MyLocation.current();
+    if (!mounted) return;
+    setState(() => _pinning = false);
+    if (fix == null) {
+      SeToast.error(context, 'Could not get your location. Check that location is on.');
+      return;
+    }
+    await FirestoreService.pinAddress(uid, id, fix.lat, fix.lng);
+    if (mounted) SeToast.success(context, 'Address pinned — your driver can find you.');
+  }
+
   void _openAddresses() => Navigator.push(context,
       MaterialPageRoute(builder: (_) => const SavedAddressesScreen()));
 
@@ -107,9 +136,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         context, 'Please add a delivery address first');
                     return;
                   }
+                  final pin = _selectedPin;
                   Navigator.pushNamed(context, '/payment', arguments: {
                     ..._orderArgs,
                     'deliveryAddress': selectedAddressText,
+                    if (pin != null) 'deliveryLat': pin.lat,
+                    if (pin != null) 'deliveryLng': pin.lng,
                   });
                 },
               ),
@@ -231,6 +263,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 3),
                   Text(addr['text'] as String? ?? '',
                       style: SeType.bodyS.copyWith(color: SeColors.ink700)),
+                  // Live tracking: a pinned address gets exact navigation and
+                  // "driver has arrived"; offer to pin the selected one.
+                  if (addr['lat'] is num)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text('📍 Pinned on the map',
+                          style: SeType.bodyS.copyWith(
+                              color: SeColors.successInk, fontSize: 12)),
+                    )
+                  else if (selected)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: SeButton(
+                        label: 'At this address now? Pin it',
+                        icon: SeIcons.location,
+                        size: SeButtonSize.small,
+                        variant: SeButtonVariant.secondary,
+                        expand: false,
+                        loading: _pinning,
+                        onPressed: _pinSelected,
+                      ),
+                    ),
                 ],
               ),
             ),

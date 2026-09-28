@@ -1182,3 +1182,32 @@ describe('Admin round — Create Order', () => {
     await assertFails(addDoc(collection(asCustomer(), 'orders'), order({ status: 'awaiting_driver' })));
   });
 });
+
+describe('Live tracking', () => {
+  test('a driver shares their own position; only they and admin read it', async () => {
+    const mine = doc(asDriver(), `driverLocations/${DRIVER}`);
+    await assertSucceeds(setDoc(mine, { lat: 17.88, lng: -76.41, online: true, updatedAt: new Date() }));
+    await assertSucceeds(getDoc(mine));
+    await assertSucceeds(getDoc(doc(asAdmin(), `driverLocations/${DRIVER}`)));
+    await assertFails(getDoc(doc(asCustomer(), `driverLocations/${DRIVER}`)));
+    await assertFails(getDoc(doc(asOtherDriver(), `driverLocations/${DRIVER}`)));
+    // Not for someone else, not junk.
+    await assertFails(setDoc(doc(asDriver(), `driverLocations/${OTHER_DRIVER}`), { lat: 1, lng: 1 }));
+    await assertFails(setDoc(mine, { lat: 'here', lng: -76.41 }));
+    await assertFails(setDoc(mine, { lat: 17.88, lng: -76.41, name: 'extra' }));
+  });
+
+  test('claiming sets the first stage; the holder updates stages and arrival times', async () => {
+    await seed(`drivers/${DRIVER}`, { name: 'D', status: 'approved', totalTrips: 0 });
+    await seed('orders/t1', order({ status: 'awaiting_driver' }));
+    await assertSucceeds(updateDoc(doc(asDriver(), 'orders/t1'), {
+      driverId: DRIVER, driverName: 'D', driverPhone: '876', status: 'confirmed',
+      acceptedAt: new Date(), driverStage: 'to_pickup'
+    }));
+    await assertSucceeds(updateDoc(doc(asDriver(), 'orders/t1'), {
+      driverStage: 'at_pickup', arrivedPickupAt: new Date()
+    }));
+    // The customer cannot fake the driver's progress.
+    await assertFails(updateDoc(doc(asCustomer(), 'orders/t1'), { driverStage: 'at_dropoff' }));
+  });
+});

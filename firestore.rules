@@ -283,7 +283,10 @@ service cloud.firestore {
                && incoming().driverId == uid()
                && incoming().status == 'confirmed'
                && changed().hasOnly([
-                    'driverId', 'driverName', 'driverPhone', 'status', 'acceptedAt'
+                    'driverId', 'driverName', 'driverPhone', 'status', 'acceptedAt',
+                    // Live tracking: the claim starts the "on the way to the
+                    // restaurant" stage.
+                    'driverStage'
                   ]);
       }
 
@@ -532,6 +535,25 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ── driverLocations ──────────────────────────────────────────────────
+    // Live GPS (client request, Sep 2026): each online driver's latest
+    // position, for the admin's Live Map. Kept OFF the driver document on
+    // purpose — that one is readable by every signed-in user. The customer
+    // never reads this; they see the position copied onto their own order
+    // (orders/{id}.driverLoc), which only they, the driver and admin can read.
+
+    match /driverLocations/{driverId} {
+      allow read: if isAdmin() || uid() == driverId;
+      allow write: if uid() == driverId
+                    && incoming().keys().hasOnly(
+                         ['lat', 'lng', 'accuracy', 'heading', 'speed',
+                          'online', 'orderId', 'updatedAt'])
+                    && incoming().lat is number && incoming().lng is number
+                    && incoming().lat >= -90 && incoming().lat <= 90
+                    && incoming().lng >= -180 && incoming().lng <= 180;
+      allow delete: if isAdmin() || uid() == driverId;
     }
 
     // ── actionAlerts ─────────────────────────────────────────────────────

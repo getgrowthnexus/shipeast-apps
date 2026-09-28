@@ -47,6 +47,10 @@
      Firebase Hosting serves HTTP/2, so five requests multiplex on one
      connection — the split costs nothing at runtime and lets each file be
      owned and reviewed on its own. -->
+<!-- Leaflet for the Live Map (client request, Sep 2026): OpenStreetMap tiles,
+     no API key. Loaded before app.js; the module reads the global L. -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin=""/>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <link rel="stylesheet" href="css/tokens.css"/>
 <link rel="stylesheet" href="css/shell.css"/>
 <link rel="stylesheet" href="css/components.css"/>
@@ -206,6 +210,11 @@
         <svg class="ic ni-line" aria-hidden="true"><use href="#i-orders"/></svg>
         <svg class="ic ni-fill" aria-hidden="true"><use href="#i-orders-f"/></svg>
         <span class="lbl">Orders</span>
+      </div>
+      <div class="ni" data-page="livemap" role="button" tabindex="0">
+        <svg class="ic ni-line" aria-hidden="true"><use href="#i-map-pin"/></svg>
+        <svg class="ic ni-fill" aria-hidden="true"><use href="#i-map-pin"/></svg>
+        <span class="lbl">Live Map</span>
       </div>
       <div class="ni" data-page="drivers" role="button" tabindex="0">
         <svg class="ic ni-line" aria-hidden="true"><use href="#i-drivers"/></svg>
@@ -451,6 +460,29 @@
         </div>
         <div class="sec-count num" id="orders-count"></div>
         <div class="card"><div class="olist" id="orders-list"></div></div>
+      </section>
+
+      <!-- ── LIVE MAP (client request, Sep 2026) ──
+           Every online driver and every active order, live. Positions come
+           from driverLocations (written by the driver app while online). -->
+      <section class="page" id="page-livemap">
+        <div class="pg-hdr"><h1 class="pg-title">Live Map</h1>
+          <span class="sec-count num" id="lm-count"></span></div>
+        <div class="lm-wrap">
+          <div class="card lm-map-card"><div id="lm-map" class="lm-map" role="region" aria-label="Live map of drivers and orders"></div></div>
+          <div class="card lm-side">
+            <div class="card-title">Drivers online</div>
+            <div id="lm-drivers"></div>
+            <div class="card-title" style="margin-top:14px">Active deliveries</div>
+            <div id="lm-orders"></div>
+            <div class="lm-legend">
+              <span><i class="lm-dot lm-avail"></i>Available</span>
+              <span><i class="lm-dot lm-busy"></i>On delivery</span>
+              <span><i class="lm-dot lm-pick"></i>Pickup</span>
+              <span><i class="lm-dot lm-drop"></i>Drop-off</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ── DRIVERS ── -->

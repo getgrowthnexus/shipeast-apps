@@ -68,5 +68,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ShipEast uses your location to pin your delivery address and show how far away your driver is.</string>
 </dict>
 </plist>

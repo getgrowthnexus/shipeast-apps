@@ -43,6 +43,11 @@ const SHARED_DART = [
     'customer_app/lib/models/order_type.dart',
     'driver_app/lib/models/order_type.dart',
   ],
+  [
+    'tracking.dart',
+    'customer_app/lib/models/tracking.dart',
+    'driver_app/lib/models/tracking.dart',
+  ],
 ];
 
 const customerSrc = read(CUSTOMER);

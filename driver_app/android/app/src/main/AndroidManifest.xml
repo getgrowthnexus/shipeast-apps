@@ -2,12 +2,18 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <!-- Live delivery tracking: the driver app streams real GPS to Firestore
-         while a delivery is active, so the customer's tracker can show a live
-         distance. Foreground use only (while the app is open on an active
-         order), so no background-location permission is requested. -->
+    <!-- Live tracking (client request, Sep 2026): the driver app streams GPS
+         while the driver is online or delivering — to the admin's Live Map and
+         the customer's live map. It runs as a location FOREGROUND SERVICE with
+         a visible notice, so it keeps going while the driver has Google Maps
+         open for directions. A foreground service started from the open app
+         needs only "while in use" permission, so no background-location
+         permission (and no extra Play Store review) is requested. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- Asking for the location permissions makes Android IMPLY that this app
          requires location hardware, and an implied feature defaults to required.
          A driver's phone will have GPS, but a device that merely fails to report

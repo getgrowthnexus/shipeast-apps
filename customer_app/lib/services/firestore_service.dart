@@ -61,6 +61,8 @@ class FirestoreService {
     required String deliveryAddress,
     int discount = 0,
     String? promoCode,
+    double? deliveryLat,
+    double? deliveryLng,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('Not authenticated');
@@ -143,6 +145,10 @@ class FirestoreService {
       // and in analytics, and the admin's type filter has nothing to filter on.
       'type': OrderType.food,
       'deliveryAddress': deliveryAddress,
+      // Live tracking: the drop-off pin, when the address has one — the
+      // driver navigates to it and arrival is detected by it.
+      if (deliveryLat != null && deliveryLng != null) 'deliveryLat': deliveryLat,
+      if (deliveryLat != null && deliveryLng != null) 'deliveryLng': deliveryLng,
       'createdAt': FieldValue.serverTimestamp(),
       'driverId': null,
       'rated': false,
@@ -414,21 +420,43 @@ class FirestoreService {
     return list;
   }
 
-  static Future<void> addAddress(String uid, String label, String text) =>
+  /// [lat]/[lng] are the address's map pin (live tracking, Sep 2026): the
+  /// driver navigates to it and "your driver has arrived" is detected by it.
+  /// Optional — an address without one still works, just less precisely.
+  static Future<void> addAddress(String uid, String label, String text,
+          {double? lat, double? lng}) =>
       _db.collection('users').doc(uid).collection('addresses').add({
         'label': label,
         'text': text,
+        if (lat != null && lng != null) 'lat': lat,
+        if (lat != null && lng != null) 'lng': lng,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
   static Future<void> updateAddress(
-          String uid, String addressId, String label, String text) =>
+          String uid, String addressId, String label, String text,
+          {double? lat, double? lng}) =>
       _db
           .collection('users')
           .doc(uid)
           .collection('addresses')
           .doc(addressId)
-          .update({'label': label, 'text': text});
+          .update({
+        'label': label,
+        'text': text,
+        'lat': lat ?? FieldValue.delete(),
+        'lng': lng ?? FieldValue.delete(),
+      });
+
+  /// Sets just the pin of a saved address (checkout's "Pin to my location").
+  static Future<void> pinAddress(
+          String uid, String addressId, double lat, double lng) =>
+      _db
+          .collection('users')
+          .doc(uid)
+          .collection('addresses')
+          .doc(addressId)
+          .update({'lat': lat, 'lng': lng});
 
   static Future<void> deleteAddress(String uid, String addressId) =>
       _db

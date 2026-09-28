@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/firestore_service.dart';
+import '../utils/my_location.dart';
 import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
@@ -72,6 +73,11 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
     String selectedQuick = isEdit && quickLabels.contains(existing['label'])
         ? existing['label'] as String
         : '';
+    // The map pin (live tracking): where the driver navigates to, and how
+    // "your driver has arrived" is detected.
+    double? pinLat = isEdit ? (existing['lat'] as num?)?.toDouble() : null;
+    double? pinLng = isEdit ? (existing['lng'] as num?)?.toDouble() : null;
+    bool pinning = false;
 
     showSeBottomSheet(
       context: context,
@@ -136,6 +142,55 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                 minLines: 2,
                 maxLines: 3,
               ),
+              const SizedBox(height: 12),
+              // ── Map pin ──
+              Row(
+                children: [
+                  Icon(SeIcons.location,
+                      size: 18,
+                      color: pinLat != null
+                          ? SeColors.successInk
+                          : SeColors.ink400),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      pinLat != null
+                          ? 'Pinned on the map — drivers navigate straight here'
+                          : 'No map pin yet. Standing at this address? Pin it.',
+                      style: SeType.bodyS.copyWith(
+                          color: pinLat != null
+                              ? SeColors.successInk
+                              : SeColors.ink500),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SeButton(
+                label: pinLat != null
+                    ? 'Re-pin to my current location'
+                    : 'Use my current location as the pin',
+                icon: SeIcons.location,
+                size: SeButtonSize.small,
+                variant: SeButtonVariant.secondary,
+                loading: pinning,
+                onPressed: () async {
+                  setModalState(() => pinning = true);
+                  final fix = await MyLocation.current();
+                  if (!ctx.mounted) return;
+                  setModalState(() {
+                    pinning = false;
+                    if (fix != null) {
+                      pinLat = fix.lat;
+                      pinLng = fix.lng;
+                    }
+                  });
+                  if (fix == null) {
+                    SeToast.error(ctx,
+                        'Could not get your location. Check that location is on.');
+                  }
+                },
+              ),
               const SizedBox(height: 20),
               SeButton(
                 label: isEdit ? 'Save changes' : 'Add address',
@@ -149,9 +204,11 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                   Navigator.pop(ctx);
                   if (isEdit) {
                     await FirestoreService.updateAddress(
-                        _uid, existing['id'] as String, label, text);
+                        _uid, existing['id'] as String, label, text,
+                        lat: pinLat, lng: pinLng);
                   } else {
-                    await FirestoreService.addAddress(_uid, label, text);
+                    await FirestoreService.addAddress(_uid, label, text,
+                        lat: pinLat, lng: pinLng);
                   }
                 },
               ),
@@ -285,6 +342,12 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
                     style: SeType.bodyS.copyWith(color: SeColors.ink500),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
+                if (addr['lat'] is num) ...[
+                  const SizedBox(height: 2),
+                  Text('📍 Pinned on the map',
+                      style: SeType.bodyS.copyWith(
+                          color: SeColors.successInk, fontSize: 12)),
+                ],
               ],
             ),
           ),

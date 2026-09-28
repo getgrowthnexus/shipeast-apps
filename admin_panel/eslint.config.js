@@ -39,6 +39,9 @@ export default [
         FileReader: 'readonly',
         Image: 'readonly',
         URL: 'readonly',
+        // Leaflet (the Live Map), loaded as a classic script from cdnjs in
+        // index.html before app.js.
+        L: 'readonly',
         CustomEvent: 'readonly',
         Event: 'readonly',
         MutationObserver: 'readonly',

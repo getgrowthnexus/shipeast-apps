@@ -8,12 +8,15 @@ import '../models/order_status.dart';
 import '../models/order_type.dart';
 import '../services/driver_firestore_service.dart';
 import '../services/location_service.dart';
+import '../services/navigate.dart';
+import '../models/tracking.dart';
 import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_motion.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../widgets/se_bottom_sheet.dart';
+import '../widgets/se_button.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_empty_state.dart';
 import '../widgets/se_online_toggle.dart';
@@ -160,6 +163,9 @@ class _DashboardScreenState extends State<DashboardScreen>
         } else if (!newOnline && wasOnline) {
           _stopListening();
         }
+        // Live GPS for the admin map while online (client request, Sep 2026).
+        // Idempotent — every snapshot may call it.
+        DriverLocationService.instance.setOnline(uid, newOnline);
       },
       // Audit §7.4: streams had no error handler, so a rules failure looked
       // identical to "no data".
@@ -282,14 +288,15 @@ class _DashboardScreenState extends State<DashboardScreen>
         if (newActive != null) {
           // Holding an order → stop offering new ones for the duration.
           _stopListening();
-          // Share live location onto this order for the duration of the delivery
-          // so its customer's tracker can show how far away the driver is.
+          // Share live location onto this order for the duration of the
+          // delivery (the customer's live map), and let the service move the
+          // "waiting at the restaurant" / "arrived" stage by distance.
           // Idempotent, so calling it on every snapshot is safe.
-          final orderId = newActive['id'] as String?;
-          if (orderId != null) DriverLocationService.instance.start(orderId);
+          DriverLocationService.instance.setOrder(newActive);
         } else {
-          // No order in hand → stop broadcasting and clear the stale fix.
-          DriverLocationService.instance.stop();
+          // No order in hand → clear the order's stale fix; the online
+          // presence for the admin map carries on while online.
+          DriverLocationService.instance.setOrder(null);
           if (hadActive && isOnline) {
             _offeredAt.clear();
             _startListening();
@@ -482,6 +489,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   /// confirmation, so `in_transit` was never written and the customer's
   /// "On the Way" step was unreachable — their tracker went from "Picked Up"
   /// to "Delivered" with no signal the driver had set off.
+  Future<void> _markArrived(String orderId, {required bool atPickup}) async {
+    try {
+      await DriverFirestoreService.markArrived(orderId, atPickup: atPickup);
+      if (mounted) {
+        SeToast.success(context,
+            atPickup ? 'Marked as arrived at pickup.' : 'Customer notified you have arrived.');
+      }
+    } catch (_) {
+      if (mounted) SeToast.error(context, 'Could not update. Try again.');
+    }
+  }
+
   Future<void> _continueActiveOrder() async {
     final order = _activeOrder;
     if (order == null) return;
@@ -844,7 +863,12 @@ class _DashboardScreenState extends State<DashboardScreen>
     final deliveryAddress = order['deliveryAddress'] as String? ?? '—';
     final isPickup = status == OrderStatus.confirmed;
     final isReadyToDepart = status == OrderStatus.pickedUp;
+    final isEnRoute = status == OrderStatus.inTransit;
+    final stage = order['driverStage'] as String?;
+    final atPickup = isPickup && stage == DriverStage.atPickup;
+    final atDropoff = isEnRoute && stage == DriverStage.atDropoff;
     final orderId = order['id'] as String? ?? '';
+    double? coord(String k) => (order[k] as num?)?.toDouble();
     final shortId = orderId.length > 8
         ? orderId.substring(0, 8).toUpperCase()
         : orderId.toUpperCase();
@@ -910,12 +934,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ],
                       ],
                     ),
+                    // Live stage (client request): the driver sees the same
+                    // step the customer and admin see.
                     Text(
-                      isPickup
-                          ? (isPackage ? 'Head to pickup' : 'Head to merchant')
-                          : isReadyToDepart
-                              ? 'Start delivery'
-                              : 'Out for delivery',
+                      atPickup
+                          ? (isPackage ? 'At the pickup' : 'Waiting at merchant')
+                          : isPickup
+                              ? (isPackage ? 'Head to pickup' : 'Head to merchant')
+                              : isReadyToDepart
+                                  ? 'Start delivery'
+                                  : atDropoff
+                                      ? 'Arrived at customer'
+                                      : 'Out for delivery',
                       style: SeType.h3,
                     ),
                   ],
@@ -942,7 +972,47 @@ class _DashboardScreenState extends State<DashboardScreen>
             dropoffLabel: '$customerName · $deliveryAddress',
             atPickup: isPickup,
           ),
-          const SizedBox(height: SeSpacing.x4),
+          const SizedBox(height: SeSpacing.x3),
+
+          // ── Navigate · I've arrived ──────────────────────────────────
+          // Directions open in Google Maps; tracking keeps running behind
+          // it. "I've arrived" is the manual twin of the GPS arrival check.
+          if (isPickup || isEnRoute) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: SeButton(
+                    label: 'Navigate',
+                    icon: SeIcons.navigation,
+                    size: SeButtonSize.small,
+                    variant: SeButtonVariant.secondary,
+                    onPressed: () => isPickup
+                        ? openDirections(context,
+                            lat: coord('pickupLat'),
+                            lng: coord('pickupLng'),
+                            address: pickupAddress)
+                        : openDirections(context,
+                            lat: coord('deliveryLat'),
+                            lng: coord('deliveryLng'),
+                            address: deliveryAddress),
+                  ),
+                ),
+                if (!(atPickup || atDropoff)) ...[
+                  const SizedBox(width: SeSpacing.x2),
+                  Expanded(
+                    child: SeButton(
+                      label: "I've arrived",
+                      icon: SeIcons.locationLine,
+                      size: SeButtonSize.small,
+                      variant: SeButtonVariant.secondary,
+                      onPressed: () => _markArrived(orderId, atPickup: isPickup),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: SeSpacing.x3),
+          ],
 
           Container(
             width: double.infinity,

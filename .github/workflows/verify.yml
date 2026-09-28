@@ -52,6 +52,11 @@ jobs:
       - name: Test the admin lifecycle module
         run: node tools/test-order-status.mjs
 
+      # Live tracking: the admin copy of the stage labels and distance maths
+      # agrees with the Dart copies' tests (tracking_test.dart in both apps).
+      - name: Test the live-tracking helpers
+        run: node tools/test-tracking.mjs
+
       # The migration logic is pure functions with no firebase-admin dependency
       # precisely so it can be tested here, with no credentials and no
       # database. "Migration corrupts production data" is rated Medium/SEVERE

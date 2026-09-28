@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../driver_constants.dart';
 import 'inline_image.dart';
 import '../models/order_status.dart';
+import '../models/tracking.dart';
 
 class DriverFirestoreService {
   static final _db = FirebaseFirestore.instance;
@@ -107,6 +108,8 @@ class DriverFirestoreService {
         'driverPhone': driverPhone,
         'status': OrderStatus.confirmed,
         'acceptedAt': FieldValue.serverTimestamp(),
+        // Live tracking: "Driver on the way to the restaurant".
+        'driverStage': DriverStage.toPickup,
       });
     });
   }
@@ -127,6 +130,18 @@ class DriverFirestoreService {
       _db.collection('orders').doc(orderId).update({
         'status': OrderStatus.inTransit,
         'inTransitAt': FieldValue.serverTimestamp(),
+        // Live tracking: "On the way to you".
+        'driverStage': DriverStage.toDropoff,
+      });
+
+  /// "I've arrived" — the manual twin of the GPS arrival check in
+  /// DriverLocationService, for when the pin is off or GPS is poor.
+  /// [atPickup] true = at the restaurant / pickup; false = at the customer.
+  static Future<void> markArrived(String orderId, {required bool atPickup}) =>
+      _db.collection('orders').doc(orderId).update({
+        'driverStage': atPickup ? DriverStage.atPickup : DriverStage.atDropoff,
+        (atPickup ? 'arrivedPickupAt' : 'arrivedDropoffAt'):
+            FieldValue.serverTimestamp(),
       });
 
   static Future<String> uploadDeliveryPhoto(String orderId, File file) async {

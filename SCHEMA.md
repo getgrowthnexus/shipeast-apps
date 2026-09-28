@@ -216,6 +216,11 @@ raw status values are **never rendered to a user** — always through `OrderStat
 | `total` | int | ✅ | customer @ create | all | **Invariant:** `subtotal + deliveryFee + serviceFee - discount == total`. Asserted client-side before write (P3-02) and recomputed server-side (P2-01). |
 | `paymentMethod` | string | ✅ | customer @ create | admin | **Currently a display string, not a slug**: `'Cash on Delivery'` or `'PayPal'` (`payment_screen.dart:575`). PayPal is hardcoded disabled, so only the former is ever written. Should be normalised to `'cod'` / `'paypal'` — that is a migration, not a Phase 1 change, so readers match loosely until then. |
 | `deliveryAddress` | string | ✅ | customer @ create | driver, admin | |
+| `deliveryLat` / `deliveryLng` | number | — | customer @ create | driver, customer, admin | **Live tracking (Sep 2026).** The drop-off pin, copied from the saved address's `lat`/`lng` when it has one. Used for the driver's Navigate button, the customer's map and ETA, and the automatic "driver has arrived". Absent = no pin; everything still works, arrival then comes from the driver's button. |
+| `pickupLat` / `pickupLng` | number | null | — | customer @ create | driver, customer, admin | The merchant's pickup location (P5-06), now also used for "waiting at the restaurant". |
+| `driverStage` | string | — | driver (claim, arrival, start delivery), admin | all | **Live tracking.** A GPS-driven detail *inside* the status, never a gate: `'to_pickup'` (set on claim) → `'at_pickup'` (within 150 m of the pickup, or "I've arrived") → `'to_dropoff'` (set on Start delivery) → `'at_dropoff'` (within 150 m of the drop-off pin, or "I've arrived"). Labels: `Tracking.liveLabel` (both apps, `models/tracking.dart`, byte-identical) and `admin_panel/tracking.js`: Driver on the way to the restaurant · Driver waiting at the restaurant · Order picked up · On the way to you · Driver is nearby (≤ 1 km, derived) · Driver has arrived. |
+| `arrivedPickupAt` / `arrivedDropoffAt` | Timestamp | — | driver | admin | When each arrival was recorded. |
+| `driverLoc` | map | — | driver while holding the order | customer, admin | `{lat, lng, accuracy, heading, updatedAt}` — the live position the customer's map reads. Cleared when the order is finished or reassigned. |
 | `status` | string | ✅ | customer @ create (`pending`), driver, admin | all | Canonical vocabulary above. |
 | `type` | string | ✅ | customer @ create | all | `'food'` \| `'package'`. Written since P5-01; defaults to `'food'` when absent, which every pre-Phase-5 order legitimately is. `'overseas'` is **reserved and refused at create** — that feature is an enquiry an admin prices by hand (`overseasInquiries`), never an order, so an order of that type could only come from a client that invented it. |
 | `package` | map \| null | — | customer @ create | driver, admin | Present only when `type == 'package'`. `{itemCategory, pickupAddress, weightKg, weightBand, packingRequired, instructions}`. See below. |
@@ -493,6 +498,7 @@ Client checklist (admin round): "Apply credit/refund". No wallet or card payment
 |---|---|---|---|
 | `label` | string | ✅ | `'Home'`, `'Work'`, … |
 | `text` | string | ✅ | The address itself. |
+| `lat` / `lng` | number | — | The address's map pin (live tracking, Sep 2026), set from the phone's GPS with "Use my current location as the pin" here or "Pin it" at checkout. Copied onto orders as `deliveryLat`/`deliveryLng`. |
 | `createdAt` | Timestamp | ✅ | Sort key. |
 
 Same access as the parent: owner-only read/write, admin read-only.
@@ -534,6 +540,20 @@ Admin round: "opened" and "tap rate". The customer app creates one when a broadc
 | `notificationId` | string | Must match the id prefix. |
 | `uid` | string | Must be the caller. |
 | `openedAt` | Timestamp | |
+
+## `driverLocations/{uid}`
+
+Live tracking (Sep 2026). Each driver's latest position, written by the driver app (`DriverLocationService`) while **online**: every fix mid-delivery, at most every 45 s / 100 m while idle. Read by the admin's Live Map. Kept off `drivers/{uid}` on purpose — that document is readable by every signed-in user. Rules: the driver writes only their own, only these fields, with numeric in-range `lat`/`lng`; read by the driver and admin only; the customer never reads it (they read `orders/{id}.driverLoc`).
+
+| Field | Type | Notes |
+|---|---|---|
+| `lat`, `lng` | number | |
+| `accuracy`, `heading`, `speed` | number | From the phone. |
+| `online` | bool | `false` when the driver goes offline. |
+| `orderId` | string | null | The order being delivered, if any. |
+| `updatedAt` | Timestamp | A position older than 3 minutes is not shown as live. |
+
+On Android the driver app runs a location foreground service (with a visible "ShipEast is sharing your location" notice) so tracking continues while the driver uses Google Maps for directions. Maps everywhere use OpenStreetMap tiles (flutter_map in the customer app, Leaflet in the admin) — no API key.
 
 ## `actionAlerts/{alertId}`
 

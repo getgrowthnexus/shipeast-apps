@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/firestore_service.dart';
 import '../theme/se_colors.dart';
@@ -10,6 +11,9 @@ import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
 import '../models/order_status.dart';
+import '../models/order_type.dart';
+import '../models/tracking.dart';
+import '../widgets/se_live_map.dart';
 import '../utils/phone.dart';
 import '../widgets/se_button.dart';
 import '../widgets/se_page.dart';
@@ -86,7 +90,48 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
 
   bool get _delivered => _status == OrderStatus.delivered;
 
-  String get _statusLabel => OrderStatus.label(_status);
+  /// While a driver has the order, the title is the live stage ("Driver
+  /// waiting at the restaurant", "Driver is nearby"…); otherwise the status.
+  String get _statusLabel {
+    final live = Tracking.liveLabel(_status, _stage,
+        isPackage: OrderType.isPackage(_order?['type']),
+        metresToDropoff: _driverToDropoffM);
+    return live.isNotEmpty ? live : OrderStatus.label(_status);
+  }
+
+  // ── Live tracking (Sep 2026) ───────────────────────────────────────────
+  String? get _stage => _order?['driverStage'] as String?;
+
+  LatLng? _point(String latKey, String lngKey, [Map<String, dynamic>? from]) {
+    final src = from ?? _order;
+    final lat = (src?[latKey] as num?)?.toDouble();
+    final lng = (src?[lngKey] as num?)?.toDouble();
+    return lat != null && lng != null ? LatLng(lat, lng) : null;
+  }
+
+  LatLng? get _driverPoint {
+    final loc = _driverLoc;
+    return loc == null ? null : _point('lat', 'lng', loc);
+  }
+
+  LatLng? get _pickupPoint => _point('pickupLat', 'pickupLng');
+  LatLng? get _dropoffPoint => _point('deliveryLat', 'deliveryLng');
+
+  /// Driver → the address pin, when both exist. Better than the customer's
+  /// own position (they may be ordering for someone else, or be out).
+  double? get _driverToDropoffM {
+    final d = _driverPoint, t = _dropoffPoint;
+    if (d == null || t == null) return null;
+    return Tracking.distanceM(d.latitude, d.longitude, t.latitude, t.longitude);
+  }
+
+  double? get _driverToPickupM {
+    final d = _driverPoint, t = _pickupPoint;
+    if (d == null || t == null) return null;
+    return Tracking.distanceM(d.latitude, d.longitude, t.latitude, t.longitude);
+  }
+
+  bool get _driverHeld => OrderStatus.isDriverHeld(_status);
 
   String get _reference => _orderId.isEmpty
       ? ''
@@ -149,11 +194,15 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
             ? 'Ready — finding a driver'
             : '$merchantName is preparing your order';
       case 2:
-        return 'A driver accepted and is heading to $merchantName';
+        return _stage == DriverStage.atPickup
+            ? 'Your driver is at $merchantName, waiting for your order'
+            : 'A driver accepted and is heading to $merchantName';
       case 3:
         return 'Your order is with the driver';
       case 4:
-        return 'Heading to you now';
+        return _stage == DriverStage.atDropoff
+            ? 'Your driver has arrived'
+            : 'Heading to you now';
       case 5:
         return 'Delivered — thanks for ordering';
       default:
@@ -195,6 +244,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
           if (!mounted) return;
           setState(() => _order = order);
           if (_isEnRoute) _startMyLocation();
+          _recomputeDistance();
           final driverId = order?['driverId'] as String?;
           if (driverId != null &&
               driverId.isNotEmpty &&
@@ -318,7 +368,20 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
             SeSpacing.gutter, 20, SeSpacing.gutter, 28),
         children: [
           _driverPanel(),
-          if (_isEnRoute && _driverLoc != null) ...[
+          // Live map: driver, restaurant and drop-off, once a driver has it.
+          if (_driverHeld &&
+              (_driverPoint != null ||
+                  _pickupPoint != null ||
+                  _dropoffPoint != null)) ...[
+            const SizedBox(height: 12),
+            SeLiveMap(
+              driver: _driverPoint,
+              pickup: _pickupPoint,
+              dropoff: _dropoffPoint,
+              towardsDropoff: _isEnRoute,
+            ),
+          ],
+          if (_driverHeld && _driverLoc != null) ...[
             const SizedBox(height: 12),
             _liveDistancePanel(),
           ],
@@ -844,7 +907,33 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
 
     String headline;
     String sub;
-    if (_locDenied) {
+    final toDrop = _driverToDropoffM;
+    final toPick = _driverToPickupM;
+    if (_status == OrderStatus.confirmed) {
+      // Leg 1: driver → restaurant.
+      final place = OrderType.isPackage(_order?['type'])
+          ? 'the pickup'
+          : (_order?['merchantName'] as String? ?? 'the restaurant');
+      if (_stage == DriverStage.atPickup) {
+        headline = 'Your driver is at $place';
+        sub = 'Waiting for your order to be handed over.';
+      } else if (toPick != null) {
+        headline = '${Tracking.distanceLabel(toPick)} from $place';
+        sub = 'About ${Tracking.etaMinutes(toPick)} min to get there.';
+      } else {
+        headline = 'On the way to $place';
+        sub = 'Your driver is sharing live location.';
+      }
+    } else if (_stage == DriverStage.atDropoff) {
+      headline = 'Your driver has arrived';
+      sub = 'Please meet them to collect your order.';
+    } else if (toDrop != null) {
+      // Leg 2 with a pinned address: distance and a rough time.
+      headline = 'About ${Tracking.etaMinutes(toDrop)} min away';
+      sub = toDrop <= Tracking.nearbyRadiusM
+          ? 'Your driver is nearby — ${Tracking.distanceLabel(toDrop)} away.'
+          : '${Tracking.distanceLabel(toDrop)} from your address.';
+    } else if (_locDenied) {
       headline = 'Your driver is sharing live location';
       sub = 'Turn on location to see how far away they are.';
     } else if (_distanceM != null) {

@@ -35,3 +35,11 @@ has been built and shipped. As of 2026-09-28 the iOS side is not ready.
 The original note (`Pending-for-IOS.md`, location strings only) lived at the
 repo root on the old `main` and was dropped when the 2026 redesign was merged;
 see tag `archive/main-2026-09-20`.
+
+## Update — live tracking (Sep 2026)
+
+Added to `Info.plist`: `NSLocationWhenInUseUsageDescription` (both apps); in the driver app also
+`NSLocationAlwaysAndWhenInUseUsageDescription`, `UIBackgroundModes: location` (the driver
+app keeps sharing GPS while another maps app is in front, via `AppleSettings.allowBackgroundLocationUpdates`),
+`NSCameraUsageDescription` and `NSPhotoLibraryUsageDescription`. The rest of this checklist
+(Firebase iOS app, APNs, iOS CI) is still open.

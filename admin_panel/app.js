@@ -19,6 +19,7 @@ import{createUploader}from'./image-upload.js';
 import{parseBands,formatBands,describeBands,parseAmount}from'./pricing-form.js';
 import*as Overseas from'./overseas-status.js';
 import*as PromoEligibility from'./promo-eligibility.js';
+import*as Tracking from'./tracking.js';
 import{parseLatLng,isValidLatLng,roundCoord,formatLatLng}from'./location-input.js';
 
 const app=initializeApp(firebaseConfig);
@@ -49,6 +50,8 @@ if(USE_EMULATORS){
 
 // ══════════════════════ LOCAL DATA MIRRORS ══════════════════════
 var orders=[],drivers=[],merchants=[],promoCodes=[],notifHistory=[],customers=[],inquiries=[];
+// Live GPS (Sep 2026): uid → {lat,lng,heading,online,orderId,updatedAt:Date}.
+var driverLocs={};
 var analyticsStats={
   'Today':    [{lbl:'Revenue',val:'J$0'},{lbl:'Orders',val:'0'},{lbl:'Customers',val:'0'},{lbl:'Avg Order Value',val:'J$0'}],
   'This Week':[{lbl:'Revenue',val:'J$0'},{lbl:'Orders',val:'0'},{lbl:'Customers',val:'0'},{lbl:'Avg Order Value',val:'J$0'}],
@@ -439,7 +442,7 @@ function togglePassReveal(show){
 }
 
 // ══════════════════════ NAVIGATION ══════════════════════
-var pageLabels={dashboard:'Dashboard',orders:'Orders',drivers:'Drivers',merchants:'Merchants',
+var pageLabels={dashboard:'Dashboard',orders:'Orders',livemap:'Live Map',drivers:'Drivers',merchants:'Merchants',
   customers:'Customers',overseas:'Shop & Deliver Requests',notifications:'Notifications',
   promos:'Promo Codes',analytics:'Analytics'};
 function navTo(page){
@@ -453,6 +456,7 @@ function navTo(page){
   $('tb-pg').textContent=lbl;
   document.title=lbl+' · ShipEast Admin';
   if(page==='analytics'){ renderBarChart(); }
+  if(page==='livemap'){ renderLiveMap(true); }
   // Paints the skeleton if the first snapshot has not landed yet — otherwise
   // an admin who navigates here quickly sees an empty table and reads it as
   // "no customers".
@@ -627,6 +631,12 @@ function startListeners(){
             // delivery. The only GPS the system has — drivers are not tracked
             // between jobs.
             driverLoc:o.driverLoc&&typeof o.driverLoc.lat==='number'?o.driverLoc:null,
+            // Live tracking: the GPS stage inside the status, and the two pins.
+            driverStage:o.driverStage||'',
+            pickupLat:typeof o.pickupLat==='number'?o.pickupLat:null,
+            pickupLng:typeof o.pickupLng==='number'?o.pickupLng:null,
+            deliveryLat:typeof o.deliveryLat==='number'?o.deliveryLat:null,
+            deliveryLng:typeof o.deliveryLng==='number'?o.deliveryLng:null,
             deliveryNote:o.deliveryNote||'',
             cancelledBy:o.cancelledBy||'',
             cancellationReason:o.cancellationReason||'',
@@ -918,6 +928,24 @@ function startListeners(){
     ));
   }catch(e){ console.warn('promoCodes init:',e.message); }
 
+  // DRIVER LOCATIONS — live GPS for the Live Map (admin-only collection).
+  try{
+    unsubscribers.push(onSnapshot(collection(db,'driverLocations'),
+      function(snap){
+        driverLocs={};
+        snap.docs.forEach(function(d){
+          var o=d.data();
+          if(typeof o.lat!=='number'||typeof o.lng!=='number') return;
+          driverLocs[d.id]={lat:o.lat,lng:o.lng,heading:o.heading,online:o.online!==false,
+            orderId:o.orderId||null,updatedAt:o.updatedAt&&o.updatedAt.toDate?o.updatedAt.toDate():null};
+        });
+        renderLiveMap(false);
+        if(isPageActive('drivers')) renderDrivers();
+      },
+      function(e){ console.warn('driverLocations:',e.message); }
+    ));
+  }catch(e){ console.warn('driverLocations init:',e.message); }
+
   // ACTION NEEDED — which alerts an admin has resolved.
   try{
     unsubscribers.push(onSnapshot(collection(db,'actionAlerts'),
@@ -1034,7 +1062,8 @@ function orderRow(o){
       ' <b class="orow-who">'+esc(o.customer)+'</b>'+
       (area?'<span class="orow-to"> → '+esc(area)+'</span>':'')+'</div>'+
     '<div class="orow-amt num">'+esc(o.amount)+'</div>'+
-    '<div class="orow-b">'+esc(o.merchant)+' · '+esc(drv)+' · '+esc(o.payment)+' · <span class="num">'+esc(o.time)+'</span></div>'+
+    '<div class="orow-b">'+(orderLiveLabel(o)?'<b class="orow-live">'+esc(orderLiveLabel(o))+'</b> · ':'')+
+      esc(o.merchant)+' · '+esc(drv)+' · '+esc(o.payment)+' · <span class="num">'+esc(o.time)+'</span></div>'+
     '<div class="orow-st">'+badge(o.status)+'</div>'+
   '</div>';
 }
@@ -1043,6 +1072,119 @@ function orderRowsSkeleton(n){
   for(var i=0;i<n;i++) out+='<div class="orow"><div class="orow-a"><span class="sk sk-line" style="width:55%"></span></div>'+
     '<div class="orow-b"><span class="sk sk-line" style="width:75%"></span></div></div>';
   return out;
+}
+
+// ══════════════════════ LIVE TRACKING ══════════════════════
+/* Client request (Sep 2026): real-time GPS for admin, driver and customer, all
+   connected. The driver app writes driverLocations/{uid} while online and
+   orders/{id}.driverLoc + driverStage while delivering; this is the admin's
+   view of both. Leaflet + OpenStreetMap tiles: no key, no billing. */
+function orderLiveLabel(o){
+  var toDrop=(o.driverLoc&&o.deliveryLat!=null)
+    ?Tracking.distanceM(o.driverLoc.lat,o.driverLoc.lng,o.deliveryLat,o.deliveryLng):null;
+  return Tracking.liveLabel(o.status,o.driverStage,{isPackage:o.type==='package',metresToDropoff:toDrop});
+}
+/* The freshest position for a driver: their live order fix, else presence. */
+function driverPosition(driverId){
+  var loc=driverLocs[driverId];
+  var held=orders.find(function(o){ return o.driverId===driverId&&OrderStatus.isDriverHeld(o.status)&&o.driverLoc; });
+  if(held){
+    var t=held.driverLoc.updatedAt&&held.driverLoc.updatedAt.toDate?held.driverLoc.updatedAt.toDate():null;
+    if(!loc||(t&&loc.updatedAt&&t>loc.updatedAt)) return {lat:held.driverLoc.lat,lng:held.driverLoc.lng,updatedAt:t,orderId:held._docId};
+  }
+  return loc||null;
+}
+function ageText(d){
+  if(!d) return 'just now';
+  var s=Math.max(0,Math.round((Date.now()-d.getTime())/1000));
+  return s<60?s+'s ago':Math.round(s/60)+' min ago';
+}
+var lm={map:null,layer:null,fitted:false,focus:null};
+function leafletReady(){ return typeof window.L!=='undefined'; }
+function tileLayer(){
+  return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {maxZoom:19,attribution:'&copy; OpenStreetMap contributors'});
+}
+function dotIcon(cls,glyph){
+  return L.divIcon({className:'lm-pin '+cls,html:'<span>'+glyph+'</span>',iconSize:[28,28],iconAnchor:[14,14]});
+}
+function renderLiveMap(entering){
+  var el=$('lm-map'); if(!el) return;
+  var list=$('lm-drivers'), olist=$('lm-orders'), cnt=$('lm-count');
+  // The side lists render even without Leaflet (e.g. the CDN is blocked).
+  var live=drivers.filter(function(d){
+    var p=driverPosition(d.id);
+    return p&&Tracking.isFresh(p.updatedAt)&&(d.isOnline||driverActiveOrder(d));
+  });
+  var active=orders.filter(function(o){ return OrderStatus.isDriverHeld(o.status); });
+  if(cnt) cnt.textContent=live.length+' driver'+(live.length===1?'':'s')+' live · '+active.length+' active deliver'+(active.length===1?'y':'ies');
+  if(list) list.innerHTML=live.length?live.map(function(d){
+    var p=driverPosition(d.id), ao=driverActiveOrder(d);
+    return '<div class="lm-row" data-action="lm-focus" data-id="'+esc(d.id)+'" role="button" tabindex="0">'+
+      '<i class="lm-dot '+(ao?'lm-busy':'lm-avail')+'"></i><div class="lm-row-t"><b>'+esc(d.name)+'</b>'+
+      '<div class="cell-mute sm">'+esc(ao?orderLiveLabel(ao)+' · '+shortId(ao.id):'Available')+' · '+esc(ageText(p.updatedAt))+'</div></div></div>';
+  }).join(''):'<div class="empty-copy">No driver is sharing a live location right now.</div>';
+  if(olist) olist.innerHTML=active.length?active.map(function(o){
+    return '<div class="lm-row" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'" role="button" tabindex="0">'+
+      '<i class="lm-dot lm-busy"></i><div class="lm-row-t"><b>'+esc(shortId(o.id))+' · '+esc(o.driver)+'</b>'+
+      '<div class="cell-mute sm">'+esc(orderLiveLabel(o)||STATUS_LABEL[o.status])+'</div></div></div>';
+  }).join(''):'<div class="empty-copy">No deliveries in progress.</div>';
+
+  if(!leafletReady()||!isPageActive('livemap')) return;
+  if(!lm.map){
+    lm.map=L.map(el,{zoomControl:true}).setView([17.97,-76.79],11); // Kingston
+    tileLayer().addTo(lm.map);
+    lm.layer=L.layerGroup().addTo(lm.map);
+  }
+  if(entering) setTimeout(function(){ lm.map.invalidateSize(); },50);
+  lm.layer.clearLayers();
+  var bounds=[];
+  live.forEach(function(d){
+    var p=driverPosition(d.id), ao=driverActiveOrder(d);
+    var m=L.marker([p.lat,p.lng],{icon:dotIcon(ao?'lm-busy':'lm-avail','🛵'),title:d.name,zIndexOffset:1000})
+      .bindPopup('<b>'+esc(d.name)+'</b><br>'+esc(ao?orderLiveLabel(ao)+' · '+shortId(ao.id):'Available')+
+        '<br><span class="cell-mute">Updated '+esc(ageText(p.updatedAt))+'</span>'+
+        (ao?'<br><button class="pa-btn" data-action="view-order" data-oid="'+esc(ao._docId||ao.id)+'">Open order</button>':''));
+    m.addTo(lm.layer); bounds.push([p.lat,p.lng]);
+    if(lm.focus===d.id){ lm.map.setView([p.lat,p.lng],15); m.openPopup(); lm.focus=null; lm.fitted=true; }
+    // Where they are heading: the pickup before collection, the drop-off after.
+    if(ao){
+      var toPickup=ao.status==='confirmed';
+      var tLat=toPickup?ao.pickupLat:ao.deliveryLat, tLng=toPickup?ao.pickupLng:ao.deliveryLng;
+      if(tLat!=null) L.polyline([[p.lat,p.lng],[tLat,tLng]],{color:'#C8102E',weight:3,dashArray:'6 6',opacity:.75}).addTo(lm.layer);
+    }
+  });
+  active.forEach(function(o){
+    if(o.pickupLat!=null&&o.status==='confirmed'){
+      L.marker([o.pickupLat,o.pickupLng],{icon:dotIcon('lm-pick','🏪'),title:o.merchant}).bindPopup('<b>Pickup</b><br>'+esc(o.merchant)+' · '+esc(shortId(o.id))).addTo(lm.layer);
+      bounds.push([o.pickupLat,o.pickupLng]);
+    }
+    if(o.deliveryLat!=null){
+      L.marker([o.deliveryLat,o.deliveryLng],{icon:dotIcon('lm-drop','🏠'),title:o.customer}).bindPopup('<b>Drop-off</b><br>'+esc(o.customer)+' · '+esc(shortId(o.id))).addTo(lm.layer);
+      bounds.push([o.deliveryLat,o.deliveryLng]);
+    }
+  });
+  // Fit once per visit; after that the admin's own panning is left alone.
+  if(!lm.fitted&&bounds.length){ lm.map.fitBounds(bounds,{padding:[40,40],maxZoom:15}); lm.fitted=true; }
+}
+function focusDriverOnMap(id){
+  lm.focus=id; lm.fitted=false;
+  navTo('livemap');
+}
+/* A small map for one order inside its side panel. */
+var orderMini=null;
+function renderOrderMiniMap(o){
+  var el=$('sp-map'); if(!el||!leafletReady()) return;
+  if(orderMini){ orderMini.remove(); orderMini=null; }
+  var pts=[];
+  orderMini=L.map(el,{zoomControl:false,attributionControl:true});
+  tileLayer().addTo(orderMini);
+  if(o.driverLoc){ L.marker([o.driverLoc.lat,o.driverLoc.lng],{icon:dotIcon('lm-busy','🛵')}).addTo(orderMini); pts.push([o.driverLoc.lat,o.driverLoc.lng]); }
+  if(o.pickupLat!=null){ L.marker([o.pickupLat,o.pickupLng],{icon:dotIcon('lm-pick','🏪')}).addTo(orderMini); pts.push([o.pickupLat,o.pickupLng]); }
+  if(o.deliveryLat!=null){ L.marker([o.deliveryLat,o.deliveryLng],{icon:dotIcon('lm-drop','🏠')}).addTo(orderMini); pts.push([o.deliveryLat,o.deliveryLng]); }
+  if(pts.length>1) orderMini.fitBounds(pts,{padding:[30,30],maxZoom:16});
+  else if(pts.length) orderMini.setView(pts[0],15);
+  setTimeout(function(){ if(orderMini) orderMini.invalidateSize(); },300);
 }
 
 // ══════════════════════ ACTION NEEDED ══════════════════════
@@ -1451,6 +1593,28 @@ function openOrderPanel(oid){
     if(i<steps.length-1) flow+='<div class="sf-line'+(i<idx-1?' done':'')+'"></div>';
   });
   flow+='</div><div style="text-align:center;margin-bottom:16px">'+badge(o.status)+'</div>';
+  // Live tracking: what the driver is doing now, and where.
+  var live=orderLiveLabel(o);
+  var hasPins=o.driverLoc||o.pickupLat!=null||o.deliveryLat!=null;
+  var liveHtml='';
+  if(live||(hasPins&&OrderStatus.isDriverHeld(o.status))){
+    var dLoc=o.driverLoc, stamp=dLoc&&dLoc.updatedAt&&dLoc.updatedAt.toDate?dLoc.updatedAt.toDate():null;
+    var near='';
+    if(dLoc&&o.status==='confirmed'&&o.pickupLat!=null){
+      var mp=Tracking.distanceM(dLoc.lat,dLoc.lng,o.pickupLat,o.pickupLng);
+      near=Tracking.distanceLabel(mp)+' from pickup · about '+Tracking.etaMinutes(mp)+' min';
+    }else if(dLoc&&o.deliveryLat!=null&&o.status!=='confirmed'){
+      var md=Tracking.distanceM(dLoc.lat,dLoc.lng,o.deliveryLat,o.deliveryLng);
+      near=Tracking.distanceLabel(md)+' from drop-off · about '+Tracking.etaMinutes(md)+' min';
+    }
+    liveHtml='<div class="sp-sec"><div class="sp-sec-title">Live Tracking</div>'+
+      (live?'<div class="sp-row"><span class="sp-lbl">Now</span><span class="sp-val"><b>'+esc(live)+'</b></span></div>':'')+
+      (near?row('Distance',esc(near)):'')+
+      row('Driver GPS',dLoc?(Tracking.isFresh(stamp)?'Live · '+esc(ageText(stamp)):'Last seen '+esc(ageText(stamp))):'Not shared yet')+
+      (o.deliveryLat==null?'<div class="sc-sub">This address has no map pin, so “arrived” comes from the driver’s button.</div>':'')+
+      (hasPins?'<div id="sp-map" class="sp-map"></div>':'')+
+    '</div>';
+  }
 
   var itemsHtml=(o.items||[]).map(function(item){
     if(item&&typeof item==='object'){
@@ -1526,7 +1690,7 @@ function openOrderPanel(oid){
     '</div>':'';
   $('sp-body').innerHTML=
     '<div class="sp-sec"><div class="sp-sec-title">Status Flow</div>'+flow+'</div>'+
-    cancelHtml+failHtml+
+    liveHtml+cancelHtml+failHtml+
     '<div class="sp-sec"><div class="sp-sec-title">Customer</div>'+
       row('Name',esc(o.customer))+row('Phone',esc(phoneFmt(o.custPhone)))+
       row('Delivery Address','<span class="sp-val sm">'+esc(o.address)+'</span>',true)+
@@ -1818,7 +1982,8 @@ function driverCard(d){
   var acts='<button class="pa-btn" data-action="view-driver" data-id="'+esc(d.id)+'">View</button>';
   if(d.rawStatus==='approved'&&!active) acts+='<button class="pa-btn" data-action="driver-assign" data-id="'+esc(d.id)+'">Assign Delivery</button>';
   if(active) acts+='<button class="pa-btn" data-action="driver-active-delivery" data-id="'+esc(d.id)+'">View Active Delivery</button>';
-  if(active&&active.driverLoc) acts+='<button class="pa-btn" data-action="driver-location" data-id="'+esc(d.id)+'">View location</button>';
+  var pos=driverPosition(d.id);
+  if(pos&&Tracking.isFresh(pos.updatedAt)) acts+='<button class="pa-btn" data-action="driver-location" data-id="'+esc(d.id)+'">View location</button>';
   var dial=d.phone&&d.phone!=='—'?phoneDial(d.phone):'';
   if(dial){
     acts+='<a class="pa-btn" href="tel:'+esc(dial)+'">Call</a>'+
@@ -2320,10 +2485,10 @@ function driverActiveDelivery(id){
 /* Client checklist: "view location". The driver app shares GPS only while it
    carries an order (driverLoc on that order), so this exists only then. */
 function driverLocation(id){
-  var d=drivers.find(function(x){ return x.id===id; }); if(!d) return;
-  var o=driverActiveOrder(d);
-  if(!o||!o.driverLoc){ toast('info','Location is shared only while a driver is on a delivery.'); return; }
-  window.open('https://www.google.com/maps/search/?api=1&query='+o.driverLoc.lat+','+o.driverLoc.lng,'_blank','noopener');
+  var pos=driverPosition(id);
+  if(!pos||!Tracking.isFresh(pos.updatedAt)){ toast('info','This driver is not sharing a live location right now (offline, or no GPS in the last 3 minutes).'); return; }
+  closeSidePanel();
+  focusDriverOnMap(id);
 }
 
 // ── DV-7: assign this driver to a waiting order from their card ────────
@@ -3470,7 +3635,7 @@ function wipeWithSub(coll,subs){
 
 function runWipe(status){
   var total=0;
-  return wipeWithSub('users',['addresses']).then(function(n){
+  return wipeWithSub('users',['addresses','credits']).then(function(n){
     total+=n; status('Cleared customers and addresses ('+n+'). Clearing drivers…');
     return wipeWithSub('drivers',['private']);
   }).then(function(n){
@@ -3483,7 +3648,10 @@ function runWipe(status){
     total+=n; status('Cleared notifications ('+n+'). Clearing overseas enquiries…');
     return wipeFlat('overseasInquiries');
   }).then(function(n){
-    total+=n; return total;
+    total+=n; status('Cleared overseas enquiries ('+n+'). Clearing live locations and alerts…');
+    return Promise.all([wipeFlat('driverLocations'),wipeFlat('actionAlerts'),wipeFlat('notificationOpens')]);
+  }).then(function(ns){
+    total+=ns.reduce(function(a,b){ return a+b; },0); return total;
   });
 }
 
@@ -5090,7 +5258,7 @@ document.addEventListener('click',function(e){
       cid=btn.getAttribute('data-cid'),
       iid=btn.getAttribute('data-iid');
   switch(action){
-    case 'view-order':      openOrderPanel(oid); break;
+    case 'view-order':      openOrderPanel(oid); { var ov=orders.find(function(x){ return x._docId===oid||x.id===oid; }); if(ov) renderOrderMiniMap(ov); } break;
     case 'an-resolve':      resolveAlert(id); break;
     case 'an-toggle':       actionShowAll=!actionShowAll; renderActionNeeded(); break;
     case 'save-order-new':  saveCreateOrder(); break;
@@ -5117,6 +5285,7 @@ document.addEventListener('click',function(e){
     case 'driver-assign':   assignFromDriver(id); break;
     case 'driver-active-delivery': driverActiveDelivery(id); break;
     case 'driver-location': driverLocation(id); break;
+    case 'lm-focus':        focusDriverOnMap(id); renderLiveMap(true); break;
     case 'merchant-menu': viewMerchantMenu(id); break;
     case 'merchant-open': toggleMerchant(id); break;
     case 'merchant-active': toggleMerchantActive(id); break;
