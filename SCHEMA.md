@@ -552,6 +552,7 @@ name, phone number and street address.
 | `quoteTotal` | int \| null | — | **admin only** | `quoteItemsCost + quoteServiceFee + quoteDeliveryFee`, **derived on save** so the stored total cannot disagree with its parts. |
 | `quoteExpiresAt` | Timestamp \| null | — | **admin only** | When the quote lapses. `null` = no expiry set. |
 | `quotePaymentStatus` | string | — | **admin only** | `'' \| 'pending' \| 'paid' \| 'refunded' \| 'waived'`. Free-form enough that this is a display slug, not enforced. |
+| `quoteCurrency` | string | — | **admin only** | `'USD' | 'JMD'`; rules refuse anything else. Absent on quotes saved before it existed — those were entered in J$. The customer sees the quote on their request as `USD$31` / `J$3,100`. |
 | `quotedBy` | string \| null | — | **admin only** | Admin uid who saved the quote. |
 | `quotedAt` | Timestamp \| null | — | **admin only** | When the quote was last saved. |
 | `createdAt` | Timestamp | ✅ | customer @ create | `serverTimestamp()`, so it is briefly `null` on the client. Both the app and the panel sort an unresolved enquiry **first** — it is the newest thing there is, and the one most needing attention. |

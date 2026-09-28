@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipeast_customer/utils/category.dart';
 import 'package:shipeast_customer/utils/dates.dart';
+import 'package:shipeast_customer/utils/money.dart';
 import 'package:shipeast_customer/utils/names.dart';
 
 /// Client checklist (Sep 2026): one date format, Title Case names, and
@@ -21,6 +22,14 @@ void main() {
 
     test('longWithTime joins the two', () {
       expect(SeDate.longWithTime(dt), 'July 31, 2026 · 6:42 PM');
+    });
+  });
+
+  group('Money.inCurrency', () {
+    test('US dollars read USD\$31; anything else is J\$', () {
+      expect(Money.inCurrency(31, 'USD'), 'USD\$31');
+      expect(Money.inCurrency(3100, 'JMD'), 'J\$3,100');
+      expect(Money.inCurrency(3100, null), 'J\$3,100');
     });
   });
 

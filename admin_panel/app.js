@@ -79,6 +79,10 @@ function icon(name,cls){ return '<svg class="ic '+(cls||'')+'" aria-hidden="true
    and the customer read the same order differently. The 'en-JM' locale is kept
    for thousands grouping only; it is not what chooses the symbol. */
 function money(n){ return 'J$'+Math.round(Number(n)||0).toLocaleString('en-JM'); }
+/* A Shop & Deliver quote can be in US dollars — the customer is overseas
+   (client checklist: "J$3,100 and USD$31 if it's in US dollars"). A quote
+   saved before the currency existed has none and was entered in J$. */
+function moneyIn(n,cur){ return (cur==='USD'?'USD$':'J$')+Math.round(Number(n)||0).toLocaleString('en-JM'); }
 function parseAmt(a){ var n=parseFloat(String(a==null?'0':a).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
 /* DR-25: one Jamaican phone format app-wide — display "1-876-000-0000", dial
    "+18760000000". Mirrors SePhone in both Flutter apps. An unrecognisable
@@ -786,6 +790,7 @@ function startListeners(){
             quoteTotal:o.quoteTotal!=null?Number(o.quoteTotal):null,
             quoteExpiresAt:o.quoteExpiresAt&&o.quoteExpiresAt.toDate?o.quoteExpiresAt.toDate():null,
             quotePaymentStatus:o.quotePaymentStatus||'',
+            quoteCurrency:o.quoteCurrency||'',
             quotedAt:o.quotedAt&&o.quotedAt.toDate?o.quotedAt.toDate():null,
             createdAt:o.createdAt&&o.createdAt.toDate?o.createdAt.toDate():null,
             updatedAt:o.updatedAt&&o.updatedAt.toDate?o.updatedAt.toDate():null,
@@ -2582,15 +2587,21 @@ function openInquiryPanel(id){
       (p?esc(p.charAt(0).toUpperCase()+p.slice(1)):'Not set')+'</option>';
   }).join('');
   var quoteExpVal=i.quoteExpiresAt?isoDate(i.quoteExpiresAt):'';
+  // New quotes default to US dollars; an existing one keeps what it was saved in.
+  var quoteCur=i.quoteTotal!=null?(i.quoteCurrency||'JMD'):'USD';
+  var curOpts=[['USD','USD$ — US dollars'],['JMD','J$ — Jamaican dollars']].map(function(c){
+    return '<option value="'+c[0]+'"'+(c[0]===quoteCur?' selected':'')+'>'+c[1]+'</option>';
+  }).join('');
   var quoteSummary=i.quoteTotal!=null
-    ? '<div class="sp-row"><span class="sp-lbl">Current quote</span><span class="sp-val money">'+money(i.quoteTotal)+
+    ? '<div class="sp-row"><span class="sp-lbl">Current quote</span><span class="sp-val money">'+moneyIn(i.quoteTotal,quoteCur)+
       (i.quoteExpiresAt?' <span class="cell-mute sm">exp. '+esc(i.quoteExpiresAt.toLocaleDateString('en-JM',{month:'short',day:'numeric'}))+'</span>':'')+'</span></div>'
     : '<div class="empty-copy">No quote sent yet.</div>';
   var quoteHtml=quoteSummary+
-    '<div class="fr"><label for="q-items">Estimated item cost (J$)</label><input id="q-items" type="number" min="0" step="1" value="'+(i.quoteItemsCost!=null?i.quoteItemsCost:'')+'"/></div>'+
-    '<div class="fr"><label for="q-service">Shopping / service fee (J$)</label><input id="q-service" type="number" min="0" step="1" value="'+(i.quoteServiceFee!=null?i.quoteServiceFee:'')+'"/></div>'+
-    '<div class="fr"><label for="q-delivery">Delivery fee (J$)</label><input id="q-delivery" type="number" min="0" step="1" value="'+(i.quoteDeliveryFee!=null?i.quoteDeliveryFee:'')+'"/></div>'+
-    '<div class="sp-row"><span class="sp-lbl">Total quote</span><span class="sp-val money num" id="q-total">'+money(i.quoteTotal||0)+'</span></div>'+
+    '<div class="fr"><label for="q-cur">Currency</label><select id="q-cur">'+curOpts+'</select></div>'+
+    '<div class="fr"><label for="q-items">Estimated item cost</label><input id="q-items" type="number" min="0" step="1" value="'+(i.quoteItemsCost!=null?i.quoteItemsCost:'')+'"/></div>'+
+    '<div class="fr"><label for="q-service">Shopping / service fee</label><input id="q-service" type="number" min="0" step="1" value="'+(i.quoteServiceFee!=null?i.quoteServiceFee:'')+'"/></div>'+
+    '<div class="fr"><label for="q-delivery">Delivery fee</label><input id="q-delivery" type="number" min="0" step="1" value="'+(i.quoteDeliveryFee!=null?i.quoteDeliveryFee:'')+'"/></div>'+
+    '<div class="sp-row"><span class="sp-lbl">Total quote</span><span class="sp-val money num" id="q-total">'+moneyIn(i.quoteTotal||0,quoteCur)+'</span></div>'+
     '<div class="fr"><label for="q-expiry">Quote expires</label><input id="q-expiry" type="date" value="'+quoteExpVal+'"/></div>'+
     '<div class="fr"><label for="q-pay">Payment status</label><select id="q-pay">'+payOpts+'</select></div>'+
     '<button class="btn btn-outline btn-block" data-action="save-quote" data-iid="'+esc(i.id)+'">'+icon('receipt')+'Save quote</button>';
@@ -2625,7 +2636,7 @@ function openInquiryPanel(id){
 function syncQuoteTotal(){
   var t=$('q-total'); if(!t) return;
   var n=function(id){ return Math.max(0,Math.round(Number(($(id)||{}).value)||0)); };
-  t.textContent=money(n('q-items')+n('q-service')+n('q-delivery'));
+  t.textContent=moneyIn(n('q-items')+n('q-service')+n('q-delivery'),($('q-cur')||{}).value);
 }
 /* SD-7: save the quote sub-fields. `quoteTotal` is derived here so the stored
    total can never disagree with its parts. */
@@ -2634,17 +2645,18 @@ function saveQuote(id){
   var n=function(el){ var v=($(el)||{}).value; return v===''?null:Math.max(0,Math.round(Number(v)||0)); };
   var items=n('q-items'),service=n('q-service'),delivery=n('q-delivery');
   var total=(items||0)+(service||0)+(delivery||0);
+  var cur=($('q-cur')||{}).value==='JMD'?'JMD':'USD';
   var expRaw=($('q-expiry')||{}).value||'';
   var expiresAt=null;
   if(expRaw){ var d=new Date(expRaw+'T23:59:59'); if(!isNaN(d.getTime())) expiresAt=Timestamp.fromDate(d); }
   updateDoc(doc(db,'overseasInquiries',id),{
     quoteItemsCost:items,quoteServiceFee:service,quoteDeliveryFee:delivery,
-    quoteTotal:total,quoteExpiresAt:expiresAt,
+    quoteTotal:total,quoteCurrency:cur,quoteExpiresAt:expiresAt,
     quotePaymentStatus:($('q-pay')||{}).value||'',
     quotedBy:auth.currentUser?auth.currentUser.uid:'',
     quotedAt:serverTimestamp(),updatedAt:serverTimestamp()
   }).then(function(){
-    toast('success','Quote saved — J$'+total+'. Email it to '+i.customerName+'.');
+    toast('success','Quote saved — '+moneyIn(total,cur)+'. Email it to '+i.customerName+'.');
     if(panelInquiryId===id) setTimeout(function(){ openInquiryPanel(id); },250);
   }).catch(function(e){ toast('error',e.message,'Could not save quote'); });
 }
@@ -4308,7 +4320,7 @@ document.addEventListener('input',function(e){
   if(e.target.id==='dash-search') renderDashboard();
   if(e.target.id==='of-area') readOrderFilters();
   if(e.target.id==='drv-search'){ driverSearch=e.target.value.trim().toLowerCase(); renderDrivers(); }
-  if(['q-items','q-service','q-delivery'].indexOf(e.target.id)>-1) syncQuoteTotal();
+  if(['q-cur','q-items','q-service','q-delivery'].indexOf(e.target.id)>-1) syncQuoteTotal();
   if(e.target.id==='customers-search'){ customerSearch=e.target.value.trim(); renderCustomers(); }
   if(e.target.id==='overseas-search'){ overseasSearch=e.target.value.trim(); renderOverseas(); }
   if(['pr-bands','pr-overage','pr-packing'].indexOf(e.target.id)>-1) renderPricingPreview();

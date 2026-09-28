@@ -36,6 +36,12 @@ class Money {
     return '${rounded < 0 ? '-' : ''}$buf';
   }
 
+  /// A Shop & Deliver quote, in the currency the admin quoted it in:
+  /// `USD$31` for US dollars, `J$3,100` otherwise (client checklist, Sep
+  /// 2026). Mirrors `moneyIn()` in `admin_panel/app.js`.
+  static String inCurrency(num? value, String? currency) =>
+      currency == 'USD' ? 'USD\$${plain(value)}' : format(value);
+
   /// Delivery fee for display: free deliveries say so rather than showing
   /// "J$0", which reads like a missing value.
   static String deliveryFee(int fee) => fee == 0 ? 'Free' : format(fee);

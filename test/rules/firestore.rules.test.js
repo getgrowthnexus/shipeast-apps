@@ -941,6 +941,22 @@ describe('Phase 5 — order types, cancellation and overseas enquiries', () => {
     await assertFails(
       updateDoc(doc(asCustomer(), 'overseasInquiries/i2'), { quoteTotal: 0 })
     );
+    // The quote's currency: US or Jamaican dollars, nothing else.
+    await assertSucceeds(
+      updateDoc(doc(asAdmin(), 'overseasInquiries/i2'), {
+        quoteTotal: 31, quoteCurrency: 'USD', updatedAt: new Date()
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(asAdmin(), 'overseasInquiries/i2'), {
+        quoteCurrency: 'JMD', updatedAt: new Date()
+      })
+    );
+    await assertFails(
+      updateDoc(doc(asAdmin(), 'overseasInquiries/i2'), {
+        quoteCurrency: 'EUR', updatedAt: new Date()
+      })
+    );
   });
 
   test('an admin cannot rewrite what the customer said they are sending', async () => {

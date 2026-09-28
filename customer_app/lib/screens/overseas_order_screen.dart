@@ -46,6 +46,7 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
+import '../utils/money.dart';
 import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_button.dart';
 import '../widgets/se_page.dart';
@@ -362,7 +363,7 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
               SeTextField(
                 controller: _budget,
                 label: 'Approximate budget (optional)',
-                hint: 'e.g. J\$10,000 or US\$70',
+                hint: 'e.g. USD\$70 or J\$10,000',
                 icon: SeIcons.scales,
                 errorText: _errors['budgetRaw'],
               ),
@@ -524,6 +525,15 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
             OverseasStatus.explain(inquiry.status),
             style: SeType.bodyS.copyWith(color: SeColors.ink400),
           ),
+          // The admin's quote, in the currency it was given in — US dollars
+          // for an overseas customer (client checklist, Sep 2026).
+          if (inquiry.quoteTotal != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Quote: ${Money.inCurrency(inquiry.quoteTotal, inquiry.quoteCurrency)}',
+              style: SeType.title.copyWith(fontSize: 14, color: SeColors.ink900),
+            ),
+          ],
         ],
       ),
     );

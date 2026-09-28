@@ -421,8 +421,11 @@ service cloud.firestore {
                           'updatedAt',
                           'quoteItemsCost', 'quoteServiceFee', 'quoteDeliveryFee',
                           'quoteTotal', 'quoteExpiresAt', 'quotePaymentStatus',
-                          'quotedAt', 'quotedBy'])
-                    && incoming().status in overseasStatus();
+                          'quotedAt', 'quotedBy', 'quoteCurrency'])
+                    && incoming().status in overseasStatus()
+                    // The customer is overseas, so a quote may be in US
+                    // dollars. Absent on quotes saved before this existed.
+                    && incoming().get('quoteCurrency', 'JMD') in ['USD', 'JMD'];
 
       // Kept, never deleted in normal operation — an enquiry is the only
       // account of a request that may have been declined for a reason worth

@@ -405,6 +405,13 @@ class OverseasInquiry {
   final String recipientParish;
   final DateTime? createdAt;
 
+  /// The admin's quote (SD-7), once one is saved; null until then.
+  final int? quoteTotal;
+
+  /// `'USD'` or `'JMD'`. A quote saved before the currency existed has none
+  /// and was entered in Jamaican dollars.
+  final String quoteCurrency;
+
   const OverseasInquiry({
     required this.id,
     required this.status,
@@ -412,6 +419,8 @@ class OverseasInquiry {
     required this.recipientName,
     required this.recipientParish,
     required this.createdAt,
+    this.quoteTotal,
+    this.quoteCurrency = 'JMD',
   });
 
   factory OverseasInquiry.fromMap(String id, Map<String, dynamic> data) {
@@ -425,6 +434,8 @@ class OverseasInquiry {
       // serverTimestamp() resolves after the local write, so a just-submitted
       // request legitimately has no date for a moment.
       createdAt: created is Timestamp ? created.toDate() : null,
+      quoteTotal: (data['quoteTotal'] as num?)?.round(),
+      quoteCurrency: data['quoteCurrency'] == 'USD' ? 'USD' : 'JMD',
     );
   }
 
