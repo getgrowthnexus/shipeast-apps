@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/se_colors.dart';
+import '../utils/dates.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
@@ -93,21 +94,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     if (createdAt == null) return '';
     try {
       final dt = (createdAt as Timestamp).toDate();
-      const months = [
-        '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul',
-        'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ];
-      final hour12 =
-          dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
-      final minute = dt.minute.toString().padLeft(2, '0');
-      final ampm = dt.hour < 12 ? 'AM' : 'PM';
       final now = DateTime.now();
       final sameDay =
           dt.year == now.year && dt.month == now.month && dt.day == now.day;
       // "Today, 6:42 PM" is what a customer checking a live order wants; the
       // full date only earns its space once the order is history.
-      if (sameDay) return 'Today, $hour12:$minute $ampm';
-      return '${months[dt.month]} ${dt.day}, $hour12:$minute $ampm';
+      if (sameDay) return 'Today, ${SeDate.clock(dt)}';
+      return SeDate.longWithTime(dt);
     } catch (_) {
       return '';
     }
@@ -181,7 +174,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       subtitle: _loading
           ? null
           : live > 0
-              ? '$live in progress'
+              ? '$live Active Order${live == 1 ? '' : 's'}'
               : null,
       capBottom: SeShellTabs(
         tabs: _tabs,

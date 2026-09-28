@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/se_colors.dart';
+import '../utils/category.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../services/firestore_service.dart';
@@ -164,7 +165,7 @@ class _SearchScreenState extends State<SearchScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SeShellField(
-            hint: 'Restaurants, shops, items…',
+            hint: 'Search stores, food, groceries, items…',
             controller: _ctrl,
             focusNode: _focus,
             onChanged: (v) => setState(() => _query = v),
@@ -185,7 +186,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 final (label, icon, _) = _quickCats[i];
                 final on = _category == label;
                 return SeShellChip(
-                  label: label,
+                  label: MerchantCategory.label(label),
                   icon: icon,
                   selected: on,
                   onTap: () => setState(() => _category = on ? '' : label),
@@ -229,7 +230,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: SeIcons.search,
                   title: 'Nothing matched',
                   message: _query.trim().isEmpty
-                      ? 'No $_category merchants are listed yet.'
+                      ? 'No ${MerchantCategory.label(_category)} merchants are listed yet.'
                       : 'No merchants match “${_query.trim()}”. '
                           'Try a shorter word.',
                   hue: SeColors.ink500,

@@ -48,6 +48,7 @@ class SeIcons {
   static const IconData heartFill = Icons.favorite_rounded;
   static const IconData star = Icons.star_rounded;
   static const IconData starOutline = Icons.star_border_rounded;
+  static const IconData gift = Icons.card_giftcard_rounded;
   static const IconData clock = Icons.access_time_rounded;
   static const IconData bike = Icons.delivery_dining_rounded;
   static const IconData scales = Icons.monitor_weight_outlined;

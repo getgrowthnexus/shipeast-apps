@@ -9,6 +9,7 @@ import '../services/firestore_service.dart';
 import '../services/notification_service.dart';
 import '../utils/phone.dart';
 import '../theme/se_colors.dart';
+import '../utils/names.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
@@ -44,7 +45,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _avatarUrl;
 
   int _orderCount = 0;
-  double _avgRating = 0;
   int _savedCount = 0;
   bool _statsLoaded = false;
 
@@ -72,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (doc.exists && mounted) {
         final data = doc.data()!;
         setState(() {
-          _name = data['name'] as String? ?? '';
+          _name = SeName.title(data['name'] as String?);
           _phone = data['phone'] as String? ?? '';
           _email = data['email'] as String? ?? user.email ?? '';
           _avatarUrl = data['avatarUrl'] as String?;
@@ -85,7 +85,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() {
           _orderCount = stats['orderCount'] as int? ?? 0;
-          _avgRating = (stats['avgRating'] as num?)?.toDouble() ?? 0;
           _savedCount = stats['savedCount'] as int? ?? 0;
           _statsLoaded = true;
         });
@@ -197,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SeButton(
               label: 'Save changes',
               onPressed: () {
-                final name = nameCtrl.text.trim();
+                final name = SeName.title(nameCtrl.text);
                 // DR-25: normalise to the one app-wide format on save.
                 final phone = SePhone.format(phoneCtrl.text);
                 final email = emailCtrl.text.trim();
@@ -247,7 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SeRow(
                 icon: SeIcons.creditCard,
                 label: 'Payment methods',
-                subtitle: 'Cash on delivery today',
+                subtitle: 'Cards, cash, other',
                 onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -257,14 +256,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SeRow(
                 icon: SeIcons.shield,
                 label: 'Privacy & security',
-                subtitle: 'Password, data and permissions',
+                subtitle: 'Password, account and permissions',
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const PrivacySecurityScreen())),
               ),
               SeRow(
                 icon: SeIcons.help,
                 label: 'Help & support',
-                subtitle: 'FAQs, WhatsApp and email',
+                subtitle: 'FAQs, WhatsApp, phone and email',
                 onTap: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => const HelpSupportScreen())),
               ),
@@ -385,9 +384,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _stats() {
-    // An em dash is the honest answer for a customer who has not been rated
-    // yet; a 0.0 rating is a claim, not a placeholder.
-    final rating = _avgRating > 0 ? _avgRating.toStringAsFixed(1) : '—';
     return Row(
       children: [
         Expanded(
@@ -401,9 +397,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: SeStat(
-            icon: SeIcons.star,
-            value: _statsLoaded ? rating : '–',
-            label: 'Rating',
+            // Client checklist: "Orders · Rewards · Saved". There is no rewards
+            // programme yet, so the tile says so rather than inventing a figure.
+            icon: SeIcons.gift,
+            value: 'Soon',
+            label: 'Rewards',
             hue: SeColors.star,
           ),
         ),

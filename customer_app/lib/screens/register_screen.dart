@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../services/notification_service.dart';
 import '../utils/phone.dart';
 import '../theme/se_colors.dart';
+import '../utils/names.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_typography.dart';
 import '../widgets/se_auth_scaffold.dart';
@@ -47,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    final name = _nameController.text.trim();
+    final name = SeName.title(_nameController.text);
     // DR-25: store the number in the one app-wide format.
     final phone = SePhone.format(_phoneController.text);
     final email = _emailController.text.trim();

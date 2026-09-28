@@ -71,7 +71,7 @@ Widget homePreview() => SePageScaffold(
           ),
         ),
       ),
-      capBottom: const SeShellField(hint: 'Search restaurants, shops, items…'),
+      capBottom: const SeShellField(hint: 'What are you looking for?'),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(0, 22, 0, 110),
         children: [
@@ -81,7 +81,7 @@ Widget homePreview() => SePageScaffold(
               children: [
                 for (final c in const [
                   ('Food', SeIcons.food, SeColors.catFood, SeColors.catFoodTint),
-                  ('Grocery', SeIcons.grocery, SeColors.catGrocery,
+                  ('Groceries', SeIcons.grocery, SeColors.catGrocery,
                       SeColors.catGroceryTint),
                   ('Packages', SeIcons.packages, SeColors.catPackages,
                       SeColors.catPackagesTint),
@@ -123,9 +123,9 @@ Widget homePreview() => SePageScaffold(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Send to family back home', style: SeType.title),
+                        Text('Shop for Family in Jamaica 🇯🇲', style: SeType.title),
                         const SizedBox(height: 2),
-                        Text('We shop in Jamaica and deliver to them.',
+                        Text('Order from overseas & we shop in 🇯🇲 & deliver to their door.',
                             style:
                                 SeType.bodyS.copyWith(color: SeColors.ink500)),
                       ],
@@ -140,7 +140,7 @@ Widget homePreview() => SePageScaffold(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
             child: SeSectionTitle(
-                title: 'Popular near you',
+                title: 'Popular in Kingston & St. Thomas',
                 actionLabel: 'See all',
                 onAction: () {}),
           ),
@@ -176,7 +176,7 @@ Widget searchPreview() => SePageScaffold(
       capBottom: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SeShellField(hint: 'Restaurants, shops, items…'),
+          const SeShellField(hint: 'Search stores, food, groceries, items…'),
           const SizedBox(height: 12),
           SizedBox(
             height: 32,
@@ -190,7 +190,7 @@ Widget searchPreview() => SePageScaffold(
                     onTap: () {}),
                 const SizedBox(width: 8),
                 SeShellChip(
-                    label: 'Grocery',
+                    label: 'Groceries',
                     icon: SeIcons.grocery,
                     selected: false,
                     onTap: () {}),
@@ -262,7 +262,7 @@ Widget alertsPreview() => SePageScaffold(
 
 Widget ordersPreview() => SePageScaffold(
       title: 'Orders',
-      subtitle: '1 in progress',
+      subtitle: '1 Active Order',
       showBack: false,
       capBottom: SeShellTabs(
         tabs: const ['All', 'Active', 'Completed', 'Cancelled'],
@@ -382,17 +382,17 @@ Widget profilePreview() => SePageScaffold(
               SeRow(
                   icon: SeIcons.creditCard,
                   label: 'Payment methods',
-                  subtitle: 'Cash on delivery today',
+                  subtitle: 'Cards, cash, other',
                   onTap: () {}),
               SeRow(
                   icon: SeIcons.shield,
                   label: 'Privacy & security',
-                  subtitle: 'Password, data and permissions',
+                  subtitle: 'Password, account and permissions',
                   onTap: () {}),
               SeRow(
                   icon: SeIcons.help,
                   label: 'Help & support',
-                  subtitle: 'FAQs, WhatsApp and email',
+                  subtitle: 'FAQs, WhatsApp, phone and email',
                   onTap: () {}),
             ],
           ),
@@ -785,8 +785,8 @@ Widget _addressRow(String label, String text, IconData icon, bool selected) =>
     );
 
 Widget overseasPreview() => SePageScaffold(
-      title: 'Send to family in Jamaica',
-      subtitle: 'We shop locally and deliver to them',
+      title: 'Shop for Family in Jamaica 🇯🇲',
+      subtitle: 'Order from overseas & we shop in 🇯🇲 & deliver to their door.',
       bottomBar: SeBottomBar(
         child: SeButton(
             label: 'Send request', icon: SeIcons.send, onPressed: () {}),

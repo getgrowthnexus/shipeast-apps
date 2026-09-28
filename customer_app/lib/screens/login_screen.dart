@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/notification_service.dart';
 import '../theme/se_colors.dart';
+import '../utils/names.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
@@ -76,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final snap = await docRef.get();
       if (!snap.exists) {
         await docRef.set({
-          'name': user.displayName ?? '',
+          'name': SeName.title(user.displayName),
           'email': user.email ?? '',
           'phone': user.phoneNumber ?? '',
           if (user.photoURL != null) 'avatarUrl': user.photoURL,

@@ -9,6 +9,7 @@ import '../models/overseas_inquiry.dart';
 import '../models/package_pricing.dart';
 import '../models/promo_code.dart';
 import '../models/promo_eligibility.dart';
+import '../utils/names.dart';
 
 class FirestoreService {
   static final _db = FirebaseFirestore.instance;
@@ -75,7 +76,7 @@ class FirestoreService {
     String customerPhone = '';
     try {
       final doc = await _db.collection('users').doc(user.uid).get();
-      customerName = doc.data()?['name'] as String? ?? '';
+      customerName = SeName.title(doc.data()?['name'] as String?);
       // The driver needs a number to reach the customer when a delivery
       // address is ambiguous. Nothing wrote it before, so the driver app had
       // no one to call — the customer could call the driver but never the
@@ -198,7 +199,7 @@ class FirestoreService {
     String customerPhone = '';
     try {
       final doc = await _db.collection('users').doc(user.uid).get();
-      customerName = doc.data()?['name'] as String? ?? '';
+      customerName = SeName.title(doc.data()?['name'] as String?);
       customerPhone = doc.data()?['phone'] as String? ?? '';
     } catch (_) {}
 

@@ -3,7 +3,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/se_colors.dart';
+import '../utils/names.dart';
 import '../utils/money.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
@@ -39,6 +41,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  /// The two areas ShipEast serves. The customer picks one in the cap
+  /// ("Delivering to …"); remembered on the device between launches.
+  static const _areas = ['St. Thomas', 'Kingston'];
+  static const _areaPrefKey = 'deliveryArea';
+  String _area = _areas.first;
+
   int _selectedCategory = 0;
   String _userName = '';
   String? _avatarUrl;
@@ -64,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Category tile spec: icon + per-category hue (SEDS §1.5).
   static const List<Map<String, dynamic>> _categories = [
     {'icon': SeIcons.food, 'label': 'Food', 'hue': SeColors.catFood, 'tint': SeColors.catFoodTint},
-    {'icon': SeIcons.grocery, 'label': 'Grocery', 'hue': SeColors.catGrocery, 'tint': SeColors.catGroceryTint},
+    {'icon': SeIcons.grocery, 'label': 'Groceries', 'hue': SeColors.catGrocery, 'tint': SeColors.catGroceryTint},
     {'icon': SeIcons.packages, 'label': 'Packages', 'hue': SeColors.catPackages, 'tint': SeColors.catPackagesTint},
     {'icon': SeIcons.pharmacy, 'label': 'Pharmacy', 'hue': SeColors.catPharmacy, 'tint': SeColors.catPharmacyTint},
   ];
@@ -87,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       statusBarIconBrightness: Brightness.light,
     ));
     _loadUserName();
+    _loadArea();
     _loadPackagePricing();
     _subscribeMerchants(0);
     _subscribeMerchants(1);
@@ -123,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         final name = data?['name'] as String?;
         if (name != null && name.isNotEmpty) {
-          _userName = name;
+          _userName = SeName.title(name);
         }
         _avatarUrl = data?['avatarUrl'] as String?;
       });
@@ -433,20 +442,97 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ── Delivery area ─────────────────────────────────────────────────────────
+
+  Future<void> _loadArea() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_areaPrefKey);
+      if (saved != null && _areas.contains(saved) && mounted) {
+        setState(() => _area = saved);
+      }
+    } catch (_) {
+      // No stored choice (or no storage) — keep the default area.
+    }
+  }
+
+  Future<void> _setArea(String area) async {
+    setState(() => _area = area);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_areaPrefKey, area);
+    } catch (_) {
+      // Remembered for this session only.
+    }
+  }
+
+  void _pickArea() {
+    showSeBottomSheet<void>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: SeSpacing.gutter,
+          right: SeSpacing.gutter,
+          bottom: MediaQuery.of(ctx).padding.bottom + SeSpacing.x5,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SeSheetHandle(),
+            const SizedBox(height: SeSpacing.x3),
+            Text('Where are we delivering?', style: SeType.h3),
+            const SizedBox(height: SeSpacing.x4),
+            for (final area in _areas)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(SeIcons.locationFill,
+                    color: SeColors.brand),
+                title: Text('$area, Jamaica', style: SeType.title),
+                trailing: area == _area
+                    ? const Icon(SeIcons.check, color: SeColors.brand)
+                    : null,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _setArea(area);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Cap ───────────────────────────────────────────────────────────────────
 
   Widget _greetingBlock() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Icon(SeIcons.locationFill,
-                  size: 13, color: SeColors.shellMark),
-              const SizedBox(width: 4),
-              Text('St. Thomas, Jamaica',
-                  style: SeType.label.copyWith(color: SeColors.shellMark)),
-            ],
+          // Client checklist: "Delivering to 📍 St. Thomas, Jamaica" — tap to
+          // switch between the two areas we serve.
+          GestureDetector(
+            onTap: _pickArea,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Delivering to ',
+                    style: SeType.label.copyWith(
+                        color: SeColors.shellInk.withValues(alpha: 0.78))),
+                Icon(SeIcons.locationFill,
+                    size: 13, color: SeColors.shellMark),
+                const SizedBox(width: 2),
+                Flexible(
+                  child: Text('$_area, Jamaica',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          SeType.label.copyWith(color: SeColors.shellMark)),
+                ),
+                Icon(SeIcons.caretDown, size: 16, color: SeColors.shellMark),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -513,7 +599,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// results; a live field here would need to own them too, and then there
   /// would be two.
   Widget _searchField() => SeShellField(
-        hint: 'Search restaurants, shops, items…',
+        hint: 'What are you looking for?',
         onTap: () => Navigator.pushNamed(context, '/search'),
       );
 
@@ -574,9 +660,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       // The total is confirmed by hand, so the card promises
                       // what the screen behind it actually does: a request to
                       // shop and deliver, answered by a person.
-                      Text('Send to family back home', style: SeType.title),
+                      Text('Shop for Family in Jamaica 🇯🇲', style: SeType.title),
                       const SizedBox(height: 2),
-                      Text('We shop in Jamaica and deliver to them.',
+                      Text('Order from overseas & we shop in 🇯🇲 & deliver to their door.',
                           style: SeType.bodyS.copyWith(color: SeColors.ink500),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis),
@@ -661,7 +747,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: SeSpacing.gutter),
           child: SeSectionTitle(
-            title: 'Popular near you',
+            title: 'Popular in Kingston & St. Thomas',
             actionLabel: 'See all',
             onAction: () => Navigator.push(
               context,

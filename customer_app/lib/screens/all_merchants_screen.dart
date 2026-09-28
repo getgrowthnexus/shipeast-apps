@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/se_colors.dart';
+import '../utils/category.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../services/firestore_service.dart';
@@ -23,7 +24,7 @@ class AllMerchantsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SePageScaffold(
-      title: 'All $category',
+      title: 'All ${MerchantCategory.label(category)}',
       subtitle: 'Every partner near you',
       child: StreamBuilder<List<Map<String, dynamic>>>(
         stream: FirestoreService.merchantsByCategory(category),
@@ -39,7 +40,7 @@ class AllMerchantsScreen extends StatelessWidget {
                 child: SeEmptyState(
                   icon: SeIcons.storefront,
                   title: 'No merchants yet',
-                  message: 'We are onboarding $category partners near you — '
+                  message: 'We are onboarding ${MerchantCategory.label(category)} partners near you — '
                       'check back soon.',
                 ),
               ),

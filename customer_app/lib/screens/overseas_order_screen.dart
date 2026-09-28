@@ -186,8 +186,8 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
     final sent = _submittedId != null;
 
     return SePageScaffold(
-      title: 'Send to family in Jamaica',
-      subtitle: 'We shop locally and deliver to them',
+      title: 'Shop for Family in Jamaica 🇯🇲',
+      subtitle: 'Order from overseas & we shop in 🇯🇲 & deliver to their door.',
       bottomBar: sent
           ? null
           : SeBottomBar(

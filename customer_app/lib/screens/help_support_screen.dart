@@ -17,7 +17,7 @@ class HelpSupportScreen extends StatelessWidget {
 
   static const _faqs = [
     {
-      'q': 'How does ShipEast work?',
+      'q': 'How does ordering with Shipeast work?',
       'a':
           'ShipEast connects you with local merchants and delivery drivers in '
               'St. Thomas, Jamaica. Browse merchants, add items to your cart, '
@@ -79,7 +79,7 @@ class HelpSupportScreen extends StatelessWidget {
                 icon: SeIcons.chat,
                 hue: const Color(0xFF25D366),
                 label: 'WhatsApp',
-                subtitle: 'Fastest — message the team directly',
+                subtitle: 'Fastest way to reach our support team',
                 onTap: () => _launch('https://wa.me/18765559988'),
               ),
               SeRow(

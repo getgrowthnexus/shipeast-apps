@@ -7,8 +7,8 @@ class SeBrand {
   SeBrand._();
 
   /// Keep in lockstep with pubspec `version:` (before the `+build`).
-  static const String version = '1.2.2';
-  static const String tagline = 'Couriers & Bearer Service · Jamaica';
+  static const String version = '1.2.3';
+  static const String tagline = 'Packages • Groceries • Errands';
 
   /// The registered company, spelled the way it is on paper. Set under the
   /// wordmark on the signed-out screen — a delivery app asking for an address
@@ -17,7 +17,7 @@ class SeBrand {
 
   /// Tracked-out strap for the launch screen. Short enough to hold one line on
   /// a 320dp phone at the wide letter-spacing the lockup needs.
-  static const String strapline = 'COURIERS & DELIVERY · JAMAICA';
+  static const String strapline = 'PACKAGES • GROCERIES • ERRANDS';
 }
 
 /// ShipEast wordmark — `Ship` + `East` in one face, two tones.
