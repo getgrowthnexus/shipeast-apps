@@ -32,7 +32,7 @@ void main() {
     // how this test hangs rather than how it passes.
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('Apply to drive'), findsOneWidget);
+    expect(find.text('Become a Shipeast driver'), findsOneWidget);
     expect(find.textContaining('Already driving with us?'), findsOneWidget);
 
     // Unmount, or that idle ticker is still running when the test ends.

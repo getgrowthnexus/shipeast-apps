@@ -450,7 +450,7 @@ class _ActionSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SeButton(
-                label: 'Apply to drive',
+                label: 'Become a Shipeast driver',
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const RegisterScreen()),

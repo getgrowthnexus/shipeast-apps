@@ -31,20 +31,30 @@ Anything done in the Codespace *after* 2026-08-03 that was never pushed is
 not recoverable from GitHub; compare the APKs you have against this build and
 list what's missing.
 
-## Branches kept
+## Branches and tags
 
-- `main` — combined, current.
-- `archive/main-before-merge-2026-09-20` — old `main` exactly as it was.
-- `feat/*`, `redesign/customer-app-ui` — every branch from the old repo.
-- Remote renamed `old-github` so nothing pushes there by accident.
-- Full-history backup bundle: `../ShipEast Backup/shipeast-full-history-*.bundle`
-  (restore with `git clone <bundle> <folder>`).
-- PR descriptions/discussion: `docs/github-archive/pull-requests.md`.
+`main` is the only branch. Nothing is pending: every old feature branch
+(`feat/admin-brand-2026`, `feat/admin-brand-sidebar`, `feat/admin-seds`,
+`feat/p1-customer-status`, `feat/p1-driver-admin`, `feat/p2-backend`,
+`feat/p3-money`) is fully contained in `main`'s history and was deleted.
+
+Snapshots kept as tags (tags do not trigger the branch-push workflows):
+
+- `archive/main-2026-09-20` — old `main` (`c4537fa`) exactly as it was.
+- `archive/customer-redesign-2026-06` — the June customer redesign (old PR 1),
+  never merged; superseded by the August redesign. Reference only.
+- `customer-latest`, `driver-latest` — moved by CI to each published APK.
+
+Full-history backup with every original branch name:
+`../ShipEast Backup/shipeast-full-history-*.bundle` on the owner's PC
+(restore with `git clone <bundle> <folder>`). PR descriptions/discussion:
+`docs/github-archive/pull-requests.md`.
 
 ## Moving to the new GitHub repo
 
-1. Create an empty repo on the new account (no README), then:
-   `git remote add origin <new-url>` and `git push -u origin --all && git push origin --tags`.
+1. **Done 2026-09-28** — pushed to `getgrowthnexus/shipeast-apps`. First CI
+   run there compiled both apps; the one failing test (a Sep-20 promo test
+   with a wrong fixture) was fixed, and both APKs published.
 2. Add Actions secrets (values are never readable from the old repo):
    - `CUSTOMER_KEYSTORE_BASE64`, `CUSTOMER_KEYSTORE_PASSWORD`, `CUSTOMER_KEY_ALIAS`
    - `DRIVER_KEYSTORE_BASE64`, `DRIVER_KEYSTORE_PASSWORD`, `DRIVER_KEY_ALIAS`
