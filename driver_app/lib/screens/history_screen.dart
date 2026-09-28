@@ -207,10 +207,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final id = order['id'] as String? ?? '';
     final shortId =
         id.length > 8 ? '#${id.substring(0, 8).toUpperCase()}' : '#$id';
-    final pickupAddr = order['merchantAddress'] as String? ??
-        order['address'] as String? ??
-        '—';
-    final deliverAddr = order['deliveryAddress'] as String? ?? '—';
+    // Client checklist: the card shows the drop-off area only ("Morant Bay,
+    // St. Thomas"); the full address is in the detail sheet.
+    final dropArea = AreaName.short(order['deliveryAddress'] as String?);
     final total = (order['total'] as num?)?.toInt() ?? 0;
     final commission = DriverPay.creditedOn(order);
     final dateStr = _formatDate(
@@ -269,7 +268,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               const Icon(SeIcons.locationLine, size: 14, color: SeColors.ink300),
               const SizedBox(width: SeSpacing.x1),
               Expanded(
-                child: Text('$pickupAddr → $deliverAddr',
+                child: Text(dropArea.isEmpty ? '—' : 'Drop-off: $dropArea',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: SeType.bodyS.copyWith(color: SeColors.ink500)),

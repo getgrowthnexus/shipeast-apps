@@ -227,6 +227,8 @@
 .mcd.open .mcd-more{display:flex;flex-direction:column;gap:var(--sp-3);}
 /* The actions land at the bottom of the revealed half, over their own rule, so
    the reveal reads as "detail, then what you can do about it". */
+.mcd-qa{display:flex;flex-wrap:wrap;gap:4px;padding-top:var(--sp-3);border-top:1px solid var(--line);}
+.mcd-off .mcd-cover{filter:grayscale(1);opacity:.7;}
 .mcd-acts{display:flex;gap:var(--gap-tight);flex-shrink:0;
   padding-top:var(--sp-3);border-top:1px solid var(--line);}
 
@@ -514,6 +516,8 @@
 .dc-star{width:15px;height:15px;color:var(--star);}
 .dc-avail{font-weight:600;color:var(--success);}
 .dc-avail.muted{color:var(--ink-3);font-weight:500;}
+.dc-state .dc-k{color:var(--ink-3);}
+.dc-state b{font-weight:600;color:var(--ink);}
 .dc-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
 /* the online toggle sitting next to the status badge on a card */
 .dc-badges .tgl{transform:scale(.85);transform-origin:right center;}

@@ -412,6 +412,13 @@ class OverseasInquiry {
   /// and was entered in Jamaican dollars.
   final String quoteCurrency;
 
+  /// When the quote stops being valid, if the admin set one.
+  final DateTime? quoteExpiresAt;
+
+  /// The customer's answer in the app: `'accepted'`, `'declined'`, or `''`
+  /// (client checklist, admin round: "customer accepted/declined").
+  final String customerResponse;
+
   const OverseasInquiry({
     required this.id,
     required this.status,
@@ -421,7 +428,19 @@ class OverseasInquiry {
     required this.createdAt,
     this.quoteTotal,
     this.quoteCurrency = 'JMD',
+    this.quoteExpiresAt,
+    this.customerResponse = '',
   });
+
+  /// A quote is out and waiting on the customer. Mirrors the rule in
+  /// firestore.rules: only in these two statuses can the customer answer.
+  bool canRespond([DateTime? now]) =>
+      quoteTotal != null &&
+      customerResponse.isEmpty &&
+      (status == OverseasStatus.quoteSent ||
+          status == OverseasStatus.awaitingCustomer) &&
+      (quoteExpiresAt == null ||
+          quoteExpiresAt!.isAfter(now ?? DateTime.now()));
 
   factory OverseasInquiry.fromMap(String id, Map<String, dynamic> data) {
     final created = data['createdAt'];
@@ -436,6 +455,10 @@ class OverseasInquiry {
       createdAt: created is Timestamp ? created.toDate() : null,
       quoteTotal: (data['quoteTotal'] as num?)?.round(),
       quoteCurrency: data['quoteCurrency'] == 'USD' ? 'USD' : 'JMD',
+      quoteExpiresAt: data['quoteExpiresAt'] is Timestamp
+          ? (data['quoteExpiresAt'] as Timestamp).toDate()
+          : null,
+      customerResponse: (data['customerResponse'] as String?) ?? '',
     );
   }
 

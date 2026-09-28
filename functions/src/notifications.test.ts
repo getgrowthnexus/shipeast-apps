@@ -135,6 +135,12 @@ describe('broadcastData (NT-4)', () => {
     assert.equal(d.destValue, 'grocery');
   });
 
+  test('a category destination opens that category (admin round)', () => {
+    const d = broadcastData('n1', 'category', 'Grocery');
+    assert.equal(d.destType, 'category');
+    assert.equal(d.destValue, 'Grocery');
+  });
+
   test('an order destination also fills orderId, reusing the existing routing', () => {
     const d = broadcastData('n1', 'order', 'order-9');
     assert.equal(d.orderId, 'order-9');

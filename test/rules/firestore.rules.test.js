@@ -1005,3 +1005,89 @@ describe('Phase 5 — order types, cancellation and overseas enquiries', () => {
     await assertSucceeds(deleteDoc(doc(asAdmin(), 'overseasInquiries/i7')));
   });
 });
+
+describe('Admin round — quote answers, credits, alerts, IDs', () => {
+  const quoted = (over = {}) => ({
+    customerId: CUSTOMER, customerName: 'Marcia Brown', status: 'quote_sent',
+    quoteTotal: 31, quoteCurrency: 'USD', createdAt: new Date(), ...over
+  });
+
+  test('the customer can accept or decline a quote that is out, and nothing else', async () => {
+    await seed('overseasInquiries/q1', quoted());
+    await assertSucceeds(updateDoc(doc(asCustomer(), 'overseasInquiries/q1'), {
+      status: 'approved', customerResponse: 'accepted',
+      customerRespondedAt: new Date(), updatedAt: new Date()
+    }));
+
+    await seed('overseasInquiries/q2', quoted({ status: 'awaiting_customer' }));
+    await assertSucceeds(updateDoc(doc(asCustomer(), 'overseasInquiries/q2'), {
+      status: 'cancelled', customerResponse: 'declined', updatedAt: new Date()
+    }));
+
+    // A mismatched pair, a skipped stage, or the quote itself: refused.
+    await seed('overseasInquiries/q3', quoted());
+    await assertFails(updateDoc(doc(asCustomer(), 'overseasInquiries/q3'), {
+      status: 'cancelled', customerResponse: 'accepted'
+    }));
+    await assertFails(updateDoc(doc(asCustomer(), 'overseasInquiries/q3'), {
+      status: 'completed', customerResponse: 'accepted'
+    }));
+    await assertFails(updateDoc(doc(asCustomer(), 'overseasInquiries/q3'), {
+      status: 'approved', customerResponse: 'accepted', quoteTotal: 1
+    }));
+    // Nobody else's request, and not before a quote exists.
+    await assertFails(updateDoc(doc(asOtherCustomer(), 'overseasInquiries/q3'), {
+      status: 'approved', customerResponse: 'accepted'
+    }));
+    await seed('overseasInquiries/q4', quoted({ status: 'reviewing' }));
+    await assertFails(updateDoc(doc(asCustomer(), 'overseasInquiries/q4'), {
+      status: 'approved', customerResponse: 'accepted'
+    }));
+  });
+
+  test('credits are the office ledger: admin only', async () => {
+    await seed(`users/${CUSTOMER}`, { name: 'C', email: 'c@example.com' });
+    await assertSucceeds(addDoc(collection(asAdmin(), `users/${CUSTOMER}/credits`), {
+      type: 'credit', amount: 500, reason: 'Late delivery', createdAt: new Date()
+    }));
+    await assertFails(addDoc(collection(asCustomer(), `users/${CUSTOMER}/credits`), {
+      type: 'credit', amount: 5000, reason: 'me', createdAt: new Date()
+    }));
+    await seed(`users/${CUSTOMER}/credits/c1`, { amount: 500 });
+    await assertFails(getDoc(doc(asCustomer(), `users/${CUSTOMER}/credits/c1`)));
+  });
+
+  test('tags switched off are admin-only, like tags', async () => {
+    await seed(`users/${CUSTOMER}`, { name: 'C', email: 'c@example.com' });
+    await assertSucceeds(updateDoc(doc(asAdmin(), `users/${CUSTOMER}`), { tagsOff: ['inactive'] }));
+    await assertFails(updateDoc(doc(asCustomer(), `users/${CUSTOMER}`), { tagsOff: [] }));
+  });
+
+  test('resolved alerts are admin-only', async () => {
+    await assertSucceeds(setDoc(doc(asAdmin(), 'actionAlerts/no_driver_o1'), { resolvedAt: new Date() }));
+    await assertFails(getDoc(doc(asCustomer(), 'actionAlerts/no_driver_o1')));
+    await assertFails(setDoc(doc(asDriver(), 'actionAlerts/x'), { resolvedAt: new Date() }));
+  });
+
+  test('a driver cannot give themselves an ID', async () => {
+    await seed(`drivers/${DRIVER}`, { name: 'D', status: 'pending', totalTrips: 0 });
+    await assertFails(updateDoc(doc(asDriver(), `drivers/${DRIVER}`), { publicId: 'SE-DRV-VIP001' }));
+    await assertSucceeds(updateDoc(doc(asAdmin(), `drivers/${DRIVER}`), { status: 'approved', publicId: 'SE-DRV-ABC123' }));
+  });
+});
+
+describe('Admin round — notification opens', () => {
+  test('a customer records their own open once; only the admin reads them', async () => {
+    const ref = doc(asCustomer(), `notificationOpens/n1_${CUSTOMER}`);
+    await assertSucceeds(setDoc(ref, { notificationId: 'n1', uid: CUSTOMER, openedAt: new Date() }));
+    // A second tap is an update, and is refused.
+    await assertFails(setDoc(ref, { notificationId: 'n1', uid: CUSTOMER, openedAt: new Date() }));
+    // Not for someone else, not under a mismatched id.
+    await assertFails(setDoc(doc(asCustomer(), `notificationOpens/n1_${OTHER_CUSTOMER}`),
+      { notificationId: 'n1', uid: OTHER_CUSTOMER, openedAt: new Date() }));
+    await assertFails(setDoc(doc(asCustomer(), 'notificationOpens/n2_x'),
+      { notificationId: 'n2', uid: CUSTOMER, openedAt: new Date() }));
+    await assertFails(getDoc(ref));
+    await assertSucceeds(getDoc(doc(asAdmin(), `notificationOpens/n1_${CUSTOMER}`)));
+  });
+});

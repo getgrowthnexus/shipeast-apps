@@ -340,8 +340,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
             ),
             const SizedBox(height: SeSpacing.x3),
             Text(
-              'Payouts are processed according to your payment schedule. Contact '
-              'dispatch if you have questions about your payout.',
+              'Payouts are arranged by the ShipEast office. Contact dispatch for '
+              'payout information.',
               style: SeType.bodyS
                   .copyWith(color: SeColors.shellInk.withValues(alpha: 0.80)),
             ),

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shipeast_customer/models/overseas_inquiry.dart';
 
@@ -292,6 +293,35 @@ void main() {
     test('shortens the id the way the rest of the app refers to records', () {
       expect(OverseasInquiry.fromMap('abc123def', const {}).shortId, 'ABC123');
       expect(OverseasInquiry.fromMap('ab12', const {}).shortId, 'AB12');
+    });
+  });
+
+  group('OverseasInquiry.canRespond (admin round: accept / decline)', () {
+    final now = DateTime(2026, 9, 28, 12);
+    OverseasInquiry q(Map<String, dynamic> over) => OverseasInquiry.fromMap(
+        'abc123', {'status': 'quote_sent', 'quoteTotal': 31, ...over});
+
+    test('a quote that is out can be answered', () {
+      expect(q({}).canRespond(now), isTrue);
+      expect(q({'status': 'awaiting_customer'}).canRespond(now), isTrue);
+    });
+
+    test('not before a quote, not twice, not in other stages', () {
+      expect(q({'quoteTotal': null}).canRespond(now), isFalse);
+      expect(q({'customerResponse': 'accepted'}).canRespond(now), isFalse);
+      expect(q({'status': 'reviewing'}).canRespond(now), isFalse);
+      expect(q({'status': 'approved'}).canRespond(now), isFalse);
+    });
+
+    test('not after the quote expires', () {
+      expect(
+          q({'quoteExpiresAt': Timestamp.fromDate(DateTime(2026, 9, 27))})
+              .canRespond(now),
+          isFalse);
+      expect(
+          q({'quoteExpiresAt': Timestamp.fromDate(DateTime(2026, 9, 30))})
+              .canRespond(now),
+          isTrue);
     });
   });
 }

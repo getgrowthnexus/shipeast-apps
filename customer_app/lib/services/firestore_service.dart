@@ -16,17 +16,27 @@ class FirestoreService {
 
   // ─── Merchants ───────────────────────────────────────────────────────────────
 
+  // Admin "Deactivate" (client checklist, admin round) sets `active: false`
+  // and the merchant must vanish from the app. Filtered here rather than in
+  // the query: every merchant created before the flag existed has no
+  // `active` field, and a `where('active', isEqualTo: true)` would hide them
+  // all. Open/Closed (`isOpen`) is separate — a closed merchant stays listed.
+  static List<Map<String, dynamic>> _listed(
+          QuerySnapshot<Map<String, dynamic>> s) =>
+      s.docs
+          .where((d) => d.data()['active'] != false)
+          .map((d) => <String, dynamic>{'id': d.id, ...d.data()})
+          .toList();
+
   static Stream<List<Map<String, dynamic>>> merchantsByCategory(String category) =>
       _db
           .collection('merchants')
           .where('category', isEqualTo: category)
           .snapshots()
-          .map((s) =>
-              s.docs.map((d) => <String, dynamic>{'id': d.id, ...d.data()}).toList());
+          .map(_listed);
 
   static Stream<List<Map<String, dynamic>>> allMerchantsStream() =>
-      _db.collection('merchants').snapshots().map((s) =>
-          s.docs.map((d) => <String, dynamic>{'id': d.id, ...d.data()}).toList());
+      _db.collection('merchants').snapshots().map(_listed);
 
   static Stream<List<Map<String, dynamic>>> menuItemsStream(String merchantId) =>
       _db
@@ -326,6 +336,18 @@ class FirestoreService {
             return list;
           });
 
+  /// The customer's answer to a Shop & Deliver quote (client checklist, admin
+  /// round). Accept moves the request to Approved so the team starts
+  /// shopping; decline closes it as Cancelled. firestore.rules allows exactly
+  /// these two writes, and only while a quote is out.
+  static Future<void> respondToQuote(String inquiryId, {required bool accept}) =>
+      _db.collection('overseasInquiries').doc(inquiryId).update({
+        'status': accept ? OverseasStatus.approved : OverseasStatus.cancelled,
+        'customerResponse': accept ? 'accepted' : 'declined',
+        'customerRespondedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
   static Stream<List<Map<String, dynamic>>> orderHistoryStream(String uid) =>
       _db
           .collection('orders')
@@ -477,6 +499,27 @@ class FirestoreService {
             PromoRejection.ineligible,
             check.displayMessage ?? 'That promo code does not apply here.',
           );
+        }
+        // Client checklist (admin round): "Uses per Customer" — a cap on one
+        // customer, separate from the code's overall `maxUses`. Absent or 0
+        // means no per-customer cap. Counted from the customer's own orders
+        // (readable by rules); redeemPromo enforces it authoritatively.
+        final perCustomer = (data['usesPerCustomer'] as num?)?.toInt() ?? 0;
+        if (perCustomer > 0 && uid.isNotEmpty) {
+          final used = await _db
+              .collection('orders')
+              .where('customerId', isEqualTo: uid)
+              .where('promoCode', isEqualTo: code.trim().toUpperCase())
+              .count()
+              .get();
+          if ((used.count ?? 0) >= perCustomer) {
+            return PromoResult.rejected(
+              PromoRejection.ineligible,
+              perCustomer == 1
+                  ? 'You have already used this promo code.'
+                  : 'You have used this promo code the maximum number of times.',
+            );
+          }
         }
         return PromoCodes.evaluate(
           data,

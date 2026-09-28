@@ -470,6 +470,61 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
         },
       );
 
+  /// Confirms, then records the customer's answer to a quote.
+  Future<void> _respond(OverseasInquiry inquiry, {required bool accept}) async {
+    final price = Money.inCurrency(inquiry.quoteTotal, inquiry.quoteCurrency);
+    final ok = await showSeBottomSheet<bool>(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+            SeSpacing.gutter, 4, SeSpacing.gutter, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SeSheetHandle(),
+            const SizedBox(height: 14),
+            Text(accept ? 'Accept this quote?' : 'Decline this quote?',
+                style: SeType.h2),
+            const SizedBox(height: 6),
+            Text(
+              accept
+                  ? 'We will start shopping for ${inquiry.recipientName} at $price. '
+                      'Our team will contact you about payment.'
+                  : 'This request will be closed. You can send a new request any time.',
+              style:
+                  SeType.bodyS.copyWith(color: SeColors.ink500, height: 1.45),
+            ),
+            const SizedBox(height: 18),
+            SeButton(
+              label: accept ? 'Accept quote' : 'Decline quote',
+              variant: accept
+                  ? SeButtonVariant.primary
+                  : SeButtonVariant.destructive,
+              onPressed: () => Navigator.of(ctx).pop(true),
+            ),
+            const SizedBox(height: 8),
+            SeButton(
+              label: 'Not now',
+              variant: SeButtonVariant.ghost,
+              onPressed: () => Navigator.of(ctx).pop(false),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await FirestoreService.respondToQuote(inquiry.id, accept: accept);
+      if (!mounted) return;
+      SeToast.success(
+          context, accept ? 'Quote accepted — thank you!' : 'Quote declined.');
+    } catch (_) {
+      if (!mounted) return;
+      SeToast.error(context, 'Could not send your answer. Please try again.');
+    }
+  }
+
   Widget _inquiryRow(OverseasInquiry inquiry) {
     final open = OverseasStatus.isOpen(inquiry.status);
     // SD-4: declined / cancelled / expired all read as "did not happen";
@@ -532,6 +587,39 @@ class _OverseasOrderScreenState extends State<OverseasOrderScreen> {
             Text(
               'Quote: ${Money.inCurrency(inquiry.quoteTotal, inquiry.quoteCurrency)}',
               style: SeType.title.copyWith(fontSize: 14, color: SeColors.ink900),
+            ),
+          ],
+          // Client checklist (admin round): answer the quote in the app, so
+          // the team sees "accepted" / "declined" instead of waiting on email.
+          if (inquiry.canRespond()) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: SeButton(
+                    label: 'Accept quote',
+                    size: SeButtonSize.small,
+                    onPressed: () => _respond(inquiry, accept: true),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SeButton(
+                    label: 'Decline',
+                    size: SeButtonSize.small,
+                    variant: SeButtonVariant.secondary,
+                    onPressed: () => _respond(inquiry, accept: false),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (inquiry.customerResponse.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              inquiry.customerResponse == 'accepted'
+                  ? 'You accepted this quote.'
+                  : 'You declined this quote.',
+              style: SeType.bodyS.copyWith(color: SeColors.ink500),
             ),
           ],
         ],

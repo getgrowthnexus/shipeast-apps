@@ -296,6 +296,7 @@ P4-05 (`createDriverAccount` Cloud Function); mitigated in the interim by removi
 | `fcmToken` | string \| null | — | driver | functions | Written by the driver app. Read by the fan-out functions (P4-04), which **delete it** when FCM reports the token unregistered — an uninstalled app otherwise leaves a corpse that fails every future send. |
 | `avatarUrl` | string \| null | — | driver | customer, admin | Profile photo, required at registration (client checklist, Sep 2026). A small inline `data:image/jpeg;base64,…` URL (≈400px) — free plan, no Cloud Storage. Older drivers may carry an `http(s)` URL; readers handle both. |
 | `vehicleYear` | int | ✅ (since Sep 2026) | driver @ register, admin | admin | 1980 … next year. |
+| `publicId` | string | — (since the admin round) | **admin only** @ approval | driver, admin | Permanent readable ID `SE-DRV-XXXXXX` = `SE-DRV-` + the first six characters of the uid, upper-cased. Written when the admin approves the driver and never changed; readers fall back to deriving it (`DriverId.of` / `publicId()`), which gives the same value. Rules forbid a driver writing it. |
 | `serviceAreas` | array\<string\> | ✅ (since Sep 2026) | driver @ register, admin | admin | Subset of `['St. Thomas', 'Kingston']`. |
 | `licenceExpiresAt` | Timestamp | ✅ (since Sep 2026) | driver | driver, admin | On the parent (not private) so the admin roster can flag expiry without reading private docs. Flag rule: expired, or ≤30 days away — `DocExpiry` (driver app) / `docState()` (admin). |
 | `insuranceExpiresAt` | Timestamp | ✅ (since Sep 2026) | driver | driver, admin | As `licenceExpiresAt`. |
@@ -339,6 +340,9 @@ panel reads `o.hours||o.deliveryTime` (`app.js:325`). Both are specified below, 
 | `deliveryTime` | string | ✅ | admin | customer | **ETA estimate**, e.g. `'25–35 min'`. **The admin has no input for this today**, which is why every admin-created merchant shows the hardcoded `'25–35 min'` fallback (audit §6.1). P3-01 adds the input. |
 | `deliveryFee` | int | ✅ | admin | customer | **Integer JMD** (§a). Replaces `fee: '$250'`. Customer renders "Free" when `0`. Was three different numbers — configured, displayed, and charged (audit §6.1); P3-01 made it one. |
 | `isOpen` | bool | ✅ | admin | customer, admin | §e — `open` is deprecated. |
+| `active` | bool | — | admin | customer, admin | Client checklist (admin round). **Separate from `isOpen`.** `isOpen` = accepting orders right now; `active` = on the platform at all. `false` hides the merchant from the customer app (filtered client-side in `FirestoreService._listed`). Absent = active, so every merchant created before this stays visible. |
+| `commissionRate` | number \| null | — | admin | admin | Percent of each order ShipEast keeps (0–100, one decimal). A record for the office; nothing charges it yet. |
+| `publicId` | string | — | admin @ create | admin | `SE-MER-XXXXXX` from the document id; see drivers.`publicId`. |
 | `imageUrl` | string \| null | — | admin | customer, admin | Cover image. Written by the P4-01 uploader as a Storage download URL under `merchants/{id}/cover_{ts}.jpg` — **timestamped, never a fixed name**, or the CDN serves stale bytes after a replacement. The paste-a-URL field is retained as a secondary option since existing records depend on it. |
 | `emoji` | string \| null | — | admin | customer | Display icon. P4-02 added the picker; before it, admin-created merchants fell back to a generic 🍽️ while seeded ones had bespoke icons. |
 | `promo` | string \| null | — | admin | customer | Badge text, e.g. `'🔥 Popular'`. No admin input today. |
@@ -386,7 +390,8 @@ today: every code validates, applies **J$0**, never expires, and ignores its usa
 | `maxDiscount` | int \| null | — | admin | customer, functions | **Caps percentage discounts.** A 100% code with no cap is an unbounded liability and nothing prevents an admin creating one by typo. |
 | `startsAt` | Timestamp \| null | — | admin | customer, functions | Client checklist PR-6. Scheduled activation: a code with a future `startsAt` is live in the collection but `evaluatePromo` rejects it as `not_yet_started` and the admin table shows it as **Scheduled**. `null` = live immediately. |
 | `expiresAt` | Timestamp \| null | ✅ | admin | customer, functions | §b. **The admin writes `validUntil` as a string** today; the customer reads `expiresAt` as a Timestamp — so expiry is never enforced. `null` = never expires. |
-| `maxUses` | int | ✅ | admin | customer, functions | |
+| `maxUses` | int | ✅ | admin | customer, functions | **Global** cap across all customers. `0` = unlimited (the admin form writes 0 for blank). |
+| `usesPerCustomer` | int | — | admin | customer, functions | Client checklist (admin round). Cap for **one** customer, separate from `maxUses`. `0`/absent = unlimited. Enforced by `redeemPromo` via `promoCodes/{CODE}/redemptions/{uid}.count` inside the redemption transaction; previewed by the customer app from its own orders. |
 | `usedCount` | int | ✅ | **server only** (`redeemPromo`) | customer, admin | Incremented transactionally at order placement, so two customers cannot both take the last use of a `maxUses: 1` code. |
 | `lastRedeemedAt` | Timestamp \| null | — | **server only** | admin | |
 | `active` | bool | ✅ | admin | customer, functions | The one field that already lines up. **Pause** (checklist PR-10) sets this `false` and is reversible with **Resume**. |
@@ -436,14 +441,28 @@ that same transaction against freshly read state; the client's preview is adviso
 | `fcmTokenUpdatedAt` | Timestamp \| null | — | customer | — | When the token was last refreshed. Diagnostic only. |
 | `notificationsReadAt` | Timestamp \| null | — | customer | customer | Drives the unread badge. |
 | `disabled` | bool | — | **server** (`setUserDisabled`) | admin | Account suspension (P5-05). Rules permit an admin to write it directly as a backstop, but the panel does not: **this flag is not consulted by rules**, so on its own it stops nobody. The callable disables the Auth account and revokes refresh tokens, then records the flag — the two move together or the flag lies. |
-| `tags` | array\<string\> | — | admin | admin, functions | Client checklist CU-4. Operator-assigned segmentation from a fixed catalogue (`CUSTOMER_TAGS` in `admin_panel/app.js`): `diaspora`, `st_thomas`, `business`, `vip`, `frequent_buyer`, `new_customer`. Drives the Customers page badges/stats and (once built) notification audience targeting (NT-2). Admin-writable directly; a customer cannot tag themselves. Absent = untagged. |
+| `tags` | array\<string\> | — | admin | admin, functions | Client checklist CU-4. Operator-assigned segmentation from a fixed catalogue (`CUSTOMER_TAGS` in `admin_panel/app.js`). Stores the **manual** tags — `diaspora`, `vip`, `business`, or any tag an admin adds by hand; automatic ones are derived (see `tagsOff`). Drives the Customers page badges/stats and (once built) notification audience targeting (NT-2). Admin-writable directly; a customer cannot tag themselves. Absent = untagged. |
 | `tagsUpdatedAt` | Timestamp \| null | — | admin | admin | When the tags were last changed. |
 | `tagsUpdatedBy` | string \| null | — | admin | admin | Admin uid who last changed the tags. |
+| `tagsOff` | array\<string\> | — | admin | admin | Client checklist (admin round). **Automatic** tags an admin removed for this customer. Automatic tags (`new_customer`, `frequent_buyer`, `high_value`, `promo_user`, `at_risk`, `inactive`, and a parish slug such as `st_thomas`) are worked out from orders on every render, using the thresholds in `settings/customerRules`, and are never stored; `tags` holds only manual ones (`diaspora`, `vip`, `business`, or any tag added by hand). Customer ID `SE-CUS-XXXXXX` is derived from the uid, not stored. |
 | `disabledReason` | string \| null | — | **server** | admin | Required when disabling; **cleared** on re-enable, so a cleared account does not keep carrying an accusation. |
 | `disabledAt` | Timestamp \| null | — | **server** | admin | Nulled on re-enable. |
 | `disabledBy` | string \| null | — | **server** | admin | Admin UID. Audit trail. |
 | `createdAt` | Timestamp | ✅ | customer | admin | |
 | `updatedAt` | Timestamp | — | customer | — | |
+
+### `users/{uid}/credits/{creditId}`
+
+Client checklist (admin round): "Apply credit/refund". No wallet or card payment exists yet, so this is the office ledger — admin read/write only; the customer app does not read it and nothing is applied automatically.
+
+| Field | Type | Req | Written by | Notes |
+|---|---|---|---|---|
+| `type` | string | ✅ | admin | `'credit'` (towards a future order) \| `'refund'` (money returned). |
+| `amount` | int | ✅ | admin | J$ (§a), > 0. |
+| `reason` | string | ✅ | admin | ≤ 200 chars. |
+| `orderId` | string \| null | — | admin | The order it relates to, if any. |
+| `createdAt` | Timestamp | ✅ | admin | |
+| `createdBy` | string | ✅ | admin | Admin email. |
 
 ### `users/{uid}/addresses/{addressId}`
 
@@ -468,17 +487,34 @@ selecting "All Drivers" delivered to nobody (audit §9).
 | `title` | string | ✅ | admin | customer, functions | |
 | `message` | string | ✅ | admin | customer, functions | |
 | `target` | string | ✅ | admin | customer, functions | Client checklist NT-2. `'all'` \| `'customers'` \| `'drivers'` \| a specific UID \| **`'tag:<slug>'`** (a CU-4 customer tag) \| **`'ordered'`** \| **`'never_ordered'`** \| **`'inactive'`** (segments derived from order history server-side). Resolved by `parseTarget` / `recipientsForTarget` in `functions/notifications.ts`. |
-| `destType` | string \| null | — | admin | customer, functions | Client checklist NT-4. Where a tap on the push lands: `'order'` (→ `destValue` is an order id) \| `'search'` (→ a search term) \| `'screen'` (→ an allow-listed route) \| `'url'` (→ an external http(s) link). Absent = opens the app. Travels in the FCM `data` payload; the customer app's `_openTarget` routes on it. |
+| `destType` | string \| null | — | admin | customer, functions | Client checklist NT-4. Where a tap on the push lands: `'order'` (→ `destValue` is an order id) \| `'category'` (→ a merchant category value such as `'Grocery'`; admin round) \| `'search'` (→ a search term) \| `'screen'` (→ an allow-listed route) \| `'url'` (→ an external http(s) link). Absent = opens the app. Travels in the FCM `data` payload; the customer app's `_openTarget` routes on it. |
 | `destValue` | string \| null | — | admin | customer, functions | The value for `destType`. |
+| `recipientUids` | array\<string\> | — | admin | functions | Admin round. For audiences only the panel can resolve — automatic tags, `'merchant:<id>'` (customers who ordered from it), `'user:<uid>'` — the panel sends the uid list, which the fan-out uses **instead of** `target`. `target` then stays for display. |
+| `audienceSize` | int | — | admin | admin | Length of `recipientUids`. |
+| `targetName` | string | — | admin | admin | Display name for a `merchant:`/`user:` target. |
 | `scheduledFor` | Timestamp \| null | — | admin | functions | Client checklist NT-3. When set to a future time, `onNotificationCreated` does **not** send — `dispatchScheduledNotifications` (runs every 5 min) picks it up once due. `null` = send immediately. |
 | `dispatchedAt` | Timestamp \| null | — | functions | admin | Set by the fan-out the moment it sends. Also the scheduler's "already done" marker, so a scheduled push is never sent twice. |
 | `sentBy` | string | ✅ | admin | admin | Admin email, audit trail. |
 | `createdAt` | Timestamp | ✅ | admin | all | |
 | `deliveredCount` | int \| null | — | functions | admin | How many devices actually received it. Closes the loop between "logged" and "sent". Written back by the fan-out. |
 | `failedCount` | int \| null | — | functions | admin | Sends FCM rejected (invalid/unregistered tokens). Written back by the fan-out alongside `deliveredCount`. Client checklist NT-6. |
-| `openedCount` | int \| null | — | functions | admin | How many recipients tapped the push. Requires the client apps to report an open (via a callable or an analytics event the function aggregates) — **not yet wired**; the admin "Recent Notifications" row renders it only when present. Client checklist NT-6. |
+| `openedCount` | int \| null | — | — | — | **Superseded** (admin round) by `notificationOpens`, which the panel counts directly. |
 
 ---
+
+## `notificationOpens/{notificationId}_{uid}`
+
+Admin round: "opened" and "tap rate". The customer app creates one when a broadcast is tapped (`NotificationService._recordOpen`). One per person per message; create-only, so a repeat tap is refused rather than double-counted. Admin read only. The panel shows Opened / Tap rate only once `deliveredCount` exists — no placeholder numbers.
+
+| Field | Type | Notes |
+|---|---|---|
+| `notificationId` | string | Must match the id prefix. |
+| `uid` | string | Must be the caller. |
+| `openedAt` | Timestamp | |
+
+## `actionAlerts/{alertId}`
+
+Admin round: the dashboard's **Action Needed** list is computed live from orders, drivers and requests. This collection only remembers which alerts an admin resolved (`{resolvedAt, resolvedBy}`), keyed by the alert id (e.g. `no_driver_<orderId>`), so a cleared alert stays cleared for every admin. Admin read/write only.
 
 ## `pushLog/{eventKey}`
 
@@ -562,6 +598,8 @@ name, phone number and street address.
 | `quoteExpiresAt` | Timestamp \| null | — | **admin only** | When the quote lapses. `null` = no expiry set. |
 | `quotePaymentStatus` | string | — | **admin only** | `'' \| 'pending' \| 'paid' \| 'refunded' \| 'waived'`. Free-form enough that this is a display slug, not enforced. |
 | `quoteCurrency` | string | — | **admin only** | `'USD'` \| `'JMD'`; rules refuse anything else. Absent on quotes saved before it existed — those were entered in J$. The customer sees the quote on their request as `USD$31` / `J$3,100`. |
+| `customerResponse` | string | — | **customer only** | Admin round. `'accepted'` \| `'declined'`, set from the app's Accept / Decline buttons. Rules allow the customer exactly two writes, only while `status` is `quote_sent` or `awaiting_customer`: accept → `status: 'approved'`, decline → `status: 'cancelled'`. |
+| `customerRespondedAt` | Timestamp | — | **customer only** | |
 | `quotedBy` | string \| null | — | **admin only** | Admin uid who saved the quote. |
 | `quotedAt` | Timestamp \| null | — | **admin only** | When the quote was last saved. |
 | `createdAt` | Timestamp | ✅ | customer @ create | `serverTimestamp()`, so it is briefly `null` on the client. Both the app and the panel sort an unresolved enquiry **first** — it is the newest thing there is, and the one most needing attention. |
@@ -609,6 +647,22 @@ take a package request. That is deliberate: a price nobody chose is worse than a
 feature, and it is the same rule the migrations follow (never invent a business value). Contrast
 `DEFAULT_COMMISSION_RATE`, which *does* fall back — that value was already shipped, so falling back
 preserves existing behaviour rather than inventing new behaviour.
+
+---
+
+## `settings/customerRules`
+
+Admin round. Thresholds behind the automatic customer tags, edited in Settings → Customer Tags. Public read like all of `settings` (nothing sensitive); admin write. Missing values fall back to the defaults shown.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `repeatOrders` | 2 | Completed orders to count as a Repeat Customer. |
+| `frequentOrders` | 5 | Completed orders for the Frequent Buyer tag. |
+| `atRiskDays` | 30 | Days since the last completed order for At Risk (until `inactiveDays`). |
+| `inactiveDays` | 60 | Days since the last completed order for Inactive. |
+| `highValueSpend` | 50000 | Lifetime delivered spend (J$) above which a customer is High Value. |
+
+New This Month = account created **or** first order placed in the current calendar month. VIP is manual only.
 
 ---
 

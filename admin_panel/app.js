@@ -266,7 +266,7 @@ var STATUS_TONE={
   cancelled:'danger',rejected:'danger',Cancelled:'danger',Closed:'danger',Suspended:'danger',
   Rejected:'danger',
   Expired:'neutral',Offline:'neutral',Inactive:'neutral','Used up':'neutral',
-  Scheduled:'info',Paused:'warning',Ended:'neutral'
+  Scheduled:'info',Paused:'warning',Ended:'neutral',Deactivated:'neutral'
 };
 var STATUS_LABEL={in_transit:'In Transit',picked_up:'Picked Up',
   confirmed:'Confirmed',delivered:'Delivered',pending:'Pending',cancelled:'Cancelled',
@@ -288,7 +288,7 @@ function fmtStamp(ts){
   var d=ts.toDate?ts.toDate():(ts instanceof Date?ts:null);
   if(!d) return '';
   if(isNaN(d.getTime())) return '';
-  return d.toLocaleString('en-JM',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 function badge(s){
   return '<span class="bdg bg-'+(STATUS_TONE[s]||'neutral')+'">'+esc(STATUS_LABEL[s]||s)+'</span>';
@@ -348,7 +348,17 @@ function catCard(cat){ return (CATS[cat]||{card:'mc-other'}).card; }
    customer app queries on it); the client asked for "Groceries" on screen. */
 /* A driver's unique ID — "D-7F3K2A", derived from the uid exactly as the
    driver app's DriverId.of() does, so both show the same number. */
-function driverNo(id){ id=String(id||''); return id?'D-'+id.slice(0,6).toUpperCase():''; }
+/* Client checklist (admin round): readable permanent IDs whose prefix says
+   what kind of account it is — SE-DRV-7K4M2P, SE-CUS-8H3N5Q, SE-MER-2B9XQ1.
+   Derived from the document id, which never changes, so the ID survives a new
+   phone number, email or name. A stored `publicId` (written when a driver is
+   approved or a merchant is created) wins, so a later backend move can carry
+   the same IDs across. Mirror of DriverId.of in the driver app. */
+function publicId(kind,id,stored){
+  if(stored) return String(stored);
+  id=String(id||''); return id?'SE-'+kind+'-'+id.slice(0,6).toUpperCase():'';
+}
+function driverNo(d){ return publicId('DRV',d.id,d.publicId); }
 function catLabel(cat){ return cat==='Grocery'?'Groceries':(cat||''); }
 function merchantMedia(m,size){
   if(m.imageUrl) return '<img class="thumb'+(size==='lg'?' lg':'')+'" src="'+esc(m.imageUrl)+'" alt="" '+
@@ -581,7 +591,7 @@ function startListeners(){
         orders=snap.docs.map(function(d){
           var o=d.data();
           var ts=o.createdAt&&o.createdAt.toDate?o.createdAt.toDate():null;
-          var tsStr=ts?ts.toLocaleTimeString('en-JM',{hour:'2-digit',minute:'2-digit'}):o.time||'—';
+          var tsStr=ts?ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):o.time||'—';
           var drvName=o.driverName||o.driver||'';
           if(!drvName&&o.driverId){ var drv=drivers.find(function(x){return x.id===o.driverId;}); if(drv) drvName=drv.name; }
           var rawTotal=o.total!=null?Number(o.total):null;
@@ -612,6 +622,10 @@ function startListeners(){
                it, and no human being could see it. A dispute could not be
                settled with evidence the system already had. */
             deliveryPhotoUrl:o.deliveryPhotoUrl||'',
+            // Written by the driver app while it carries the order, cleared on
+            // delivery. The only GPS the system has — drivers are not tracked
+            // between jobs.
+            driverLoc:o.driverLoc&&typeof o.driverLoc.lat==='number'?o.driverLoc:null,
             deliveryNote:o.deliveryNote||'',
             cancelledBy:o.cancelledBy||'',
             cancellationReason:o.cancellationReason||'',
@@ -649,7 +663,9 @@ function startListeners(){
           else if(rawStatus==='pending') statusLbl='Pending Approval';
           else if(rawStatus==='rejected') statusLbl='Rejected';
           else if(o.onDelivery) statusLbl='On Delivery';
-          else if(o.isOnline) statusLbl='Online';
+          // Client checklist: a driver can be online AND delivering, so the
+          // two presence states are Available and On Delivery.
+          else if(o.isOnline) statusLbl='Available';
           else statusLbl='Offline';
           var onlineSince=o.onlineSince&&o.onlineSince.toDate?o.onlineSince.toDate():null;
           return {id:d.id,name:o.name||'—',phone:o.phone||'—',email:o.email||'—',
@@ -661,7 +677,7 @@ function startListeners(){
             rating:o.averageRating||o.rating||0,trips:o.totalTrips||o.trips||0,
             ratingCounts:o.ratingCounts||o.ratingBreakdown||null,
             ratingTotal:o.ratingCount!=null?o.ratingCount:null,
-            avatarUrl:o.avatarUrl||'',onlineSince:onlineSince,
+            avatarUrl:o.avatarUrl||'',onlineSince:onlineSince,publicId:o.publicId||'',
             // Client checklist (driver round): application details and the
             // two expiry dates the roster flags.
             vehicleYear:o.vehicleYear||'',serviceAreas:Array.isArray(o.serviceAreas)?o.serviceAreas:[],
@@ -681,6 +697,20 @@ function startListeners(){
       function(e){ loadedOnce.drivers=true; console.warn('drivers:',e.message); toast('error','Could not load drivers: '+e.message); renderDrivers(); }
     ));
   }catch(e){ console.warn('drivers init:',e.message); }
+
+  // CUSTOMER RULES — the thresholds behind the automatic customer tags,
+  // editable in Settings (client checklist: "configurable in the admin panel
+  // so we can change them later without rebuilding the app").
+  try{
+    unsubscribers.push(onSnapshot(doc(db,'settings','customerRules'),
+      function(snap){
+        custRules=normaliseCustRules(snap.exists()?snap.data():null);
+        fillCustRulesForm();
+        renderCustomers();
+      },
+      function(e){ console.warn('customerRules:',e.message); }
+    ));
+  }catch(e){ console.warn('customerRules init:',e.message); }
 
   // MERCHANTS
   try{
@@ -704,6 +734,13 @@ function startListeners(){
             rating:o.averageRating||o.rating||0,
             ratingCount:Number(o.ratingCount)||0,
             open:isOpenVal,imageUrl:o.imageUrl||o.image||'',
+            // Client checklist (admin round): Activate/Deactivate is separate
+            // from Open/Closed. Open = accepting orders right now; active =
+            // on the platform at all. Absent means active (every merchant
+            // before this existed).
+            active:o.active!==false,
+            commission:o.commissionRate!=null&&isFinite(o.commissionRate)?Number(o.commissionRate):null,
+            publicId:o.publicId||'',
             // Pickup coordinates (P5-06). Kept as numbers or null so the form
             // and the "has a location" indicator can tell "unset" from "0".
             lat:(o.lat!=null&&isFinite(o.lat))?Number(o.lat):null,
@@ -746,6 +783,8 @@ function startListeners(){
             disabledReason:o.disabledReason||'',
             // CU-4: operator-assigned segment tags.
             tags:Array.isArray(o.tags)?o.tags:[],
+            // Automatic tags an admin has removed from this customer.
+            tagsOff:Array.isArray(o.tagsOff)?o.tagsOff:[],
             joined:joined,
             // Presence of a token is the only honest answer available here:
             // whether the device still accepts pushes is known to FCM, not to
@@ -789,6 +828,10 @@ function startListeners(){
             itemDescription:o.itemDescription||'—',
             requestedStore:o.requestedStore||'',
             budget:o.budget||'',
+            // Client checklist (admin round): the customer's answer to the
+            // quote, given in the app — 'accepted' | 'declined' | ''.
+            customerResponse:o.customerResponse||'',
+            customerRespondedAt:o.customerRespondedAt&&o.customerRespondedAt.toDate?o.customerRespondedAt.toDate():null,
             notes:o.notes||'',
             status:Overseas.normalise(o.status),
             adminNote:o.adminNote||'',
@@ -847,6 +890,9 @@ function startListeners(){
           var lastRedeemed=o.lastRedeemedAt&&o.lastRedeemedAt.toDate?o.lastRedeemedAt.toDate():null;
           return {id:d.id,code:o.code||d.id,discount:discStr,discountType:discType,discountAmount:discAmt,
             usedCount:usedCount,maxUses:maxUses,
+            // Client checklist (admin round): per-customer cap, separate from
+            // the global maxUses. 0 = no cap.
+            usesPerCustomer:Number(o.usesPerCustomer)||0,
             minOrderTotal:Number(o.minOrderTotal)||0,
             maxDiscount:o.maxDiscount!=null?Number(o.maxDiscount):null,
             expiresAt:expiry,startsAt:startsAt,lastRedeemedAt:lastRedeemed,
@@ -868,6 +914,22 @@ function startListeners(){
     ));
   }catch(e){ console.warn('promoCodes init:',e.message); }
 
+  // NOTIFICATION OPENS — written by the customer app when a broadcast is
+  // tapped ({notificationId}_{uid}); counted here for "opened" / tap rate.
+  try{
+    unsubscribers.push(onSnapshot(
+      query(collection(db,'notificationOpens'),limit(5000)),
+      function(snap){
+        opensByNotif={};
+        snap.docs.forEach(function(d){
+          var nid=d.data().notificationId; if(nid) opensByNotif[nid]=(opensByNotif[nid]||0)+1;
+        });
+        renderNotifHist();
+      },
+      function(e){ console.warn('notificationOpens:',e.message); }
+    ));
+  }catch(e){ console.warn('notificationOpens init:',e.message); }
+
   // NOTIFICATIONS
   try{
     unsubscribers.push(onSnapshot(
@@ -876,11 +938,11 @@ function startListeners(){
         notifHistory=snap.docs.map(function(d){
           var o=d.data();
           var ts=o.createdAt&&o.createdAt.toDate
-            ?new Date(o.createdAt.toDate()).toLocaleString('en-JM',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
+            ?new Date(o.createdAt.toDate()).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})
             :'—';
           var TARGETS={customers:'All Customers',drivers:'All Drivers',all:'Everyone'};
           var t=o.target||'all';
-          var targetLbl=TARGETS[t]||(t&&t.indexOf('tag:')===0?tagLabel(t.slice(4))+' customers':t);
+          var targetLbl=TARGETS[t]||notifAudienceLabel(t,o.targetName);
           var sched=o.scheduledFor&&o.scheduledFor.toDate?o.scheduledFor.toDate():null;
           var dispatched=o.dispatchedAt&&o.dispatchedAt.toDate?o.dispatchedAt.toDate():null;
           return {id:d.id,title:o.title||'—',msg:o.message||'—',target:targetLbl,time:ts,
@@ -889,7 +951,8 @@ function startListeners(){
             destType:o.destType||'',destValue:o.destValue||'',
             delivered:typeof o.deliveredCount==='number'?o.deliveredCount:null,
             opened:typeof o.openedCount==='number'?o.openedCount:null,
-            failed:typeof o.failedCount==='number'?o.failedCount:null,_docId:d.id};
+            failed:typeof o.failedCount==='number'?o.failedCount:null,
+            audienceSize:typeof o.audienceSize==='number'?o.audienceSize:null,_docId:d.id};
         });
         loadedOnce.notifs=true;
         renderNotifHist();
@@ -1425,7 +1488,7 @@ var driverFilter='',driverSearch='';
 /* Which filter bucket a driver falls in — matches the #drv-filter options. */
 function driverInBucket(d,b){
   if(!b) return true;
-  if(b==='online') return d.status==='Online';
+  if(b==='online') return d.status==='Available'||d.status==='On Delivery';
   if(b==='ondelivery') return d.status==='On Delivery';
   if(b==='available') return d.available;
   if(b==='offline') return d.status==='Offline';
@@ -1452,7 +1515,7 @@ function driverActiveOrder(d){
 function renderDrivers(){
   var el=$('drivers-stats');
   if(el){
-    var onlineC=drivers.filter(function(d){ return d.status==='Online'||d.status==='On Delivery'; }).length;
+    var onlineC=drivers.filter(function(d){ return d.status==='Available'||d.status==='On Delivery'; }).length;
     var delC=drivers.filter(function(d){ return d.status==='On Delivery'; }).length;
     var pendC=drivers.filter(function(d){ return d.rawStatus==='pending'; }).length;
     el.innerHTML=
@@ -1489,22 +1552,32 @@ function renderDrivers(){
      Available / View Active Delivery
      View | Assign  (+ state actions)                             */
 function driverCard(d){
-  var dotCls=d.status==='Online'?'on':(d.status==='On Delivery'?'busy':(d.rawStatus==='paused'||d.rawStatus==='pending'?'warn':(d.rawStatus==='suspended'||d.rawStatus==='rejected'?'off':'')));
+  var dotCls=d.status==='Available'?'on':(d.status==='On Delivery'?'busy':(d.rawStatus==='paused'||d.rawStatus==='pending'?'warn':(d.rawStatus==='suspended'||d.rawStatus==='rejected'?'off':'')));
   var rate=(Number(d.rating)||0).toFixed(1);
   var stats=d.ratingTotal
     ? '<svg class="ic dc-star" aria-hidden="true"><use href="#i-star-f"/></svg>'+rate+' • '+d.trips+' deliver'+(d.trips===1?'y':'ies')
     : 'No ratings yet • '+d.trips+' deliver'+(d.trips===1?'y':'ies');
 
   var active=driverActiveOrder(d);
-  var availLine;
-  if(active) availLine='<button class="pa-btn" data-action="driver-active-delivery" data-id="'+esc(d.id)+'">'+icon('orders')+' View active delivery — '+esc(shortId(active.id))+'</button>';
-  else if(d.available) availLine='<span class="dc-avail">Available</span>';
-  else if(d.status==='Online') availLine='<span class="dc-avail">Online</span>';
-  else availLine='<span class="dc-avail muted">'+esc(d.status)+'</span>';
+  // Client checklist: account standing and live presence are two different
+  // facts, so they get two labels — "Account: Approved · Status: On Delivery".
+  var acctLbl={approved:'Approved',pending:'Pending Approval',paused:'Paused',
+    suspended:'Suspended',rejected:'Rejected'}[d.rawStatus]||d.rawStatus;
+  var presence=d.rawStatus==='approved'?d.status:'—';
+  var stateLine='<span class="dc-k">Account:</span> <b>'+esc(acctLbl)+'</b>'+
+    (d.rawStatus==='approved'?' · <span class="dc-k">Status:</span> <b>'+esc(presence)+'</b>':'');
 
-  // Primary actions — "View | Assign" as the client asked, always present.
+  // Primary actions — "View | Assign" as the client asked, then the quick
+  // contact buttons, then "View Active Delivery" for someone mid-job.
   var acts='<button class="pa-btn" data-action="view-driver" data-id="'+esc(d.id)+'">View</button>';
-  if(d.rawStatus==='approved') acts+='<button class="pa-btn" data-action="driver-assign" data-id="'+esc(d.id)+'">Assign</button>';
+  if(d.rawStatus==='approved'&&!active) acts+='<button class="pa-btn" data-action="driver-assign" data-id="'+esc(d.id)+'">Assign Delivery</button>';
+  if(active) acts+='<button class="pa-btn" data-action="driver-active-delivery" data-id="'+esc(d.id)+'">View Active Delivery</button>';
+  if(active&&active.driverLoc) acts+='<button class="pa-btn" data-action="driver-location" data-id="'+esc(d.id)+'">View location</button>';
+  var dial=d.phone&&d.phone!=='—'?phoneDial(d.phone):'';
+  if(dial){
+    acts+='<a class="pa-btn" href="tel:'+esc(dial)+'">Call</a>'+
+      '<a class="pa-btn" href="https://wa.me/'+esc(dial.replace(/\D/g,''))+'" target="_blank" rel="noopener">WhatsApp</a>';
+  }
 
   // State actions depend on where the driver is in their lifecycle.
   if(d.rawStatus==='pending'){
@@ -1537,10 +1610,12 @@ function driverCard(d){
       '<b class="dc-name">'+esc(d.name)+'</b>'+
       '<span class="dc-badges">'+badge(d.status)+toggle+'</span>'+
     '</div>'+
-    '<div class="dc-line"><span class="num">'+esc(driverNo(d.id))+'</span> • '+esc(d.vtype)+' • Plate '+esc(d.plate)+'</div>'+
+    // The ID is issued on approval (client checklist), so an applicant has none.
+    '<div class="dc-line">'+(d.rawStatus==='pending'||d.rawStatus==='rejected'?'':'<span class="num">'+esc(driverNo(d))+'</span> • ')+
+      esc(d.vtype)+' • Plate '+esc(d.plate)+'</div>'+
     '<div class="dc-line dc-stats">'+stats+'</div>'+
     (docFlags(d).length?'<div class="dc-line">'+docFlagsHtml(d)+'</div>':'')+
-    '<div class="dc-line">'+availLine+'</div>'+
+    '<div class="dc-line dc-state">'+stateLine+'</div>'+
     '<div class="dc-acts">'+acts+'</div>'+
   '</div>';
 }
@@ -1911,8 +1986,12 @@ function deleteDriver(id){
     });
 }
 function approveDriver(id){
-  updateDoc(doc(db,'drivers',id),{status:'approved',updatedAt:serverTimestamp()})
-    .then(function(){ closeSidePanel(); toast('success','Driver approved.'); })
+  var d=drivers.find(function(x){ return x.id===id; });
+  // The permanent ID is issued here (client checklist) — kept if one exists,
+  // so re-approving after a rejection never renumbers anyone.
+  var pid=(d&&d.publicId)||publicId('DRV',id);
+  updateDoc(doc(db,'drivers',id),{status:'approved',publicId:pid,updatedAt:serverTimestamp()})
+    .then(function(){ closeSidePanel(); toast('success','Driver approved — ID '+pid+'.'); })
     .catch(function(e){ toast('error',e.message,'Approval failed'); });
 }
 function rejectDriver(id){
@@ -1990,6 +2069,15 @@ function driverActiveDelivery(id){
   var o=driverActiveOrder(d);
   if(!o){ toast('info',d.name+' is not on a delivery right now.'); return; }
   openOrderPanel(o._docId||o.id);
+}
+
+/* Client checklist: "view location". The driver app shares GPS only while it
+   carries an order (driverLoc on that order), so this exists only then. */
+function driverLocation(id){
+  var d=drivers.find(function(x){ return x.id===id; }); if(!d) return;
+  var o=driverActiveOrder(d);
+  if(!o||!o.driverLoc){ toast('info','Location is shared only while a driver is on a delivery.'); return; }
+  window.open('https://www.google.com/maps/search/?api=1&query='+o.driverLoc.lat+','+o.driverLoc.lng,'_blank','noopener');
 }
 
 // ── DV-7: assign this driver to a waiting order from their card ────────
@@ -2077,7 +2165,7 @@ function reviewDriverDocs(id){
   $('sp-sub').textContent='Document review';
   $('sp-title').textContent=d.name;
   var head='<div class="sp-sec"><div class="sp-sec-title">Applicant</div>'+
-    row('Driver ID','<span class="num">'+esc(driverNo(d.id))+'</span>')+
+    row('Driver ID','<span class="num">'+esc(driverNo(d))+'</span>')+
     row('Vehicle',esc(d.vtype)+' • '+esc(d.plate))+
     row('Phone','<span class="num">'+esc(phoneFmt(d.phone))+'</span>')+
     row('Vehicle year',esc(String(d.vehicleYear||'—')))+
@@ -2170,7 +2258,7 @@ function openDriverPanel(id){
     '<div class="sp-hero"><div class="sp-avatar">'+esc((d.name[0]||'?').toUpperCase())+'</div>'+
       '<div><div class="sp-hero-name">'+esc(d.name)+'</div><div style="margin-top:5px">'+badge(d.status)+'</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Contact</div>'+
-      row('Driver ID','<span class="num">'+esc(driverNo(d.id))+'</span>')+
+      row('Driver ID','<span class="num">'+esc(driverNo(d))+'</span>')+
       row('Phone','<span class="num">'+esc(phoneFmt(d.phone))+'</span>')+
       row('Email','<span class="sp-val sm">'+esc(d.email)+'</span>',true)+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Vehicle</div>'+
@@ -2216,17 +2304,92 @@ function customerOrders(uid){
   return orders.filter(function(o){ return o.customerId===uid; });
 }
 
-/* CU-4: the fixed tag catalogue. Slugs are stored; labels + tones are display.
-   Kept small and operator-assigned — deriving "VIP" from spend is a different
-   feature (and a judgement call the operator should keep). */
+/* Customer tags (client checklist CU-4, refined in the admin round).
+   Slugs are stored; labels + tones are display. Two kinds:
+     manual — only an admin sets them: Diaspora, VIP, Business Customer.
+     auto   — worked out from the customer's orders on every render, using the
+              thresholds in settings/customerRules: New Customer, Frequent
+              Buyer, High Value, Promo User, At Risk, Inactive, and their parish
+              (from their latest delivery address).
+   An admin can also add any tag by hand, or switch an automatic one off for a
+   customer (stored in `tagsOff`). VIP stays manual on purpose — the client
+   wants to award it for relationship or business value, not one number. */
+var JAMAICA_PARISHES=['Kingston','St. Andrew','St. Thomas','Portland','St. Mary','St. Ann',
+  'Trelawny','St. James','Hanover','Westmoreland','St. Elizabeth','Manchester','Clarendon','St. Catherine'];
+function parishSlug(p){ return p.toLowerCase().replace(/[^a-z]+/g,'_').replace(/^_|_$/g,''); }
 var CUSTOMER_TAGS=[
-  {slug:'diaspora',      label:'Diaspora',      tone:'info'},
-  {slug:'st_thomas',     label:'St. Thomas',    tone:'info'},
-  {slug:'business',      label:'Business',      tone:'brand'},
-  {slug:'vip',           label:'VIP',           tone:'warning'},
-  {slug:'frequent_buyer',label:'Frequent Buyer',tone:'success'},
-  {slug:'new_customer',  label:'New Customer',  tone:'neutral'}
-];
+  {slug:'diaspora',      label:'Diaspora',          tone:'info'},
+  {slug:'vip',           label:'VIP',               tone:'warning'},
+  {slug:'business',      label:'Business Customer', tone:'brand'},
+  {slug:'new_customer',  label:'New Customer',      tone:'neutral', auto:true},
+  {slug:'frequent_buyer',label:'Frequent Buyer',    tone:'success', auto:true},
+  {slug:'high_value',    label:'High Value',        tone:'success', auto:true},
+  {slug:'promo_user',    label:'Promo User',        tone:'info',    auto:true},
+  {slug:'at_risk',       label:'At Risk',           tone:'warning', auto:true},
+  {slug:'inactive',      label:'Inactive',          tone:'neutral', auto:true}
+].concat(JAMAICA_PARISHES.map(function(p){
+  // 'st_thomas' is the slug the first tag list used, so existing tags keep working.
+  return {slug:parishSlug(p),label:p,tone:'info',auto:true,parish:true};
+}));
+var CUST_RULE_DEFAULTS={repeatOrders:2,frequentOrders:5,atRiskDays:30,inactiveDays:60,highValueSpend:50000};
+var custRules=CUST_RULE_DEFAULTS;
+function normaliseCustRules(r){
+  var out={};
+  Object.keys(CUST_RULE_DEFAULTS).forEach(function(k){
+    var v=r&&r[k]!=null?Number(r[k]):NaN;
+    out[k]=isFinite(v)&&v>=0?v:CUST_RULE_DEFAULTS[k];
+  });
+  return out;
+}
+function daysSince(d){ return d?Math.floor((Date.now()-d.getTime())/86400000):null; }
+/* The parish named in an address, or '' — "St Thomas" and "St. Thomas" both count. */
+function parishIn(address){
+  var a=String(address||'').toLowerCase().replace(/\bst\.?\s+/g,'st. ');
+  for(var i=0;i<JAMAICA_PARISHES.length;i++){
+    if(a.indexOf(JAMAICA_PARISHES[i].toLowerCase())>-1) return JAMAICA_PARISHES[i];
+  }
+  return '';
+}
+/* Everything the tags and stats need about one customer, in one pass. */
+function customerFacts(c){
+  var list=customerOrders(c.id);
+  var done=list.filter(function(o){ return isDeliveredStatus(o.status); });
+  var first=null,lastDone=null;
+  list.forEach(function(o){ if(o._ts&&(!first||o._ts<first)) first=o._ts; });
+  done.forEach(function(o){ if(o._ts&&(!lastDone||o._ts>lastDone)) lastDone=o._ts; });
+  var latest=list.find(function(o){ return o.address&&o.address!=='—'; }); // newest first
+  return {orders:list.length,completed:done.length,firstOrder:first,lastCompleted:lastDone,
+    spend:customerValue(c.id),usedPromo:list.some(function(o){ return !!o.promoCode; }),
+    parish:latest?parishIn(latest.address):''};
+}
+function isNewThisMonth(c,f){
+  var now=new Date(), start=new Date(now.getFullYear(),now.getMonth(),1);
+  return (c.joined&&c.joined>=start)||(f.firstOrder&&f.firstOrder>=start);
+}
+function customerAutoTags(c){
+  var f=customerFacts(c), R=custRules, out=[];
+  if(isNewThisMonth(c,f)) out.push('new_customer');
+  if(f.completed>=R.frequentOrders) out.push('frequent_buyer');
+  if(R.highValueSpend>0&&f.spend>R.highValueSpend) out.push('high_value');
+  if(f.usedPromo) out.push('promo_user');
+  var idle=daysSince(f.lastCompleted);
+  if(f.completed>0&&idle!=null){
+    if(idle>=R.inactiveDays) out.push('inactive');
+    else if(idle>=R.atRiskDays) out.push('at_risk');
+  }
+  if(f.parish) out.push(parishSlug(f.parish));
+  return out;
+}
+/* What a customer is tagged with right now: manual ∪ automatic, minus any
+   automatic tag an admin switched off. */
+function customerTags(c){
+  var off={}; (c.tagsOff||[]).forEach(function(s){ off[s]=1; });
+  var seen={},out=[];
+  (c.tags||[]).concat(customerAutoTags(c)).forEach(function(s){
+    if(!seen[s]&&!off[s]){ seen[s]=1; out.push(s); }
+  });
+  return out;
+}
 function tagLabel(slug){ var t=CUSTOMER_TAGS.find(function(x){ return x.slug===slug; }); return t?t.label:slug; }
 function tagTone(slug){ var t=CUSTOMER_TAGS.find(function(x){ return x.slug===slug; }); return t?t.tone:'neutral'; }
 function customerTagBadges(tags){
@@ -2245,9 +2408,6 @@ function customerLastOrder(uid){
   return d;
 }
 
-// CU-2: business-rule thresholds. Documented defaults — confirm with the client.
-var REPEAT_ORDER_THRESHOLD=2;      // delivered orders to count as a repeat customer
-var INACTIVE_DAYS_THRESHOLD=60;    // days without an order to count as inactive
 
 function customerValue(uid){
   // Delivered only. Counting pending or cancelled orders as "lifetime value"
@@ -2275,27 +2435,30 @@ function renderCustomers(){
 
   var stats=$('customers-stats');
   if(stats){
-    var now=new Date();
-    var monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime();
-    var inactiveCutoff=now.getTime()-INACTIVE_DAYS_THRESHOLD*86400000;
+    var R=custRules;
     var disabledCount=customers.filter(function(c){ return c.disabled; }).length;
     var ordering=customers.filter(function(c){ return customerOrders(c.id).length>0; }).length;
-    // CU-2: new this month / repeat / inactive / total spend.
-    var newThisMonth=customers.filter(function(c){ return c.joined&&c.joined.getTime()>=monthStart; }).length;
-    var repeat=customers.filter(function(c){
-      return customerOrders(c.id).filter(function(o){ return isDeliveredStatus(o.status); }).length>=REPEAT_ORDER_THRESHOLD;
-    }).length;
-    var inactive=customers.filter(function(c){
-      var last=customerLastOrder(c.id);
-      return customerOrders(c.id).length>0&&(!last||last.getTime()<inactiveCutoff);
-    }).length;
+    // CU-2, with the client's definitions (admin round):
+    //   New This Month = account created OR first order placed this month
+    //   Repeat         = completed orders ≥ repeatOrders (2)
+    //   Inactive       = no completed order in inactiveDays (60)
+    var newThisMonth=0,repeat=0,inactive=0,atRisk=0;
+    customers.forEach(function(c){
+      var f=customerFacts(c), idle=daysSince(f.lastCompleted);
+      if(isNewThisMonth(c,f)) newThisMonth++;
+      if(f.completed>=R.repeatOrders) repeat++;
+      if(f.completed>0&&idle!=null){
+        if(idle>=R.inactiveDays) inactive++;
+        else if(idle>=R.atRiskDays) atRisk++;
+      }
+    });
     var totalSpend=customers.reduce(function(s,c){ return s+customerValue(c.id); },0);
     stats.innerHTML=
       statCard('users','Total Customers',customers.length,'','')+
       statCard('orders','Customers Who Ordered',ordering,customers.length?Math.round((ordering/customers.length)*100)+'% of accounts':'','info')+
-      statCard('bolt','New This Month',newThisMonth,'joined since the 1st','success')+
-      statCard('star','Repeat Customers',repeat,REPEAT_ORDER_THRESHOLD+'+ delivered orders','warning')+
-      statCard('clock','Inactive Customers',inactive,'no order in '+INACTIVE_DAYS_THRESHOLD+' days','')+
+      statCard('bolt','New This Month',newThisMonth,'joined or first ordered since the 1st','success')+
+      statCard('star','Repeat Customers',repeat,R.repeatOrders+'+ completed orders','warning')+
+      statCard('clock','Inactive Customers',inactive,(atRisk?atRisk+' at risk · ':'')+'no order in '+R.inactiveDays+' days','')+
       statCard('revenue','Total Customer Spend',money(totalSpend),'lifetime delivered','warning')+
       statCard('close','Disabled',disabledCount,disabledCount?'blocked from signing in':'','');
   }
@@ -2325,9 +2488,9 @@ function renderCustomers(){
       '<td class="cell-mute" title="'+esc(c.email)+'">'+esc(c.email)+'</td>'+
       '<td class="cell-mute num">'+esc(phoneFmt(c.phone))+'</td>'+
       '<td class="right cell-id">'+count+'</td>'+
-      '<td class="cell-mute num">'+(last?esc(last.toLocaleDateString('en-JM',{month:'short',day:'numeric',year:'numeric'})):'—')+'</td>'+
+      '<td class="cell-mute num">'+(last?esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})):'—')+'</td>'+
       '<td class="right cell-strong">'+money(customerValue(c.id))+'</td>'+
-      '<td>'+(customerTagBadges(c.tags)||'<span class="cell-mute sm">—</span>')+'</td>'+
+      '<td>'+(customerTagBadges(customerTags(c))||'<span class="cell-mute sm">—</span>')+'</td>'+
       '<td>'+(c.disabled
         ?'<span class="bdg bg-danger plain">Disabled'+(c.disabledReason?' — '+esc(c.disabledReason):'')+'</span>'
         :'<span class="bdg bg-success plain">Active</span>')+'</td>'+
@@ -2365,6 +2528,8 @@ function openCustomerPanel(uid){
       (waDigits?'<a class="pa-btn" href="https://wa.me/'+esc(waDigits)+'" target="_blank" rel="noopener">WhatsApp</a>':'')+
       '<button class="pa-btn" data-action="customer-orders" data-cid="'+esc(c.id)+'">View orders</button>'+
       '<button class="pa-btn" data-action="customer-notify" data-cid="'+esc(c.id)+'">Send notification</button>'+
+      '<button class="pa-btn" data-action="customer-credit" data-cid="'+esc(c.id)+'">Apply credit/refund</button>'+
+      '<button class="pa-btn pa-del" data-action="toggle-customer" data-cid="'+esc(c.id)+'">'+(c.disabled?'Re-enable account':'Disable account')+'</button>'+
     '</div>'+
     (c.disabled&&c.disabledReason
       ?'<div class="sp-sec"><div class="sp-sec-title">Why this account is disabled</div>'+
@@ -2372,14 +2537,14 @@ function openCustomerPanel(uid){
     // CU-4: segment tags.
     '<div class="sp-sec"><div class="sp-sec-title">Tags '+
       '<button class="pa-btn" data-action="customer-tags" data-cid="'+esc(c.id)+'" style="float:right;font-weight:600">Edit</button></div>'+
-      '<div>'+(customerTagBadges(c.tags)||'<span class="empty-copy">No tags. Use Edit to add Diaspora, VIP, Business…</span>')+'</div></div>'+
+      '<div>'+(customerTagBadges(customerTags(c))||'<span class="empty-copy">No tags. Use Edit to add Diaspora, VIP, Business…</span>')+'</div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Contact</div>'+
       row('Email','<span class="sp-val sm">'+esc(c.email)+'</span>',true)+
       row('Phone','<span class="num">'+esc(phoneFmt(c.phone))+'</span>')+
-      row('Joined',esc(c.joined?c.joined.toLocaleDateString('en-JM',{year:'numeric',month:'short',day:'numeric'}):'Before records began'))+
-      row('Last order',esc(last?last.toLocaleDateString('en-JM',{year:'numeric',month:'short',day:'numeric'}):'Never'))+
+      row('Joined',esc(c.joined?c.joined.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'Before records began'))+
+      row('Last order',esc(last?last.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'Never'))+
       row('Push',c.hasPush?'Registered':'No device registered')+
-      row('User ID','<span class="sp-val sm num">'+esc(c.id)+'</span>',true)+
+      row('Customer ID','<span class="num">'+esc(publicId('CUS',c.id))+'</span>')+
     '</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Value</div>'+
       '<div class="sp-row"><span class="sp-lbl">Lifetime (delivered)</span><span class="sp-val money">'+money(customerValue(uid))+'</span></div>'+
@@ -2391,6 +2556,8 @@ function openCustomerPanel(uid){
     '<div class="sp-sec"><div class="sp-sec-title">Saved Addresses</div>'+
       '<div id="cust-addresses"><div class="empty-copy">Loading…</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Recent Orders</div>'+histHtml+'</div>'+
+    '<div class="sp-sec"><div class="sp-sec-title">Credits &amp; Refunds</div>'+
+      '<div id="cust-credits"><div class="empty-copy">Loading…</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Account</div>'+
       '<button class="btn '+(c.disabled?'btn-secondary':'btn-danger')+' btn-block" '+
         'data-action="toggle-customer" data-cid="'+esc(c.id)+'">'+
@@ -2400,6 +2567,7 @@ function openCustomerPanel(uid){
     '</div>';
   openSidePanel();
   loadCustomerAddresses(uid);
+  loadCustomerCredits(uid);
 }
 function loadCustomerAddresses(uid){
   getDocs(collection(db,'users',uid,'addresses')).then(function(snap){
@@ -2421,21 +2589,36 @@ function loadCustomerAddresses(uid){
 // ── CU-4: tag assignment ──────────────────────────────────────────────
 function editCustomerTags(uid){
   var c=customers.find(function(x){ return x.id===uid; }); if(!c) return;
-  var have={}; (c.tags||[]).forEach(function(s){ have[s]=1; });
+  var auto={}; customerAutoTags(c).forEach(function(s){ auto[s]=1; });
+  var have={}; customerTags(c).forEach(function(s){ have[s]=1; });
+  var opt=function(t){
+    return '<label class="tag-opt"><input type="checkbox" value="'+esc(t.slug)+'"'+(have[t.slug]?' checked':'')+'>'+
+      '<span class="bdg bg-'+t.tone+' plain sm">'+esc(t.label)+'</span>'+
+      (auto[t.slug]?' <small class="cell-mute">auto</small>':'')+'</label>';
+  };
   $('cf-ico').className='m-ico'; $('cf-ico').innerHTML=icon('users','ic-lg');
   $('cf-title').textContent='Tags for '+c.name;
-  $('cf-body').innerHTML='<div class="tag-picker">'+CUSTOMER_TAGS.map(function(t){
-    return '<label class="tag-opt"><input type="checkbox" value="'+esc(t.slug)+'"'+(have[t.slug]?' checked':'')+'>'+
-      '<span class="bdg bg-'+t.tone+' plain sm">'+esc(t.label)+'</span></label>';
-  }).join('')+'</div>';
+  $('cf-body').innerHTML='<div class="sc-sub" style="margin-bottom:8px">“auto” tags come from this customer’s orders. '+
+      'Untick one to remove it for this customer only.</div>'+
+    '<div class="tag-picker">'+CUSTOMER_TAGS.filter(function(t){ return !t.parish; }).map(opt).join('')+'</div>'+
+    '<div class="sp-sec-title" style="margin-top:10px">Parish</div>'+
+    '<div class="tag-picker">'+CUSTOMER_TAGS.filter(function(t){ return t.parish; }).map(opt).join('')+'</div>';
   var ok=$('cf-ok'); ok.textContent='Save tags'; ok.className='btn btn-primary';
   confirmResolve=function(confirmed){
-    var picked=Array.prototype.slice.call(document.querySelectorAll('.tag-picker input:checked'))
-      .map(function(i){ return i.value; });
+    var picked={};
+    Array.prototype.slice.call(document.querySelectorAll('.tag-picker input:checked'))
+      .forEach(function(i){ picked[i.value]=1; });
     $('cf-body').innerHTML='';
     if(!confirmed) return;
+    // Ticked and not automatic → stored as a manual tag. Unticked but
+    // automatic → stored as switched off. Everything else follows the orders.
+    var tags=[],off=[];
+    CUSTOMER_TAGS.forEach(function(t){
+      if(picked[t.slug]&&!auto[t.slug]) tags.push(t.slug);
+      if(!picked[t.slug]&&auto[t.slug]) off.push(t.slug);
+    });
     updateDoc(doc(db,'users',uid),{
-      tags:picked,
+      tags:tags,tagsOff:off,
       tagsUpdatedAt:serverTimestamp(),
       tagsUpdatedBy:auth.currentUser?auth.currentUser.uid:''
     }).then(function(){
@@ -2444,6 +2627,81 @@ function editCustomerTags(uid){
     }).catch(function(e){ toast('error',e.message,'Could not save tags'); });
   };
   openModal('modal-confirm');
+}
+
+/* Client checklist (admin round): "Apply credit/refund". There is no wallet
+   and no card payment yet, so this records what the office owes or gave —
+   amount, reason, which order, who — in users/{uid}/credits. The office
+   honours it by hand; the customer app does not apply it. */
+function loadCustomerCredits(uid){
+  getDocs(query(collection(db,'users',uid,'credits'),orderBy('createdAt','desc'),limit(20))).then(function(snap){
+    var el=$('cust-credits'); if(!el||panelCustomerId!==uid) return;
+    if(snap.empty){ el.innerHTML='<div class="empty-copy">None recorded.</div>'; return; }
+    el.innerHTML=snap.docs.map(function(d){
+      var x=d.data(), at=x.createdAt&&x.createdAt.toDate?x.createdAt.toDate():null;
+      return '<div class="sp-row"><span class="sp-lbl">'+esc(x.type==='refund'?'Refund':'Credit')+' — '+esc(x.reason||'')+
+        (x.orderId?' · '+esc(shortId(x.orderId)):'')+
+        '<div class="cell-mute sm">'+esc(at?fmtStamp(at):'')+(x.createdBy?' · by '+esc(x.createdBy):'')+'</div></span>'+
+        '<span class="sp-val money num">'+money(x.amount)+'</span></div>';
+    }).join('');
+  }).catch(function(e){
+    var el=$('cust-credits'); if(el) el.innerHTML='<div class="empty-copy">Could not load: '+esc(e.message)+'</div>';
+  });
+}
+function applyCustomerCredit(uid){
+  var c=customers.find(function(x){ return x.id===uid; }); if(!c) return;
+  var mine=customerOrders(uid).slice(0,30);
+  $('cf-ico').className='m-ico'; $('cf-ico').innerHTML=icon('revenue','ic-lg');
+  $('cf-title').textContent='Credit or refund — '+c.name;
+  $('cf-body').innerHTML=
+    '<div class="sc-sub" style="margin-bottom:8px">Recorded on the account for the office to honour. '+
+      'Nothing is charged or paid automatically.</div>'+
+    '<div class="fr fr-standalone"><label for="cr-type">Type</label><select id="cr-type">'+
+      '<option value="credit">Credit (towards a future order)</option><option value="refund">Refund (money returned)</option></select></div>'+
+    '<div class="fr fr-standalone"><label for="cr-amount">Amount (J$)</label><input id="cr-amount" type="number" min="1" step="1" inputmode="numeric"/></div>'+
+    '<div class="fr fr-standalone"><label for="cr-reason">Reason <small>(required)</small></label><input id="cr-reason" maxlength="200" placeholder="Item missing from order"/></div>'+
+    '<div class="fr fr-standalone"><label for="cr-order">Order <small>(optional)</small></label><select id="cr-order"><option value="">Not tied to an order</option>'+
+      mine.map(function(o){ return '<option value="'+esc(o._docId||o.id)+'">'+esc(shortId(o.id))+' — '+esc(o.merchant)+' ('+esc(o.amount)+')</option>'; }).join('')+
+    '</select></div>';
+  var ok=$('cf-ok'); ok.textContent='Record'; ok.className='btn btn-primary';
+  confirmResolve=function(confirmed){
+    var type=($('cr-type')||{}).value||'credit';
+    var amount=Math.round(Number(($('cr-amount')||{}).value)||0);
+    var reason=((($('cr-reason')||{}).value)||'').trim();
+    var orderId=($('cr-order')||{}).value||'';
+    $('cf-body').innerHTML='';
+    if(!confirmed) return;
+    if(!(amount>0)){ toast('warning','Enter an amount above J$0.'); return; }
+    if(!reason){ toast('warning','Give a reason — it is kept on the account.'); return; }
+    addDoc(collection(db,'users',uid,'credits'),{
+      type:type,amount:amount,reason:reason.slice(0,200),orderId:orderId||null,
+      createdAt:serverTimestamp(),createdBy:auth.currentUser?(auth.currentUser.email||auth.currentUser.uid):''
+    }).then(function(){
+      toast('success',(type==='refund'?'Refund':'Credit')+' of '+money(amount)+' recorded for '+c.name+'.');
+      if(panelCustomerId===uid) loadCustomerCredits(uid);
+    }).catch(function(e){ toast('error',e.message,'Could not record'); });
+  };
+  openModal('modal-confirm');
+}
+
+/* Settings → Customer tags: the thresholds behind the automatic tags. */
+function fillCustRulesForm(){
+  var R=custRules;
+  var set=function(id,v){ var el=$(id); if(el&&document.activeElement!==el) el.value=String(v); };
+  set('cr-repeat',R.repeatOrders); set('cr-frequent',R.frequentOrders);
+  set('cr-atrisk',R.atRiskDays); set('cr-inactive',R.inactiveDays); set('cr-highvalue',R.highValueSpend);
+}
+function saveCustRules(){
+  var n=function(id){ var v=Number(($(id)||{}).value); return isFinite(v)&&v>=0?Math.round(v):NaN; };
+  var r={repeatOrders:n('cr-repeat'),frequentOrders:n('cr-frequent'),atRiskDays:n('cr-atrisk'),
+    inactiveDays:n('cr-inactive'),highValueSpend:n('cr-highvalue')};
+  var bad=Object.keys(r).some(function(k){ return isNaN(r[k]); });
+  if(bad){ toast('warning','Every threshold needs a whole number of 0 or more.'); return; }
+  if(r.atRiskDays>=r.inactiveDays){ toast('warning','“At risk” must start before “Inactive” (fewer days).'); return; }
+  r.updatedAt=serverTimestamp();
+  setDoc(doc(db,'settings','customerRules'),r,{merge:true})
+    .then(function(){ toast('success','Customer tag rules saved.'); })
+    .catch(function(e){ toast('error',e.message,'Could not save'); });
 }
 // ── CU-5: jump to this customer's orders / notify them ────────────────
 function viewCustomerOrders(uid){
@@ -2460,9 +2718,12 @@ function notifyCustomer(uid){
   var c=customers.find(function(x){ return x.id===uid; }); if(!c) return;
   closeSidePanel();
   navTo('notifications');
-  // Per-customer targeting is NT-2 (audience segments). Until then the operator
-  // composes a message and picks the audience by hand; drop a hint.
-  toast('info','Compose the message, then choose the audience. Per-customer sending arrives with audience targeting (NT-2).');
+  // Admin round: "One customer" is an audience now — preselect this one.
+  $('n-target').value='user';
+  syncNotifTarget();
+  $('n-target-pick').value=uid;
+  var t=$('n-title'); if(t) t.focus();
+  toast('info','Writing to '+c.name+' only.');
 }
 
 var setUserDisabled=httpsCallable(fns,'setUserDisabled');
@@ -2582,7 +2843,8 @@ function renderOverseas(){
     stats.innerHTML=
       statCard('send','New Requests',s.newCount,'awaiting review','')+
       statCard('clock','Awaiting Customer',s.awaitingCustomer,'quote sent, waiting for response','warning')+
-      statCard('success','Closed',s.closed,s.counts[Overseas.COMPLETED]+' completed · '+s.counts[Overseas.DECLINED]+' declined','success');
+      statCard('success','Closed',s.closed,s.counts[Overseas.COMPLETED]+' completed · '+s.counts[Overseas.DECLINED]+' declined · '+
+        s.counts[Overseas.CANCELLED]+' cancelled · '+s.counts[Overseas.EXPIRED]+' expired','success');
   }
 
   var rows=Overseas.filterInquiries(inquiries,{status:overseasFilter,q:overseasSearch});
@@ -2615,7 +2877,7 @@ function renderOverseas(){
       '<td class="cell-mute">'+esc(i.recipientParish)+'</td>'+
       '<td class="cell-mute" title="'+esc(i.itemCategory)+' · '+esc(i.itemDescription)+'">'+listCell+'</td>'+
       '<td class="right num">'+esc(inquiryBudget(i.budget))+'</td>'+
-      '<td>'+inquiryBadge(i.status)+'</td>'+
+      '<td>'+inquiryBadge(i.status)+(i.customerResponse?'<div class="cell-mute sm">Customer '+(i.customerResponse==='accepted'?'accepted':'declined')+'</div>':'')+'</td>'+
       // A brand-new enquiry has no resolved timestamp yet, and "—" would read
       // as missing data rather than "seconds ago".
       '<td class="cell-mute num">'+esc(i.createdAt?fmtStamp(i.createdAt):'Just now')+'</td>'+
@@ -2664,6 +2926,10 @@ function openInquiryPanel(id){
 
   var handledHtml=
     row('Received',esc(i.createdAt?fmtStamp(i.createdAt):'Just now'))+
+    (i.customerResponse?row('Customer answer',(i.customerResponse==='accepted'
+      ?'<span class="bdg bg-success plain">Accepted quote</span>'
+      :'<span class="bdg bg-danger plain">Declined quote</span>')+
+      (i.customerRespondedAt?' <span class="cell-mute sm">'+esc(fmtStamp(i.customerRespondedAt))+'</span>':'')):'')+
     (i.updatedAt?row('Last updated',esc(fmtStamp(i.updatedAt))):'')+
     (i.handledBy?row('Handled by','<span class="sp-val sm num">'+esc(i.handledBy)+'</span>',true):'');
 
@@ -2685,7 +2951,7 @@ function openInquiryPanel(id){
   }).join('');
   var quoteSummary=i.quoteTotal!=null
     ? '<div class="sp-row"><span class="sp-lbl">Current quote</span><span class="sp-val money">'+moneyIn(i.quoteTotal,quoteCur)+
-      (i.quoteExpiresAt?' <span class="cell-mute sm">exp. '+esc(i.quoteExpiresAt.toLocaleDateString('en-JM',{month:'short',day:'numeric'}))+'</span>':'')+'</span></div>'
+      (i.quoteExpiresAt?' <span class="cell-mute sm">exp. '+esc(i.quoteExpiresAt.toLocaleDateString('en-US',{month:'short',day:'numeric'}))+'</span>':'')+'</span></div>'
     : '<div class="empty-copy">No quote sent yet.</div>';
   var quoteHtml=quoteSummary+
     '<div class="fr"><label for="q-cur">Currency</label><select id="q-cur">'+curOpts+'</select></div>'+
@@ -2999,11 +3265,13 @@ function eraseAllData(){
 // ══════════════════════ MERCHANTS ══════════════════════
 function renderMerchantStats(){
   var el=$('merchants-stats'); if(!el) return;
-  var openC=merchants.filter(function(m){ return m.open; }).length;
+  var live=merchants.filter(function(m){ return m.active; });
+  var openC=live.filter(function(m){ return m.open; }).length;
+  var offC=merchants.length-live.length;
   el.innerHTML=
-    statCard('merchants','Total Merchants',merchants.length,'','')+
+    statCard('merchants','Total Merchants',merchants.length,offC?offC+' deactivated':'','')+
     statCard('check','Open Now',openC,'Accepting orders','success')+
-    statCard('clock','Closed',merchants.length-openC,'Not accepting','warning');
+    statCard('clock','Closed',live.length-openC,'Listed, not accepting orders','warning');
 }
 /* The loading state has to be card-shaped too. skeletonRows() draws <tr>s, so
    reusing it here would have put a table inside a grid; the .sk blocks and the
@@ -3038,7 +3306,7 @@ function renderMerchants(){
   renderMerchantStats();
   var cnt=$('merchants-count');
   if(cnt) cnt.textContent=loadedOnce.merchants
-    ? merchants.length+(merchants.length===1?' store':' stores')
+    ? merchants.length+(merchants.length===1?' merchant':' merchants')
     : '';
   var grid=$('merchants-grid'); if(!grid) return;
   if(!loadedOnce.merchants){ grid.innerHTML=merchantSkeletons(8); return; }
@@ -3053,12 +3321,16 @@ function renderMerchants(){
   }
   grid.innerHTML=merchants.map(function(m){
     var id=esc(m.id),open=!!m.open,shown=!!expandedMerchants[m.id];
-    return '<article class="mcd '+catCard(m.category)+(shown?' open':'')+'">'+
+    // Active + Open = visible and ordering; Active + Closed = listed, not
+    // ordering; Deactivated = hidden from the customer app entirely.
+    var stateLbl=!m.active?'Deactivated':(open?'Open':'Closed');
+    var qa=function(action,label){ return '<button class="pa-btn" data-action="'+action+'" data-id="'+id+'">'+esc(label)+'</button>'; };
+    return '<article class="mcd '+catCard(m.category)+(shown?' open':'')+(m.active?'':' mcd-off')+'">'+
       // ── Cover. The state badge rides on the photo rather than sitting in
       //    the body: open/closed is the fact you scan a grid FOR, and up here
       //    it is in the same place on all four cards in a row.
       '<div class="mcd-cover">'+merchantCover(m)+
-        '<div class="mcd-state">'+badge(open?'Open':'Closed')+'</div>'+
+        '<div class="mcd-state">'+badge(stateLbl)+'</div>'+
       '</div>'+
       // ── The default half: who they are, what they sell, how to reach them,
       //    and the one switch that changes what customers see right now. Five
@@ -3079,7 +3351,7 @@ function renderMerchants(){
           // words instead of relying on a title attribute — and the words never
           // change, because the STATE is the badge on the cover.
           '<div class="mcd-row"><span class="mcd-k">Accepting orders</span>'+
-            '<label class="tgl" title="Toggle open"><input type="checkbox"'+(open?' checked':'')+
+            '<label class="tgl" title="Open / close the store"><input type="checkbox"'+(open?' checked':'')+(m.active?'':' disabled')+
               ' class="tgl-merchant" data-id="'+id+'" aria-label="Merchant open"><span class="ts"></span></label>'+
           '</div>'+
         '</div>'+
@@ -3093,10 +3365,20 @@ function renderMerchants(){
           '<span class="mcd-v num">'+ordersTodayFor(m.id)+'</span></div>'+
         '<div class="mcd-row"><span class="mcd-k">Rating</span>'+
           '<span class="mcd-v">'+starsOrNone(m.rating,m.ratingCount)+'</span></div>'+
-        '<div class="mcd-acts">'+
-          '<button class="aicon ai-v" data-action="view-merchant" data-id="'+id+'" title="View" aria-label="View merchant">'+icon('view')+'</button>'+
-          '<button class="aicon ai-e" data-action="edit-merchant" data-id="'+id+'" title="Edit" aria-label="Edit merchant">'+icon('edit')+'</button>'+
-          '<button class="aicon ai-d" data-action="del-merchant" data-id="'+id+'" title="Delete" aria-label="Delete merchant">'+icon('delete')+'</button>'+
+        '<div class="mcd-row"><span class="mcd-k">Merchant ID</span>'+
+          '<span class="mcd-v num">'+esc(publicId('MER',m.id,m.publicId))+'</span></div>'+
+        // Client checklist (admin round): the nine quick actions.
+        '<div class="mcd-qa">'+
+          qa('edit-merchant','Edit Merchant')+
+          qa('merchant-menu','View Menu / Products')+
+          (m.active?qa('merchant-open',open?'Close Store':'Open Store'):'')+
+          qa('merchant-active',m.active?'Deactivate':'Activate')+
+          qa('merchant-orders','View Orders')+
+          qa('merchant-fee','Set Delivery Fee')+
+          qa('merchant-commission','Set Commission')+
+          qa('merchant-hours','Set Hours')+
+          qa('merchant-promos','Manage Promotions')+
+          '<button class="pa-btn pa-del" data-action="del-merchant" data-id="'+id+'">Delete</button>'+
         '</div>'+
       '</div>'+
       '<div class="mcd-foot">'+
@@ -3241,6 +3523,7 @@ function openMerchantModal(mode,id){
   $('m-phone').value   =m?m.phone:'';
   $('m-email').value   =m?(m.email||''):'';
   $('m-fee').value     =m?String(m.deliveryFee):'';
+  $('m-commission').value=m&&m.commission!=null?String(m.commission):'';
   $('m-hours').value   =m?m.openingHours:'';
   $('m-etatime').value =m?m.deliveryTime:'';
   $('m-address').value =m?m.address:'';
@@ -3270,6 +3553,12 @@ function saveMerchant(){
   var name=$('m-name').value.trim();
   if(!name){ toast('warning','Business name is required.'); $('m-name').focus(); return; }
   var isOpenState=$('m-status').value==='Open';
+  var comRaw=($('m-commission')||{}).value||'';
+  var commissionRate=comRaw.trim()===''?null:Number(comRaw);
+  if(commissionRate!=null&&!(isFinite(commissionRate)&&commissionRate>=0&&commissionRate<=100)){
+    toast('warning','Commission must be between 0 and 100%.'); $('m-commission').focus(); return;
+  }
+  if(commissionRate!=null) commissionRate=Math.round(commissionRate*10)/10;
 
   /* P3-01. The delivery fee is written as an INTEGER, not '$'+value.
      The old string write is the root of the three-different-numbers bug:
@@ -3312,6 +3601,7 @@ function saveMerchant(){
     openingHours:$('m-hours').value.trim()||'—',
     deliveryTime:$('m-etatime').value.trim()||'25–35 min',
     deliveryFee:deliveryFee,
+    commissionRate:commissionRate,
     isOpen:isOpenState,
     // P4-02. Customer-facing display icon (home_screen.dart:672). Until now
     // the panel had no input for it, so every admin-created merchant fell
@@ -3331,7 +3621,11 @@ function saveMerchant(){
     // is no longer stored at all — it is derived (P3-05).
     obj.totalRatings=0; obj.ratingCount=0; obj.averageRating=0;
     obj.createdAt=serverTimestamp();
-    promise=addDoc(collection(db,'merchants'),obj);
+    obj.active=true;
+    // The permanent SE-MER- ID comes from the new document's id.
+    promise=addDoc(collection(db,'merchants'),obj).then(function(ref){
+      return updateDoc(ref,{publicId:publicId('MER',ref.id)}).then(function(){ return ref; });
+    });
   }
   promise.then(function(created){
     btn.disabled=false;
@@ -3385,6 +3679,78 @@ function toggleMerchant(id){
   updateDoc(doc(db,'merchants',id),{isOpen:!m.open,updatedAt:serverTimestamp()})
     .catch(function(e){ toast('error',e.message,'Could not change status'); });
 }
+/* Activate/Deactivate (client checklist): independent of Open/Closed. A
+   deactivated merchant disappears from the customer app until reactivated,
+   so turning one off asks first; turning one back on does not. */
+function toggleMerchantActive(id){
+  var m=merchants.find(function(x){ return x.id===id; }); if(!m) return;
+  var write=function(){
+    updateDoc(doc(db,'merchants',id),{active:!m.active,updatedAt:serverTimestamp()})
+      .then(function(){ toast('success',m.name+(m.active?' deactivated — hidden from the app.':' activated — back on the app.')); })
+      .catch(function(e){ toast('error',e.message,'Could not change status'); });
+  };
+  if(!m.active){ write(); return; }
+  confirmDialog({title:'Deactivate '+m.name+'?',
+    body:'It disappears from the customer app and cannot receive orders until you activate it again. Its menu, orders and ratings are kept.',
+    confirmLabel:'Deactivate',tone:'warning'})
+    .then(function(ok){ if(ok) write(); });
+}
+function viewMerchantMenu(id){ openMerchantPanel(id); switchMerchantTab('menu'); }
+function viewMerchantOrders(id){
+  var m=merchants.find(function(x){ return x.id===id; }); if(!m) return;
+  closeSidePanel();
+  navTo('orders');
+  clearOrderFilters();
+  ordersFilter='All'; updateOrdersTabs();
+  var sel=$('of-merchant');
+  if(sel&&Array.prototype.some.call(sel.options,function(o){ return o.value===m.name; })){ sel.value=m.name; readOrderFilters(); }
+  else toast('info','No orders from '+m.name+' yet.');
+}
+function merchantPromos(id){
+  var m=merchants.find(function(x){ return x.id===id; }); if(!m) return;
+  navTo('promos');
+  var sel=$('pc-elig-merchants');
+  if(sel){ selectOptionsById(sel,[id]); if(typeof syncEligScope==='function') syncEligScope(); }
+  toast('info','New promo codes are now limited to '+m.name+'. Clear “Merchants” under “Who can use this?” to widen it.');
+}
+/* One-field edits from the card: delivery fee, commission, hours. */
+var MERCHANT_QUICK={
+  fee:{title:'delivery fee',label:'Delivery fee (J$) — 0 shows as “Free delivery”',key:'deliveryFee',type:'number',
+    get:function(m){ return m.deliveryFee; },
+    parse:function(v){ if(String(v).trim()==='') return null; var n=Math.round(Number(v)); return isFinite(n)&&n>=0?n:null; },
+    err:'Enter a delivery fee of 0 or more.'},
+  commission:{title:'commission',label:'Commission (% of each order kept by ShipEast)',key:'commissionRate',type:'number',
+    get:function(m){ return m.commission; },
+    parse:function(v){ if(String(v).trim()==='') return null; var n=Number(v); return isFinite(n)&&n>=0&&n<=100?Math.round(n*10)/10:null; },
+    err:'Enter a commission between 0 and 100%.'},
+  hours:{title:'hours',label:'Opening hours',key:'openingHours',type:'text',
+    get:function(m){ return m.openingHours; },
+    parse:function(v){ v=String(v||'').trim(); return v?v.slice(0,120):null; },
+    err:'Enter the opening hours, e.g. 8:00 AM – 10:00 PM.'}
+};
+function quickSetMerchant(id,which){
+  var m=merchants.find(function(x){ return x.id===id; }); var q=MERCHANT_QUICK[which]; if(!m||!q) return;
+  var cur=q.get(m);
+  $('cf-ico').className='m-ico'; $('cf-ico').innerHTML=icon('merchants','ic-lg');
+  $('cf-title').textContent='Set '+q.title+' — '+m.name;
+  $('cf-body').innerHTML='<div class="fr fr-standalone"><label for="cf-qset">'+esc(q.label)+'</label>'+
+    '<input id="cf-qset" type="'+q.type+'"'+(q.type==='number'?' min="0" step="any" inputmode="decimal"':' maxlength="120"')+
+    ' value="'+esc(cur==null||cur==='—'?'':String(cur))+'"/></div>';
+  var ok=$('cf-ok'); ok.textContent='Save'; ok.className='btn btn-primary';
+  confirmResolve=function(confirmed){
+    var raw=(($('cf-qset')||{}).value)||'';
+    $('cf-body').innerHTML='';
+    if(!confirmed) return;
+    var v=q.parse(raw);
+    if(v==null){ toast('warning',q.err); return; }
+    var upd={updatedAt:serverTimestamp()}; upd[q.key]=v;
+    updateDoc(doc(db,'merchants',id),upd)
+      .then(function(){ toast('success',m.name+' — '+q.title+' saved.'); })
+      .catch(function(e){ toast('error',e.message,'Could not save'); });
+  };
+  openModal('modal-confirm');
+  setTimeout(function(){ var f=$('cf-qset'); if(f) f.focus(); },50);
+}
 function openMerchantPanel(id){
   panelMerchantId=id;
   var m=merchants.find(function(x){ return x.id===id; }); if(!m) return;
@@ -3399,9 +3765,12 @@ function openMerchantPanel(id){
 
   var detailsHtml=
     '<div class="sp-hero">'+merchantMedia(m,'lg')+
-      '<div><div class="sp-hero-name">'+esc(m.name)+'</div><div style="margin-top:5px">'+badge(m.open?'Open':'Closed')+'</div></div></div>'+
+      '<div><div class="sp-hero-name">'+esc(m.name)+'</div><div style="margin-top:5px">'+badge(!m.active?'Deactivated':(m.open?'Open':'Closed'))+'</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Business Details</div>'+
+      row('Merchant ID','<span class="num">'+esc(publicId('MER',m.id,m.publicId))+'</span>')+
       row('Category','<span class="bdg bg-info plain">'+esc(catLabel(m.category))+'</span>')+
+      row('On the app',m.active?'Active':'Deactivated — hidden from customers')+
+      row('Commission',m.commission!=null?'<span class="num">'+esc(String(m.commission))+'%</span>':'Not set')+
       row('Owner',esc(m.owner))+
       row('Opening Hours','<span class="sp-val sm">'+esc(m.openingHours||'—')+'</span>',true)+
       row('Delivery ETA','<span class="sp-val sm">'+esc(m.deliveryTime||'—')+'</span>')+
@@ -3611,15 +3980,20 @@ function renderNotifHist(){
     var stat=function(txt){ return '<span class="num nh-stamp">'+txt+'</span>'; };
     var chips=[];
     if(n.delivered!=null) chips.push(stat('Delivered to '+n.delivered+' device'+(n.delivered===1?'':'s')));
-    if(n.opened!=null){
-      chips.push(stat(n.opened+' opened'));
-      if(n.delivered) chips.push(stat('Tap rate '+Math.round((n.opened/n.delivered)*100)+'%'));
+    // Client checklist (admin round): Opened and Tap rate appear only once a
+    // push has really gone out (the server wrote deliveredCount) — never as
+    // placeholder numbers. Opens come from the customer app's tap reports.
+    if(n.delivered!=null){
+      var opened=opensByNotif[n.id]||0;
+      chips.push(stat(opened+' opened'));
+      if(n.delivered) chips.push(stat('Tap rate '+Math.round((opened/n.delivered)*100)+'%'));
     }
+    if(n.audienceSize!=null&&n.delivered==null) chips.push(stat(n.audienceSize+' recipient'+(n.audienceSize===1?'':'s')));
     if(n.failed) chips.push('<span class="num nh-stamp" style="color:var(--danger)">'+n.failed+' failed</span>');
     // NT-3: a scheduled push that has not gone out yet.
     var schedChip='';
     if(n.scheduledFor&&!n.dispatched){
-      schedChip='<span class="bdg bg-warning plain sm">⏱ '+esc(n.scheduledFor.toLocaleString('en-JM',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}))+'</span>';
+      schedChip='<span class="bdg bg-warning plain sm">⏱ '+esc(n.scheduledFor.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}))+'</span>';
     }
     // NT-4: the tap destination.
     var destChip=n.destType?'<span class="bdg bg-neutral plain sm">→ '+esc(n.destType)+(n.destValue?': '+esc(n.destValue):'')+'</span>':'';
@@ -3645,10 +4019,45 @@ var NOTIF_AUDIENCE={
   ordered:'customers who have ordered',never_ordered:'customers who never ordered',
   inactive:'inactive customers'
 };
-function notifAudienceLabel(target){
+function notifAudienceLabel(target,name){
   if(NOTIF_AUDIENCE[target]) return NOTIF_AUDIENCE[target];
   if(target&&target.indexOf('tag:')===0) return tagLabel(target.slice(4))+' customers';
+  if(target&&target.indexOf('merchant:')===0) return 'customers of '+(name||'a merchant');
+  if(target&&target.indexOf('user:')===0) return name||'one customer';
   return target;
+}
+var opensByNotif={};
+/* Admin round: audiences only the panel can work out — automatic tags
+   (worked out from orders, never stored), a merchant's customers, one
+   customer — are resolved here to a list of uids the sender uses as-is.
+   Returns null for the audiences the server resolves itself. */
+function resolveNotifRecipients(target,pick){
+  if(target==='user') return pick?[pick]:[];
+  if(target==='merchant'){
+    var seen={};
+    orders.forEach(function(o){ if(o.merchantId===pick&&o.customerId) seen[o.customerId]=1; });
+    return Object.keys(seen);
+  }
+  if(target.indexOf('tag:')===0){
+    var tag=target.slice(4);
+    return customers.filter(function(c){ return !c.disabled&&customerTags(c).indexOf(tag)>-1; })
+      .map(function(c){ return c.id; });
+  }
+  return null;
+}
+/* The follow-up picker for "one customer" / "a merchant's customers". */
+function syncNotifTarget(){
+  var t=($('n-target')||{}).value||'';
+  var row=$('n-target-pick-row'), sel=$('n-target-pick'); if(!row||!sel) return;
+  row.hidden=!(t==='user'||t==='merchant');
+  if(row.hidden) return;
+  $('n-target-pick-label').textContent=t==='user'?'Customer':'Merchant';
+  var list=t==='user'
+    ? customers.filter(function(c){ return !c.disabled; }).slice().sort(function(a,b){ return a.name.localeCompare(b.name); })
+        .map(function(c){ return [c.id,c.name+(c.phone&&c.phone!=='—'?' — '+phoneFmt(c.phone):'')]; })
+    : merchants.slice().sort(function(a,b){ return a.name.localeCompare(b.name); })
+        .map(function(m){ return [m.id,m.name]; });
+  sel.innerHTML=list.map(function(x){ return '<option value="'+esc(x[0])+'">'+esc(x[1])+'</option>'; }).join('');
 }
 /* NT-2: the customer-segment options come from the CU-4 tag catalogue, so the
    two lists cannot drift. */
@@ -3663,9 +4072,18 @@ function syncNotifDest(){
   var dest=($('n-dest')||{}).value||'';
   var row=$('n-dest-value-row'); if(!row) return;
   row.hidden=!dest||dest==='';
-  var isScreen=dest==='screen';
-  $('n-dest-value').hidden=isScreen;
+  var isScreen=dest==='screen', isCat=dest==='category';
+  $('n-dest-value').hidden=isScreen||isCat;
   $('n-dest-screen').hidden=!isScreen;
+  var catSel=$('n-dest-category');
+  catSel.hidden=!isCat;
+  if(isCat&&!catSel.options.length){
+    // Same list as the merchant form, so a category here is one merchants use.
+    catSel.innerHTML=Array.prototype.map.call($('m-cat').options,function(o){
+      return '<option value="'+esc(o.value)+'">'+esc(o.textContent)+'</option>';
+    }).join('');
+  }
+  if(isCat){ $('n-dest-value-label').textContent='Category'; }
   var lbl=$('n-dest-value-label');
   if(dest==='search'){ lbl.textContent='Search term'; $('n-dest-value').placeholder='grocery'; }
   else if(dest==='url'){ lbl.textContent='Web address'; $('n-dest-value').placeholder='https://…'; }
@@ -3682,7 +4100,9 @@ function syncNotifSchedule(){
 function notifDestFields(){
   var dest=($('n-dest')||{}).value||'';
   if(!dest) return {};
-  var val=dest==='screen'?($('n-dest-screen')||{}).value:($('n-dest-value')||{}).value;
+  var val=dest==='screen'?($('n-dest-screen')||{}).value
+    :dest==='category'?($('n-dest-category')||{}).value
+    :($('n-dest-value')||{}).value;
   val=(val||'').trim();
   if(!val) return {};
   return {destType:dest,destValue:val};
@@ -3692,7 +4112,15 @@ function sendNotif(scheduled){
   var msg=$('n-msg').value.trim();
   var target=$('n-target').value;
   if(!title||!msg){ toast('warning','Enter both a title and a message.'); return; }
-  var audience=notifAudienceLabel(target);
+  var pick=($('n-target-pick')||{}).value||'';
+  if((target==='user'||target==='merchant')&&!pick){ toast('warning','Choose who to send it to.'); return; }
+  var pickName='';
+  if(target==='user'){ var pc=customers.find(function(c){ return c.id===pick; }); pickName=pc?pc.name:''; }
+  if(target==='merchant'){ var pm=merchants.find(function(m){ return m.id===pick; }); pickName=pm?pm.name:''; }
+  var storedTarget=target==='user'?'user:'+pick:(target==='merchant'?'merchant:'+pick:target);
+  var recipientUids=resolveNotifRecipients(target,pick);
+  if(recipientUids&&!recipientUids.length){ toast('warning','Nobody is in that audience yet.'); return; }
+  var audience=notifAudienceLabel(storedTarget,pickName)+(recipientUids?' ('+recipientUids.length+')':'');
   var dest=notifDestFields();
 
   var whenRaw=($('n-schedule')||{}).value||'';
@@ -3708,7 +4136,7 @@ function sendNotif(scheduled){
     tone:'warning',
     title:scheduled?'Schedule this push?':'Send this push?',
     body:(scheduled
-      ? 'This will send to '+audience+' at '+new Date(whenRaw).toLocaleString('en-JM',{dateStyle:'medium',timeStyle:'short'})+'.'
+      ? 'This will send to '+audience+' at '+new Date(whenRaw).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})+'.'
       : 'This sends a real push notification to '+audience+'. It cannot be recalled once sent.')+
       (dest.destType?' Tapping it opens: '+dest.destType+' → '+dest.destValue+'.':''),
     confirmLabel:scheduled?'Schedule it':'Send Notification'
@@ -3718,12 +4146,14 @@ function sendNotif(scheduled){
     var btn=$(btnId), orig=btn.innerHTML;
     btn.disabled=true; btn.innerHTML='<span class="spin"></span>'+(scheduled?'Scheduling…':'Sending…');
     var payload={
-      title:title,message:msg,target:target,
+      title:title,message:msg,target:storedTarget,
       sentBy:auth.currentUser?auth.currentUser.email:'admin',
       createdAt:serverTimestamp()
     };
     if(dest.destType){ payload.destType=dest.destType; payload.destValue=dest.destValue; }
     if(scheduledFor) payload.scheduledFor=scheduledFor;
+    if(recipientUids){ payload.recipientUids=recipientUids; payload.audienceSize=recipientUids.length; }
+    if(pickName) payload.targetName=pickName;
     addDoc(collection(db,'notifications'),payload).then(function(){
       ['n-title','n-msg','n-schedule','n-dest-value'].forEach(function(f){ var el=$(f); if(el) el.value=''; });
       $('n-dest').value=''; syncNotifDest(); syncNotifSchedule();
@@ -3746,7 +4176,16 @@ function fmtDateLong(iso){
   if(p.length!==3) return iso;
   var d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
   if(isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('en-JM',{year:'numeric',month:'long',day:'numeric'});
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
+/* "August 18, 2026", or "August 18, 2026 at 6:00 PM" when an end time is set. */
+function fmtEndLong(date,time){
+  var out=fmtDateLong(date);
+  if(time&&time!=='23:59'){
+    var t=new Date(date+'T'+time);
+    if(!isNaN(t.getTime())) out+=' at '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }
+  return out;
 }
 function updPromoPreview(){
   var code=($('pc-code').value||'PROMO').toUpperCase();
@@ -3756,7 +4195,7 @@ function updPromoPreview(){
   $('pcp-disc').textContent=disc?(type==='percent'?disc+'% OFF':money(disc)+' OFF'):'—';
   // PR-9: surface the max-discount cap the form already captures.
   $('pcp-max').textContent=(disc&&type==='percent'&&maxDisc)?('Up to '+money(maxDisc)):'';
-  $('pcp-valid').textContent=valid?('Valid until '+fmtDateLong(valid)):'Never expires';
+  $('pcp-valid').textContent=valid?('Valid until '+fmtEndLong(valid,($('pc-valid-time')||{}).value)):'Never expires';
 }
 /* Live usage against the cap (P3-03). `usedCount` was never incremented before
    redemption moved server-side, so this column read 0 forever. */
@@ -3772,7 +4211,7 @@ function renderPromos(){
   var tbody=$('promos-tbody'); if(!tbody) return;
   if(!loadedOnce.promos){ tbody.innerHTML=skeletonRows(7,4); return; }
   if(!promoCodes.length){
-    tbody.innerHTML=emptyRow(7,'ticket','No promo codes yet','Create a promo code on the left to make it available at checkout.');
+    tbody.innerHTML=emptyRow(7,'ticket','No promo codes yet','Create a promo code above to make it available at checkout.');
     return;
   }
   tbody.innerHTML=promoCodes.map(function(p){
@@ -3784,8 +4223,8 @@ function renderPromos(){
       a.push(p.paused?pa('resume-promo',p.id,'Resume'):pa('pause-promo',p.id,'Pause'));
     }
     a.push(pa('dup-promo',p.id,'Duplicate'));
-    if(!p.ended) a.push(pa('end-promo',p.id,'End'));
-    a.push(pa('usage-promo',p.id,'Usage'));
+    if(!p.ended) a.push(pa('end-promo',p.id,'End Promo'));
+    a.push(pa('usage-promo',p.id,'View Usage'));
     a.push(pa('del-promo',p.id,'Delete','pa-del'));
     // PR-5: a small line under the code naming what it's restricted to, if
     // anything — so "why didn't this apply?" has an answer right in the table.
@@ -3796,8 +4235,9 @@ function renderPromos(){
       '</td>'+
       '<td class="cell-strong">'+esc(p.discount)+'</td>'+
       '<td class="right num">'+usageBar(p.usedCount,p.maxUses)+'</td>'+
-      '<td class="right num">'+(p.maxUses||'∞')+'</td>'+
-      '<td class="cell-mute num">'+esc(p.expiresAt?p.expiresAt.toLocaleDateString('en-JM',{year:'numeric',month:'short',day:'numeric'}):'Never')+'</td>'+
+      '<td class="right num" title="Global max uses · uses per customer">'+(p.maxUses||'∞')+
+        '<div class="cell-mute sm">'+(p.usesPerCustomer?p.usesPerCustomer+' per customer':'no per-customer cap')+'</div></td>'+
+      '<td class="cell-mute num">'+esc(p.expiresAt?p.expiresAt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}):'Never')+'</td>'+
       '<td>'+badge(p.status)+'</td>'+
       '<td><div class="promo-acts">'+a.join('')+'</div></td>'+
     '</tr>';
@@ -3887,7 +4327,13 @@ function createPromo(){
   var discType=$('pc-type').value;
   if(!code){ toast('warning','A promo code is required.'); $('pc-code').focus(); return; }
   if(!discAmt){ toast('warning','A discount amount is required.'); $('pc-disc').focus(); return; }
-  var maxUses=parseInt($('pc-max').value,10)||100;
+  // Both caps optional (client checklist): blank = unlimited, stored as 0.
+  var maxUses=Math.max(0,parseInt($('pc-max').value,10)||0);
+  var usesPerCustomer=Math.max(0,parseInt(($('pc-percust')||{}).value,10)||0);
+  if(maxUses&&usesPerCustomer>maxUses){
+    toast('warning','Uses per Customer cannot be more than the Global Max Uses.');
+    $('pc-percust').focus(); return;
+  }
   var minOrderTotal=Math.max(0,Math.round(parseAmt($('pc-min').value)))||0;
   var maxDiscRaw=$('pc-maxdisc').value.trim();
   var maxDiscount=maxDiscRaw===''?null:Math.max(0,Math.round(parseAmt(maxDiscRaw)));
@@ -3910,8 +4356,10 @@ function createPromo(){
   var validUntil=$('pc-valid').value||'';
   var expiresAt=null;
   if(validUntil){
-    // End of the chosen day, so a code valid "until the 5th" works ON the 5th.
-    var d=new Date(validUntil+'T23:59:59');
+    // An optional end time (client checklist: specific dates/times). Blank =
+    // end of the chosen day, so a code valid "until the 5th" works ON the 5th.
+    var endTime=($('pc-valid-time')||{}).value||'';
+    var d=new Date(validUntil+'T'+(endTime?endTime+':59':'23:59:59'));
     if(!isNaN(d.getTime())) expiresAt=Timestamp.fromDate(d);
   }
 
@@ -3935,7 +4383,7 @@ function createPromo(){
   var fields={
     code:code,discountType:discType,discountAmount:Math.round(discAmt),
     minOrderTotal:minOrderTotal,maxDiscount:maxDiscount,
-    maxUses:maxUses,startsAt:startsAt,expiresAt:expiresAt,active:true
+    maxUses:maxUses,usesPerCustomer:usesPerCustomer,startsAt:startsAt,expiresAt:expiresAt,active:true
   };
   fields.usedCount=editing&&existing?existing.usedCount:0;
   fields.createdAt=serverTimestamp();
@@ -3951,7 +4399,7 @@ function createPromo(){
     btn.disabled=false; btn.innerHTML=restore;
     if(editing){ cancelPromoEdit(); toast('success','“'+code+'” updated.'); }
     else{
-      ['pc-code','pc-disc','pc-max','pc-start','pc-valid','pc-min','pc-maxdisc'].forEach(function(i){ $(i).value=''; });
+      ['pc-code','pc-disc','pc-max','pc-percust','pc-start','pc-valid','pc-valid-time','pc-min','pc-maxdisc'].forEach(function(i){ $(i).value=''; });
       $('pc-type').value='percent';
       resetEligForm();
       updPromoPreview();
@@ -4016,7 +4464,7 @@ function duplicatePromo(id){
     setDoc(doc(db,'promoCodes',code),{
       code:code,discountType:p.discountType,discountAmount:Math.round(p.discountAmount||0),
       minOrderTotal:p.minOrderTotal||0,maxDiscount:p.maxDiscount,
-      maxUses:p.maxUses||100,usedCount:0,
+      maxUses:p.maxUses||0,usesPerCustomer:p.usesPerCustomer||0,usedCount:0,
       startsAt:p.startsAt?Timestamp.fromDate(p.startsAt):null,
       expiresAt:p.expiresAt?Timestamp.fromDate(p.expiresAt):null,
       // PR-5: eligibility rules are part of "every rule" the duplicate copies.
@@ -4027,16 +4475,55 @@ function duplicatePromo(id){
   };
   openModal('modal-confirm');
 }
-/* View Usage: a read-only summary. PR-11 (revenue, AOV, …) is a separate,
-   bigger piece; this is the redemption count the admin can act on today. */
+/* Client checklist PR-11: promo analytics — redemptions, discount cost,
+   revenue generated, average order value, new customers acquired. Worked out
+   from the orders that carry this code (the newest 200 the panel mirrors), so
+   it needs no extra storage. Only delivered orders count towards revenue. */
+function promoStats(code){
+  var withCode=orders.filter(function(o){ return o.promoCode===code; });
+  var done=withCode.filter(function(o){ return isDeliveredStatus(o.status); });
+  var revenue=done.reduce(function(s,o){ return s+(o.rawTotal||0); },0);
+  var cost=withCode.filter(function(o){ return !isCancelledStatus(o.status); })
+    .reduce(function(s,o){ return s+(o.discount||0); },0);
+  // A new customer = this order was their first ever (in the mirrored window).
+  var firstByCustomer={};
+  orders.forEach(function(o){
+    if(!o.customerId||!o._ts) return;
+    var f=firstByCustomer[o.customerId];
+    if(!f||o._ts<f._ts) firstByCustomer[o.customerId]=o;
+  });
+  var newCust={};
+  withCode.forEach(function(o){ var f=firstByCustomer[o.customerId]; if(f&&f.id===o.id) newCust[o.customerId]=1; });
+  return {orders:withCode.length,delivered:done.length,revenue:revenue,cost:cost,
+    aov:done.length?Math.round(revenue/done.length):0,newCustomers:Object.keys(newCust).length};
+}
 function viewPromoUsage(id){
   var p=promoCodes.find(function(x){ return x.id===id; }); if(!p) return;
-  var cap=p.maxUses?(' of '+p.maxUses):' (no cap)';
-  var pct=p.maxUses?' · '+Math.round((p.usedCount/p.maxUses)*100)+'% used':'';
-  var last=p.lastRedeemedAt?p.lastRedeemedAt.toLocaleString('en-JM',{dateStyle:'medium',timeStyle:'short'}):'never redeemed';
-  toast('info',
-    p.usedCount+' redemption'+(p.usedCount===1?'':'s')+cap+pct+'. Last redeemed: '+last+'.',
-    '“'+p.code+'” usage');
+  var st=promoStats(p.code);
+  var last=p.lastRedeemedAt?p.lastRedeemedAt.toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}):'Never';
+  $('sp-sub').textContent='Promo Analytics';
+  $('sp-title').textContent=p.code;
+  $('sp-body').innerHTML=
+    '<div class="sp-sec"><div class="sp-sec-title">Performance</div>'+
+      row('Redemptions','<span class="num">'+p.usedCount+(p.maxUses?' of '+p.maxUses:'')+'</span>')+
+      row('Orders with this code','<span class="num">'+st.orders+' ('+st.delivered+' delivered)</span>')+
+      row('Discount cost','<span class="num">'+money(st.cost)+'</span>')+
+      row('Revenue generated','<span class="num">'+money(st.revenue)+'</span>')+
+      row('Average order value','<span class="num">'+(st.delivered?money(st.aov):'—')+'</span>')+
+      row('New customers acquired','<span class="num">'+st.newCustomers+'</span>')+
+      row('Last redeemed',esc(last))+
+    '</div>'+
+    '<div class="sp-sec"><div class="sp-sec-title">Rules</div>'+
+      row('Discount',esc(p.discount)+(p.maxDiscount!=null&&p.discountType==='percent'?' · up to '+money(p.maxDiscount):''))+
+      row('Global max uses',p.maxUses?String(p.maxUses):'Unlimited')+
+      row('Uses per customer',p.usesPerCustomer?String(p.usesPerCustomer):'Unlimited')+
+      row('Starts',esc(p.startsAt?fmtStamp(p.startsAt):'Immediately'))+
+      row('Ends',esc(p.expiresAt?fmtStamp(p.expiresAt):'Never'))+
+      row('Status',badge(p.status))+
+    '</div>'+
+    '<div class="sc-sub">Revenue, order value and new customers are worked out from the most recent 200 orders. '+
+      'Redemptions only count once promo redemption is running on the server.</div>';
+  openSidePanel();
 }
 /* Edit prefills the create form. The doc id IS the code, so saving overwrites
    the same document; usedCount and createdAt are preserved (see createPromo). */
@@ -4047,9 +4534,12 @@ function editPromo(id){
   $('pc-type').value=p.discountType||'percent';
   $('pc-disc').value=p.discountAmount!=null?p.discountAmount:'';
   $('pc-max').value=p.maxUses||'';
+  $('pc-percust').value=p.usesPerCustomer||'';
   $('pc-min').value=p.minOrderTotal||'';
   $('pc-maxdisc').value=p.maxDiscount!=null?p.maxDiscount:'';
   $('pc-valid').value=p.expiresAt?isoDate(p.expiresAt):'';
+  var endT=p.expiresAt?isoLocal(p.expiresAt).slice(11):'';
+  $('pc-valid-time').value=endT==='23:59'?'':endT;
   $('pc-start').value=p.startsAt?isoLocal(p.startsAt):'';
   fillEligForm(p.eligibility);
   var btn=$('promo-create-btn'); btn.innerHTML=icon('edit')+'Save changes';
@@ -4059,7 +4549,7 @@ function editPromo(id){
 }
 function cancelPromoEdit(){
   promoEditId=null;
-  ['pc-code','pc-disc','pc-max','pc-start','pc-valid','pc-min','pc-maxdisc'].forEach(function(i){ var el=$(i); if(el) el.value=''; });
+  ['pc-code','pc-disc','pc-max','pc-percust','pc-start','pc-valid','pc-valid-time','pc-min','pc-maxdisc'].forEach(function(i){ var el=$(i); if(el) el.value=''; });
   $('pc-code').disabled=false;
   $('pc-type').value='percent';
   resetEligForm();
@@ -4346,6 +4836,7 @@ document.addEventListener('click',function(e){
     case 'customer-tags':   editCustomerTags(cid); break;
     case 'customer-orders': viewCustomerOrders(cid); break;
     case 'customer-notify': notifyCustomer(cid); break;
+    case 'customer-credit': applyCustomerCredit(cid); break;
     case 'view-inquiry':    openInquiryPanel(iid); break;
     case 'save-inquiry':    saveInquiry(iid); break;
     case 'save-quote':      saveQuote(iid); break;
@@ -4362,6 +4853,15 @@ document.addEventListener('click',function(e){
     case 'driver-reinstate':reinstateDriver(id); break;
     case 'driver-assign':   assignFromDriver(id); break;
     case 'driver-active-delivery': driverActiveDelivery(id); break;
+    case 'driver-location': driverLocation(id); break;
+    case 'merchant-menu': viewMerchantMenu(id); break;
+    case 'merchant-open': toggleMerchant(id); break;
+    case 'merchant-active': toggleMerchantActive(id); break;
+    case 'merchant-orders': viewMerchantOrders(id); break;
+    case 'merchant-fee': quickSetMerchant(id,'fee'); break;
+    case 'merchant-commission': quickSetMerchant(id,'commission'); break;
+    case 'merchant-hours': quickSetMerchant(id,'hours'); break;
+    case 'merchant-promos': merchantPromos(id); break;
     case 'driver-review':   reviewDriverDocs(id); break;
     case 'expand-merchant': toggleMerchantCard(id); break;
     case 'view-merchant':   openMerchantPanel(id); break;
@@ -4385,6 +4885,7 @@ document.addEventListener('click',function(e){
     case 'reset-driver-pass': resetDriverPassword(); break;
     case 'save-merchant':   saveMerchant(); break;
     case 'save-pricing':    savePricing(); break;
+    case 'save-cust-rules': saveCustRules(); break;
     case 'erase-open':      openWipeFlow(); break;
     case 'erase-all':       eraseAllData(); break;
     case 'send-notif':      sendNotif(false); break;
@@ -4399,9 +4900,10 @@ document.addEventListener('change',function(e){
   if(e.target.id&&e.target.id.indexOf('of-')===0) readOrderFilters();
   // DV: driver roster filter.
   if(e.target.id==='drv-filter'){ driverFilter=e.target.value; renderDrivers(); }
-  if(e.target.id==='pc-type'||e.target.id==='pc-valid') updPromoPreview();
+  if(e.target.id==='pc-type'||e.target.id==='pc-valid'||e.target.id==='pc-valid-time') updPromoPreview();
   if(e.target.id==='pc-elig-scope') syncEligScope();
   if(e.target.id==='n-dest') syncNotifDest();
+  if(e.target.id==='n-target') syncNotifTarget();
   // The note under the Status dropdown says what the chosen value does to the
   // driver's app, so it has to follow the dropdown.
   if(e.target.id==='d-status') syncDriverStatusNote();
@@ -4559,7 +5061,7 @@ function setupTableLabels(){
 }
 
 function initApp(){
-  $('tb-date').textContent=new Date().toLocaleDateString('en-JM',{weekday:'long',month:'long',day:'numeric'});
+  $('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   renderDashboard(); renderOrders(); renderDrivers(); renderMerchants();
   renderPromos(); renderNotifHist(); renderAnalytics(); renderOverseas();
   updPromoPreview(); updPhonePreview(); renderEmojiPicker();

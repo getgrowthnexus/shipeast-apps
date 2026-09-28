@@ -144,6 +144,27 @@ export const redeemPromo = onCall(async (request) => {
 
     if (!result.ok) return result;
 
+    // Client checklist (admin round): "Uses per Customer", separate from the
+    // global maxUses cap. Absent or 0 = no per-customer cap. Tracked per
+    // customer in a subcollection, inside the same transaction, so two
+    // simultaneous checkouts by one customer cannot both take the last use.
+    const perCustomer = Math.floor(Number(data?.usesPerCustomer) || 0);
+    const mineRef = ref.collection('redemptions').doc(uid);
+    const mine = await tx.get(mineRef);
+    const mineCount = Number(mine.exists ? mine.data()?.count : 0) || 0;
+    if (perCustomer > 0 && mineCount >= perCustomer) {
+      return {
+        ok: false as const, discount: 0, reason: 'per_customer_limit',
+        message: perCustomer === 1
+          ? 'You have already used this promo code.'
+          : 'You have used this promo code the maximum number of times.',
+      };
+    }
+    tx.set(mineRef, {
+      count: admin.firestore.FieldValue.increment(1),
+      lastRedeemedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
     tx.update(ref, {
       usedCount: admin.firestore.FieldValue.increment(1),
       lastRedeemedAt: admin.firestore.FieldValue.serverTimestamp(),

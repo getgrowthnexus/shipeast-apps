@@ -29,13 +29,27 @@ void main() {
   });
 
   group('DriverId.of', () {
-    test('is D- plus the first six characters, upper-cased', () {
-      expect(DriverId.of('7f3k2abcXYZ'), 'D-7F3K2A');
+    test('is SE-DRV- plus the first six characters, upper-cased', () {
+      expect(DriverId.of('7k4m2pbcXYZ'), 'SE-DRV-7K4M2P');
     });
 
     test('short and empty uids do not throw', () {
-      expect(DriverId.of('ab1'), 'D-AB1');
+      expect(DriverId.of('ab1'), 'SE-DRV-AB1');
       expect(DriverId.of(''), '');
+    });
+  });
+
+  group('AreaName.short', () {
+    test('keeps the last two parts and drops the country', () {
+      expect(AreaName.short('12 Queen St, Morant Bay, St. Thomas, Jamaica'),
+          'Morant Bay, St. Thomas');
+    });
+
+    test('short, empty and missing addresses', () {
+      expect(AreaName.short('Morant Bay, St. Thomas'), 'Morant Bay, St. Thomas');
+      expect(AreaName.short('Kingston'), 'Kingston');
+      expect(AreaName.short(''), '');
+      expect(AreaName.short(null), '');
     });
   });
 

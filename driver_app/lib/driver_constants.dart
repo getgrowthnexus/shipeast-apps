@@ -96,16 +96,37 @@ class DocExpiry {
   }
 }
 
-/// A driver's unique ID for people to quote — "D-7F3K2A" (client checklist:
-/// "Give each rider/driver a unique id #"). Derived from the auth uid, the same
-/// way order numbers are, so it is never stored and cannot drift. Mirror in
-/// `driverNo()` in `admin_panel/app.js`.
+/// A driver's unique ID for people to quote — "SE-DRV-7K4M2P" (client
+/// checklist, admin round: SE-DRV- / SE-CUS- / SE-MER- so an operator can tell
+/// at a glance which kind of account they are dealing with). Derived from the
+/// auth uid, which never changes, so the ID survives a new phone number, email
+/// or name. The admin panel also stores it as `publicId` on approval. Mirror
+/// in `publicId()` in `admin_panel/app.js`.
 class DriverId {
   DriverId._();
 
   static String of(String uid) => uid.isEmpty
       ? ''
-      : 'D-${(uid.length > 6 ? uid.substring(0, 6) : uid).toUpperCase()}';
+      : 'SE-DRV-${(uid.length > 6 ? uid.substring(0, 6) : uid).toUpperCase()}';
+}
+
+/// The short area of a free-text address — "Morant Bay, St. Thomas" out of
+/// "12 Queen St, Morant Bay, St. Thomas, Jamaica" — for list cards, where the
+/// full address is too long (client checklist). Keeps the last two parts after
+/// dropping the country; the detail sheet still shows the full address.
+class AreaName {
+  AreaName._();
+
+  static String short(String? address) {
+    if (address == null) return '';
+    final parts = address
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty && p.toLowerCase() != 'jamaica')
+        .toList();
+    if (parts.length <= 2) return parts.join(', ');
+    return parts.sublist(parts.length - 2).join(', ');
+  }
 }
 
 /// Phone-number formatting — one Jamaican format everywhere (client request:

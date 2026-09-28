@@ -188,6 +188,15 @@ class NotificationService {
     if (nav == null) return;
     final data = message.data;
 
+    // Client checklist (admin round): report the tap, so the admin panel can
+    // show "opened" and the tap rate for each broadcast.
+    final notificationId = data['notificationId'] as String?;
+    if (data['type'] == 'broadcast' &&
+        notificationId != null &&
+        notificationId.isNotEmpty) {
+      _recordOpen(notificationId);
+    }
+
     final orderId = data['orderId'] as String?;
     if (orderId != null && orderId.isNotEmpty) {
       nav.pushNamed('/order-status',
@@ -203,6 +212,11 @@ class NotificationService {
       case 'search':
         nav.pushNamed('/search', arguments: <String, dynamic>{'query': destValue});
         break;
+      case 'category':
+        // "20% off groceries today" lands on Groceries (admin round).
+        nav.pushNamed('/search',
+            arguments: <String, dynamic>{'category': destValue});
+        break;
       case 'screen':
         const allowed = {
           '/home', '/order-history', '/overseas-order', '/search',
@@ -216,6 +230,27 @@ class NotificationService {
           launchUrl(uri, mode: LaunchMode.externalApplication);
         }
         break;
+    }
+  }
+
+  /// One document per customer per broadcast (`{notificationId}_{uid}`), so
+  /// a second tap is a no-op rather than a second "open" — the admin's tap
+  /// rate counts people, not taps. firestore.rules allows only this create.
+  static Future<void> _recordOpen(String notificationId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await _db
+          .collection('notificationOpens')
+          .doc('${notificationId}_$uid')
+          .set(<String, dynamic>{
+        'notificationId': notificationId,
+        'uid': uid,
+        'openedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Already recorded (a repeat tap is refused by the rules), or offline.
+      // Analytics must never get in the way of opening the message.
     }
   }
 }

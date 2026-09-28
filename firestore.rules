@@ -98,9 +98,9 @@ service cloud.firestore {
          notification audience targeting. Admin-writable directly; a customer
          cannot tag themselves. */
       allow update: if (uid() == userId
-                        && untouched(['disabled', 'tags', 'tagsUpdatedAt', 'tagsUpdatedBy']))
+                        && untouched(['disabled', 'tags', 'tagsOff', 'tagsUpdatedAt', 'tagsUpdatedBy']))
                     || (isAdmin()
-                        && changed().hasOnly(['disabled', 'tags', 'tagsUpdatedAt', 'tagsUpdatedBy']));
+                        && changed().hasOnly(['disabled', 'tags', 'tagsOff', 'tagsUpdatedAt', 'tagsUpdatedBy']));
 
       // The owner may delete their own account. Admin delete exists solely for
       // the Settings → Danger Zone "Erase all data" wipe (a deliberate,
@@ -115,6 +115,14 @@ service cloud.firestore {
         // doc, so it does not vanish with the parent user and must be swept
         // explicitly (see eraseAllData in app.js).
         allow delete: if isAdmin();
+      }
+
+      // Client checklist (admin round): "Apply credit/refund". There is no
+      // wallet or card payment yet, so a credit is a record the office keeps —
+      // amount, reason, who, when — and honours by hand. Admin-only both ways:
+      // it is the office's ledger, not something the customer app shows.
+      match /credits/{creditId} {
+        allow read, write: if isAdmin();
       }
     }
 
@@ -160,7 +168,7 @@ service cloud.firestore {
                         && untouched([
                              'status', 'totalTrips', 'totalRatings',
                              'ratingCount', 'averageRating', 'ratingCounts',
-                             'todayEarnings'
+                             'todayEarnings', 'publicId'
                            ]))
                     || isAdmin();
 
@@ -350,6 +358,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── notificationOpens ────────────────────────────────────────────────
+    // Client checklist (admin round): "opened" and "tap rate" per broadcast.
+    // The customer app records a tap as {notificationId}_{uid} — one per
+    // person per message, create-only, so a repeat tap cannot inflate it and
+    // nobody can record an open for someone else. Only the admin reads them.
+
+    match /notificationOpens/{openId} {
+      allow create: if signedIn()
+                    && incoming().uid == uid()
+                    && incoming().notificationId is string
+                    && openId == incoming().notificationId + '_' + uid()
+                    && incoming().keys().hasOnly(['notificationId', 'uid', 'openedAt']);
+      allow read: if isAdmin();
+    }
+
     // ── overseasInquiries ────────────────────────────────────────────────
     // Shop-and-deliver requests: a customer abroad asks us to buy from a local
     // Jamaican store and deliver to their family. Not shipping — no carrier, no
@@ -415,6 +438,22 @@ service cloud.firestore {
       // service and delivery fees, the total, an expiry, and the payment
       // status. Still admin-only, still additive — the customer's request body
       // remains untouchable.
+      // Client checklist (admin round): the customer accepts or declines a
+      // quote in the app, so "customer accepted/declined" is recorded rather
+      // than learned by email. Only while a quote is out, only these fields,
+      // and only the two matching moves: accept → approved, decline →
+      // cancelled.
+      allow update: if signedIn()
+                    && existing().customerId == uid()
+                    && existing().status in ['quote_sent', 'awaiting_customer']
+                    && changed().hasOnly(
+                         ['status', 'customerResponse', 'customerRespondedAt',
+                          'updatedAt'])
+                    && ((incoming().customerResponse == 'accepted'
+                         && incoming().status == 'approved')
+                     || (incoming().customerResponse == 'declined'
+                         && incoming().status == 'cancelled'));
+
       allow update: if isAdmin()
                     && changed().hasOnly(
                          ['status', 'adminNote', 'handledBy', 'handledAt',
@@ -454,6 +493,16 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ── actionAlerts ─────────────────────────────────────────────────────
+    // Client checklist (admin round): the dashboard's "Action Needed" list is
+    // worked out live from orders, drivers and requests. This collection only
+    // records which alerts an admin has resolved (keyed by alert id), so a
+    // cleared alert stays cleared across reloads and other admins' screens.
+
+    match /actionAlerts/{alertId} {
+      allow read, write: if isAdmin();
     }
 
     // ── Default deny ─────────────────────────────────────────────────────

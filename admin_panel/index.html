@@ -18,7 +18,7 @@
   }
 })();
 </script>
-<meta name="description" content="ShipEast Admin Portal — orders, drivers, merchants and analytics for ShipEast Couriers &amp; Bearer Service Ltd, Jamaica."/>
+<meta name="description" content="ShipEast Admin Portal — orders, drivers, merchants and analytics for ShipEast Couriers &amp; Bearer Service Ltd., Jamaica."/>
 <title>ShipEast Admin Portal</title>
 <!-- Favicon set. `/favicon.ico` is the multi-size (16→256) file the brand
      supplied: it is what legacy Edge/IE, pinned-site tiles, RSS readers and
@@ -179,7 +179,7 @@
       <button class="btn btn-primary lc-cta" id="login-btn">Sign In<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
       <div class="l-foot">
         <svg class="ic ic-xs" aria-hidden="true"><use href="#i-lock"/></svg>
-        <span>ShipEast Couriers &amp; Bearer Service Ltd · Jamaica</span>
+        <span>ShipEast Couriers &amp; Bearer Service Ltd. · Jamaica</span>
       </div>
     </div>
   </main>
@@ -489,7 +489,6 @@
             <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add Merchant
           </button>
         </div>
-        <p class="pg-note">Turn a merchant off to temporarily remove it from the app.</p>
         <div class="sg g3" id="merchants-stats"></div>
         <!-- The grid used to begin the moment the three summary boxes ended, so
              a page that is really two things — a summary, then a directory —
@@ -498,7 +497,7 @@
         <div class="sec-hdr">
           <div class="sec-hdr-txt">
             <h2 class="sec-title">All Merchants</h2>
-            <p class="sec-sub">Every store customers can order from. A card's switch takes it off the app immediately.</p>
+            <p class="sec-sub">Manage all merchants available to customers. Turn a merchant off to temporarily remove it from the app.</p>
           </div>
           <span class="sec-count num" id="merchants-count"></span>
         </div>
@@ -590,12 +589,21 @@
                     <option value="never_ordered">Customers who never ordered</option>
                     <option value="inactive">Inactive customers (60+ days)</option>
                   </optgroup>
+                  <optgroup label="Specific">
+                    <option value="merchant">Customers of a specific merchant</option>
+                    <option value="user">One customer</option>
+                  </optgroup>
                 </select>
+              </div>
+              <div class="fr" id="n-target-pick-row" hidden>
+                <label for="n-target-pick" id="n-target-pick-label">Customer</label>
+                <select id="n-target-pick"></select>
               </div>
               <!-- Checklist NT-4: where a tap on the notification lands. -->
               <div class="fr"><label for="n-dest">On tap, open</label>
                 <select id="n-dest">
                   <option value="">Nothing (open the app)</option>
+                  <option value="category">A category (e.g. Groceries)</option>
                   <option value="search">A search (e.g. groceries)</option>
                   <option value="screen">A screen</option>
                   <option value="url">A web link</option>
@@ -604,6 +612,7 @@
               <div class="fr" id="n-dest-value-row" hidden>
                 <label for="n-dest-value" id="n-dest-value-label">Search term</label>
                 <input id="n-dest-value" placeholder="grocery"/>
+                <select id="n-dest-category" hidden></select>
                 <select id="n-dest-screen" hidden>
                   <option value="/order-history">Order history</option>
                   <option value="/overseas-order">Shop &amp; Deliver</option>
@@ -683,7 +692,8 @@
                   <select id="pc-type"><option value="percent">Percentage (%)</option><option value="fixed">Fixed Amount (J$)</option></select>
                 </div>
                 <div class="fr"><label for="pc-disc">Discount Amount</label><input id="pc-disc" type="number" min="0" placeholder="25"/></div>
-                <div class="fr"><label for="pc-max">Max Uses</label><input id="pc-max" type="number" min="1" placeholder="100"/></div>
+                <div class="fr"><label for="pc-max">Global Max Uses <small>(all customers; blank = unlimited)</small></label><input id="pc-max" type="number" min="1" placeholder="500"/></div>
+                <div class="fr"><label for="pc-percust">Uses per Customer <small>(blank = unlimited)</small></label><input id="pc-percust" type="number" min="1" placeholder="1"/></div>
                 <!-- P3-03: neither of these existed, so no code could carry a
                      minimum and no percentage code could be capped. -->
                 <div class="fr"><label for="pc-min">Minimum Order (J$) <small>(0 for none)</small></label><input id="pc-min" type="number" min="0" step="1" placeholder="0"/></div>
@@ -691,6 +701,7 @@
               </div>
               <div class="fr"><label for="pc-start">Start date/time <small>(blank = starts now)</small></label><input id="pc-start" type="datetime-local"/></div>
               <div class="fr"><label for="pc-valid">Valid until (End Date) <small>(blank = never expires)</small></label><input id="pc-valid" type="date"/></div>
+              <div class="fr"><label for="pc-valid-time">End time <small>(blank = end of that day)</small></label><input id="pc-valid-time" type="time"/></div>
 
               <!-- PR-5: who can get the discount. Every control here is
                    optional — leaving a picker empty imposes no restriction on
@@ -756,7 +767,7 @@
                   <col class="tc-ref"/><col class="tc-flex"/><col class="tc-usage"/><col class="tc-num"/>
                   <col class="tc-date"/><col class="tc-badge"/><col class="tc-acts"/>
                 </colgroup>
-                <thead><tr><th>Code</th><th>Discount</th><th class="right">Used</th><th class="right">Max</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Code</th><th>Discount</th><th class="right">Used</th><th class="right">Limits</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr></thead>
                 <tbody id="promos-tbody"></tbody>
               </table></div>
             </div>
@@ -770,7 +781,7 @@
                 <div class="pc-disc" id="pcp-disc">—</div>
                 <div class="pc-max" id="pcp-max"></div>
                 <div class="pc-valid" id="pcp-valid">Valid until —</div>
-                <div class="pc-foot">COURIERS &amp; BEARER SERVICES LTD</div>
+                <div class="pc-foot">COURIERS &amp; BEARER SERVICE LTD.</div>
               </div>
               <div class="helper">
                 <b>How to apply</b>
@@ -864,6 +875,38 @@
             <div class="form-actions">
               <button class="btn btn-primary" data-action="save-pricing">
                 <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Save pricing
+              </button>
+            </div>
+          </div>
+
+          <!-- Client checklist (admin round): thresholds behind the automatic
+               customer tags, so they change without rebuilding anything. -->
+          <div class="card">
+            <div class="card-title">Customer Tags
+              <span class="card-note">Automatic tag rules</span>
+            </div>
+            <p class="prose">
+              New Customer, Frequent Buyer, High Value, Promo User, At Risk, Inactive and the
+              customer’s parish are worked out from their orders. VIP, Diaspora and Business
+              Customer are only ever set by hand.
+            </p>
+            <div class="mg">
+              <div class="fr"><label for="cr-repeat">Repeat customer — completed orders</label>
+                <input id="cr-repeat" type="number" min="1" step="1" placeholder="2"/></div>
+              <div class="fr"><label for="cr-frequent">Frequent Buyer — completed orders</label>
+                <input id="cr-frequent" type="number" min="1" step="1" placeholder="5"/></div>
+            </div>
+            <div class="mg">
+              <div class="fr"><label for="cr-atrisk">At Risk — days since last order</label>
+                <input id="cr-atrisk" type="number" min="1" step="1" placeholder="30"/></div>
+              <div class="fr"><label for="cr-inactive">Inactive — days since last order</label>
+                <input id="cr-inactive" type="number" min="1" step="1" placeholder="60"/></div>
+            </div>
+            <div class="fr"><label for="cr-highvalue">High Value — total spend above (J$)</label>
+              <input id="cr-highvalue" type="number" min="0" step="1" placeholder="50000"/></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" data-action="save-cust-rules">
+                <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Save rules
               </button>
             </div>
           </div>
@@ -1037,6 +1080,7 @@
         <div class="fr"><label for="m-phone">Phone Number</label><input id="m-phone" placeholder="1-876-000-0000"/></div>
         <div class="fr"><label for="m-email">Email Address</label><input id="m-email" type="email" placeholder="business@email.com"/></div>
         <div class="fr"><label for="m-fee">Delivery Fee (J$) <small>(0 shows as “Free delivery”)</small></label><input id="m-fee" type="number" min="0" step="1" inputmode="numeric" placeholder="200"/></div>
+        <div class="fr"><label for="m-commission">Commission (%) <small>(blank = not set)</small></label><input id="m-commission" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="10"/></div>
         <div class="fr"><label for="m-hours">Opening Hours <small>(business hours)</small></label><input id="m-hours" placeholder="8:00 AM – 10:00 PM"/></div>
         <!-- P3-01: there was no input for this at all, which is why every merchant
              showed the customer app's hardcoded "25–35 min" fallback. -->

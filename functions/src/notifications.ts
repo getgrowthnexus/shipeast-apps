@@ -141,8 +141,10 @@ export function broadcastData(
   };
   const dt = typeof destType === 'string' ? destType.trim() : '';
   const dv = typeof destValue === 'string' ? destValue.trim() : '';
-  // 'order' | 'screen' | 'search' | 'url' — a value is required for all of them.
-  if (dt && dv && ['order', 'screen', 'search', 'url'].includes(dt)) {
+  // 'order' | 'screen' | 'search' | 'category' | 'url' — a value is required
+  // for all of them. 'category' (admin round) opens that merchant category,
+  // e.g. "20% off groceries" → Groceries.
+  if (dt && dv && ['order', 'screen', 'search', 'category', 'url'].includes(dt)) {
     out.destType = dt;
     out.destValue = dv;
     // An order deep link reuses the existing orderId routing on the client.
@@ -513,7 +515,15 @@ async function dispatchBroadcast(
 ): Promise<void> {
   if (!(await claim(`notification_${id}`))) return;
 
-  const recipients = await recipientsForTarget(data.target);
+  // Admin round: the panel resolves audiences it can only work out from order
+  // history (automatic tags, a merchant's customers, one customer) and sends
+  // the list. When present it wins over `target`, which stays for display.
+  const listed: string[] = Array.isArray(data.recipientUids)
+    ? data.recipientUids.filter((u: unknown): u is string => typeof u === 'string' && u.length > 0)
+    : [];
+  const recipients = listed.length > 0
+    ? (await Promise.all(listed.slice(0, 5000).map((u) => tokenForUid(u)))).flat()
+    : await recipientsForTarget(data.target);
   if (recipients.length === 0) {
     logger.warn('notification reached nobody', { target: data.target });
   }

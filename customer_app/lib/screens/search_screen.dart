@@ -75,6 +75,12 @@ class _SearchScreenState extends State<SearchScreen> {
         _query = q;
       }
     }
+    // …or with a category chip selected (admin round: "20% off groceries"
+    // opens Groceries). Only a known category — a stale value is ignored.
+    if (args is Map && args['category'] is String) {
+      final cat = MerchantCategory.of(args['category'] as String);
+      if (cat != null) _category = cat.value;
+    }
   }
 
   @override
