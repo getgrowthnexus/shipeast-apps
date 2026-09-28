@@ -263,12 +263,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     // old ember block sat directly beneath it — two reds, one on top of the
     // other, telling the applicant the same thing twice.
     return SeAuthScaffold(
-      // Header copy per the client review round.
-      title: 'Earn while driving with Shipeast',
-      subtitle: 'Complete deliveries across St. Thomas and Kingston using your '
-          'own motorcycle or car.',
+      // Header copy per the client review round: the recruiting line lives on
+      // the welcome screen; this screen asks for the application itself.
+      title: 'Become a Shipeast driver',
+      subtitle: 'Tell us about yourself and your vehicle. Every application is '
+          'reviewed before approval.',
       children: [
-        _sectionLabel('Your details'),
+        _sectionLabel('Personal Details'),
         SeTextField(
           controller: _nameController,
           label: 'Full Name',

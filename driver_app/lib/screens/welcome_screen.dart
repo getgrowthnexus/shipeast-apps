@@ -149,9 +149,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                           color: SeColors.shellInk,
                                         ),
                                         children: const [
-                                          TextSpan(text: 'Earn on\n'),
+                                          TextSpan(text: 'Earn while driving\n'),
                                           TextSpan(
-                                            text: 'your own time.',
+                                            text: 'with Shipeast.',
                                             style: TextStyle(
                                               color: SeColors.shellMark,
                                             ),
@@ -164,9 +164,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                       constraints:
                                           const BoxConstraints(maxWidth: 330),
                                       child: Text(
-                                        'Run deliveries across St. Thomas & '
-                                        'Kingston on your own bike or car. '
-                                        'Go online when it suits you.',
+                                        'Complete deliveries across St. Thomas and '
+                                        'Kingston using your own motorcycle or car.',
                                         style: SeType.bodyS.copyWith(
                                           color: SeColors.shellInk
                                               .withValues(alpha: 0.78),
@@ -189,11 +188,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                         ),
                                         _Pill(
                                           icon: SeIcons.navigation,
-                                          label: 'Jobs near you',
+                                          label: 'Nearby delivery requests',
                                         ),
                                         _Pill(
                                           icon: SeIcons.wallet,
-                                          label: 'Track every dollar',
+                                          label: 'Track your earnings',
                                         ),
                                       ],
                                     ),

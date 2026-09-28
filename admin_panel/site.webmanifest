@@ -1,7 +1,7 @@
 {
   "name": "ShipEast Admin Portal",
   "short_name": "ShipEast Admin",
-  "description": "Orders, drivers, merchants and analytics for ShipEast Couriers & Bearer Services Ltd, Jamaica.",
+  "description": "Orders, drivers, merchants and analytics for ShipEast Couriers & Bearer Service Ltd, Jamaica.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

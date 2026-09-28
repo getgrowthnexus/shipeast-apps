@@ -8,6 +8,7 @@ import '../theme/se_colors.dart';
 import '../theme/se_icons.dart';
 import '../theme/se_spacing.dart';
 import '../theme/se_typography.dart';
+import '../widgets/se_bottom_sheet.dart';
 import '../widgets/se_card.dart';
 import '../widgets/se_chip.dart';
 import '../widgets/se_empty_state.dart';
@@ -217,6 +218,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     return SeCard(
       padding: const EdgeInsets.all(SeSpacing.x4),
+      // Client checklist: "Tap to view details".
+      onTap: () => _showDetails(order),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -289,4 +292,90 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
   }
+
+  /// One delivery in full: number, when, pickup, drop-off, items, final
+  /// status and what the driver earned (client checklist, driver round).
+  void _showDetails(Map<String, dynamic> order) {
+    final status = order['status'] as String? ?? '';
+    final spec = _statusSpec(status);
+    final isCompleted = status == OrderStatus.delivered;
+    final id = order['id'] as String? ?? '';
+    final shortId =
+        id.length > 8 ? '#${id.substring(0, 8).toUpperCase()}' : '#$id';
+    final merchant = order['merchantName'] as String? ?? 'Merchant';
+    final pickupAddr = order['merchantAddress'] as String? ??
+        order['address'] as String? ??
+        '—';
+    final deliverAddr = order['deliveryAddress'] as String? ?? '—';
+    final total = (order['total'] as num?)?.toInt() ?? 0;
+    final items = (order['items'] as List?) ?? const [];
+    final when = _formatDate(
+        order['deliveredAt'] ?? order['createdAt'] ?? order['acceptedAt']);
+
+    showSeBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+              SeSpacing.gutter, 0, SeSpacing.gutter, SeSpacing.x5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SeSheetHandle(),
+              const SizedBox(height: SeSpacing.x3),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Delivery $shortId', style: SeType.h3),
+                  ),
+                  SeChip.status(
+                      label: spec.label, color: spec.hue, tint: spec.tint),
+                ],
+              ),
+              const SizedBox(height: SeSpacing.x4),
+              _detailRow(SeIcons.clock, 'Date & time', when),
+              _detailRow(SeIcons.storefront, 'Pickup', '$merchant\n$pickupAddr'),
+              _detailRow(SeIcons.home, 'Drop-off', deliverAddr),
+              if (items.isNotEmpty)
+                _detailRow(
+                  SeIcons.box,
+                  'Items',
+                  items.map((raw) {
+                    final i = raw is Map ? raw : const {};
+                    return '${i['quantity'] ?? 1} × ${i['name'] ?? 'Item'}';
+                  }).join('\n'),
+                ),
+              _detailRow(SeIcons.receipt, 'Order total', Money.format(total)),
+              _detailRow(
+                SeIcons.wallet,
+                'Your earnings',
+                isCompleted
+                    ? Money.format(DriverPay.creditedOn(order))
+                    : 'None — this delivery was not completed',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value) => Padding(
+        padding: const EdgeInsets.only(bottom: SeSpacing.x3),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 18, color: SeColors.ink400),
+            const SizedBox(width: SeSpacing.x3),
+            SizedBox(
+              width: 96,
+              child: Text(label,
+                  style: SeType.bodyS.copyWith(color: SeColors.ink500)),
+            ),
+            Expanded(child: Text(value, style: SeType.body)),
+          ],
+        ),
+      );
 }

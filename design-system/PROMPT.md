@@ -173,8 +173,8 @@ Do not silently deviate.
 ```
 APP_NAME:            ShipEast
 WORDMARK_SPLIT:      Ship|East
-LEGAL_NAME:          ShipEast Couriers & Bearer Services Ltd
-TAGLINE:             Couriers & Bearer Services · Jamaica
+LEGAL_NAME:          ShipEast Couriers & Bearer Service Ltd
+TAGLINE:             Packages • Groceries • Errands
 
 PRIMARY:             #F72B54
 SECONDARY:           (none)

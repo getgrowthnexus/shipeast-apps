@@ -351,7 +351,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '$_vehicle · ShipEast Driver',
+                  '$_vehicle · Driver ID '
+                  '${DriverId.of(FirebaseAuth.instance.currentUser?.uid ?? '')}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: SeType.bodyS.copyWith(

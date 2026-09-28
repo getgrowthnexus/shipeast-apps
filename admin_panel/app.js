@@ -346,6 +346,9 @@ function catIcon(cat,size){
 function catCard(cat){ return (CATS[cat]||{card:'mc-other'}).card; }
 /* Stored category value → the word shown. Merchants keep 'Grocery' (the
    customer app queries on it); the client asked for "Groceries" on screen. */
+/* A driver's unique ID — "D-7F3K2A", derived from the uid exactly as the
+   driver app's DriverId.of() does, so both show the same number. */
+function driverNo(id){ id=String(id||''); return id?'D-'+id.slice(0,6).toUpperCase():''; }
 function catLabel(cat){ return cat==='Grocery'?'Groceries':(cat||''); }
 function merchantMedia(m,size){
   if(m.imageUrl) return '<img class="thumb'+(size==='lg'?' lg':'')+'" src="'+esc(m.imageUrl)+'" alt="" '+
@@ -1526,7 +1529,7 @@ function driverCard(d){
       '<b class="dc-name">'+esc(d.name)+'</b>'+
       '<span class="dc-badges">'+badge(d.status)+toggle+'</span>'+
     '</div>'+
-    '<div class="dc-line">'+esc(d.vtype)+' • Plate '+esc(d.plate)+'</div>'+
+    '<div class="dc-line"><span class="num">'+esc(driverNo(d.id))+'</span> • '+esc(d.vtype)+' • Plate '+esc(d.plate)+'</div>'+
     '<div class="dc-line dc-stats">'+stats+'</div>'+
     '<div class="dc-line">'+availLine+'</div>'+
     '<div class="dc-acts">'+acts+'</div>'+
@@ -2027,6 +2030,7 @@ function reviewDriverDocs(id){
   $('sp-sub').textContent='Document review';
   $('sp-title').textContent=d.name;
   var head='<div class="sp-sec"><div class="sp-sec-title">Applicant</div>'+
+    row('Driver ID','<span class="num">'+esc(driverNo(d.id))+'</span>')+
     row('Vehicle',esc(d.vtype)+' • '+esc(d.plate))+
     row('Phone','<span class="num">'+esc(phoneFmt(d.phone))+'</span>')+
     row('Licence No.','<span class="num">'+esc(d.dlicence)+'</span>')+'</div>';
@@ -2089,6 +2093,7 @@ function openDriverPanel(id){
     '<div class="sp-hero"><div class="sp-avatar">'+esc((d.name[0]||'?').toUpperCase())+'</div>'+
       '<div><div class="sp-hero-name">'+esc(d.name)+'</div><div style="margin-top:5px">'+badge(d.status)+'</div></div></div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Contact</div>'+
+      row('Driver ID','<span class="num">'+esc(driverNo(d.id))+'</span>')+
       row('Phone','<span class="num">'+esc(phoneFmt(d.phone))+'</span>')+
       row('Email','<span class="sp-val sm">'+esc(d.email)+'</span>',true)+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Vehicle</div>'+

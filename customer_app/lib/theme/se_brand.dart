@@ -13,7 +13,7 @@ class SeBrand {
   /// The registered company, spelled the way it is on paper. Set under the
   /// wordmark on the signed-out screen — a delivery app asking for an address
   /// and a phone number should say who is actually collecting them.
-  static const String legalName = 'ShipEast Couriers & Bearer Services Ltd';
+  static const String legalName = 'ShipEast Couriers & Bearer Service Ltd';
 
   /// Tracked-out strap for the launch screen. Short enough to hold one line on
   /// a 320dp phone at the wide letter-spacing the lockup needs.

@@ -59,6 +59,18 @@ class Money {
   }
 }
 
+/// A driver's unique ID for people to quote — "D-7F3K2A" (client checklist:
+/// "Give each rider/driver a unique id #"). Derived from the auth uid, the same
+/// way order numbers are, so it is never stored and cannot drift. Mirror in
+/// `driverNo()` in `admin_panel/app.js`.
+class DriverId {
+  DriverId._();
+
+  static String of(String uid) => uid.isEmpty
+      ? ''
+      : 'D-${(uid.length > 6 ? uid.substring(0, 6) : uid).toUpperCase()}';
+}
+
 /// Phone-number formatting — one Jamaican format everywhere (client request:
 /// `1-876-111-1111` throughout all apps). Kept next to `Money` for the same
 /// reason: one definition, identical output on every screen and in all three

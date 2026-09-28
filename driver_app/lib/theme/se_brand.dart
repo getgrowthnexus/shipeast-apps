@@ -7,13 +7,13 @@ class SeBrand {
   SeBrand._();
 
   /// Keep in lockstep with pubspec `version:` (before the `+build`).
-  static const String version = '1.2.3';
+  static const String version = '1.2.4';
   static const String tagline = 'Couriers & Bearer Service · Jamaica';
 
   /// The registered company, spelled the way it is on paper. Set under the
   /// wordmark on the signed-out screen — a driver handing over their licence
   /// and bank details should be able to see who is actually collecting them.
-  static const String legalName = 'ShipEast Couriers & Bearer Services Ltd';
+  static const String legalName = 'ShipEast Couriers & Bearer Service Ltd';
 
   /// Tracked-out strap for the launch screen. Short enough to hold one line on
   /// a 320dp phone at the wide letter-spacing the lockup needs.
