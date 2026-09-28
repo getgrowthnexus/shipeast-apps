@@ -49,11 +49,34 @@ list what's missing.
    - `CUSTOMER_KEYSTORE_BASE64`, `CUSTOMER_KEYSTORE_PASSWORD`, `CUSTOMER_KEY_ALIAS`
    - `DRIVER_KEYSTORE_BASE64`, `DRIVER_KEYSTORE_PASSWORD`, `DRIVER_KEY_ALIAS`
    - `FIREBASE_SERVICE_ACCOUNT_SHIPEAST_1A1F6` (admin panel deploy)
-3. The Sep-20 customer APK was signed with the **Android debug key**, i.e. the
-   old repo never had release keystores. Create one release keystore per app
-   once, keep the `.jks` files and passwords somewhere safe outside git, and
-   put them in the secrets above. Without them CI will build but (by design)
-   not publish the APK.
-4. Existing installs are debug-signed, so the first release-signed APK must be
-   installed after uninstalling the old app on each phone. After that,
-   updates install normally.
+3. Signing: the Sep-20 customer APK from CI was signed with the **Android
+   debug key** (the old repo's keystore secrets were never set). Earlier
+   Codespace builds (e.g. customer 1.0.7+8, commit 282b117) were release-signed
+   with a key whose certificate starts `f0a74f…` — that `.jks` lived in the
+   Codespace and was not found on this PC. If it turns up, reuse it; otherwise
+   create one release keystore per app, keep the `.jks` files and passwords
+   somewhere safe outside git, and put them in the secrets above. Without the
+   secrets CI still builds and publishes, but labels the APK a debug-signed
+   test build.
+4. Any phone whose installed app was signed with a different key (debug, or
+   the lost `f0a74f…` key) must uninstall once before installing the new
+   build. After that, updates install normally.
+
+## Known gaps found in the 2026-09-28 audit
+
+The Firebase project (`shipeast-1a1f6`) is on the free Spark plan: no Cloud
+Functions are deployed and no Cloud Storage bucket exists. Several flows
+already have Spark workarounds (menu photos inline in Firestore, delivery
+enforced in rules, admin disable-customer message). These do not yet:
+
+| Feature | Uses | Effect today |
+|---|---|---|
+| Driver registration documents (DV-5, required) | Cloud Storage | **Driver sign-up fails**, after the auth account is created |
+| Promo code redemption (`redeemPromo`) | Function | Every order silently falls back to full price |
+| Ratings (`submitRating`) | Function | Rating submit fails |
+| Customer & driver profile photos | Cloud Storage | Upload fails |
+| Delivery proof photo | Cloud Storage | Delivery saves, photo is dropped (toast says so) |
+| Push notifications, scheduled sends (NT-3) | Functions | Admin can compose; nothing is sent |
+
+Fix either by moving the project to Blaze and deploying `functions/` +
+`storage.rules`, or by porting each row to a Spark-only design.
