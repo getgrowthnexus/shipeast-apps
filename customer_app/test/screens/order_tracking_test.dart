@@ -16,19 +16,23 @@ import 'package:shipeast_customer/models/order_status.dart';
 /// would require Firebase. The mapping is what was wrong.
 void main() {
   group('the tracker advances once per transition', () {
-    test('each forward step increments the index by exactly one', () {
-      const happyPath = [
-        OrderStatus.pending,
-        OrderStatus.confirmed,
-        OrderStatus.pickedUp,
-        OrderStatus.inTransit,
-        OrderStatus.delivered,
-      ];
-
-      for (var i = 0; i < happyPath.length; i++) {
-        expect(OrderStatus.step(happyPath[i]), i,
-            reason: '${happyPath[i]} should be step $i');
-      }
+    test('each stage lands on its tracker step', () {
+      // Admin round: ten stages onto six steps. Awaiting Merchant is still
+      // "placed"; Awaiting Driver is "preparing" finished.
+      const expected = {
+        OrderStatus.pending: 0,
+        OrderStatus.awaitingMerchant: 0,
+        OrderStatus.preparing: 1,
+        OrderStatus.awaitingDriver: 1,
+        OrderStatus.confirmed: 2,
+        OrderStatus.pickedUp: 3,
+        OrderStatus.inTransit: 4,
+        OrderStatus.delivered: 5,
+      };
+      expected.forEach((status, step) {
+        expect(OrderStatus.step(status), step,
+            reason: '$status should be step $step');
+      });
     });
 
     test('the statuses that used to freeze the tracker now advance it', () {
@@ -37,12 +41,13 @@ void main() {
       expect(OrderStatus.step(OrderStatus.pickedUp), greaterThan(0));
     });
 
-    test('every happy-path status maps to a distinct step', () {
+    test('every tracker step is reached by some status', () {
       final steps = OrderStatus.all
-          .where((s) => s != OrderStatus.cancelled)
+          .where((s) =>
+              s != OrderStatus.cancelled && s != OrderStatus.failedDelivery)
           .map(OrderStatus.step)
-          .toList();
-      expect(steps.toSet(), hasLength(steps.length));
+          .toSet();
+      expect(steps, {for (var i = 0; i < OrderStatus.stepCount; i++) i});
     });
 
     test('the walk from pending to delivered visits every step exactly once', () {
@@ -57,7 +62,11 @@ void main() {
         visited.add(OrderStatus.step(status));
       }
 
-      expect(visited, [0, 1, 2, 3, 4]);
+      // Never backwards, and every step is visited.
+      for (var i = 1; i < visited.length; i++) {
+        expect(visited[i], greaterThanOrEqualTo(visited[i - 1]));
+      }
+      expect(visited.toSet(), {0, 1, 2, 3, 4, 5});
     });
   });
 
@@ -66,7 +75,8 @@ void main() {
       // _buildStepper does List.generate(OrderStatus.stepCount, ...) and
       // _stepNames / _stepIcons must line up with it, or the row builder
       // range-errors.
-      expect(OrderStatus.stepCount, 5);
+      expect(OrderStatus.stepCount, 6);
+      expect(OrderStatus.stepTitles, hasLength(OrderStatus.stepCount));
     });
 
     test('the delivered check used by build() is the final index', () {
@@ -76,7 +86,9 @@ void main() {
 
     test('the route-bar fraction stays within 0..1 for every happy status', () {
       for (final s in OrderStatus.all) {
-        if (s == OrderStatus.cancelled) continue;
+        if (s == OrderStatus.cancelled || s == OrderStatus.failedDelivery) {
+          continue;
+        }
         final progress = OrderStatus.step(s) / (OrderStatus.stepCount - 1);
         expect(progress, inInclusiveRange(0.0, 1.0), reason: s);
       }

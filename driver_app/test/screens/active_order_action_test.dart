@@ -88,8 +88,12 @@ void main() {
             .firstWhere((s) => s != OrderStatus.cancelled);
         path.add(status);
       }
+      // Admin round: the client's stages come before a driver is assigned.
       expect(path, [
         OrderStatus.pending,
+        OrderStatus.awaitingMerchant,
+        OrderStatus.preparing,
+        OrderStatus.awaitingDriver,
         OrderStatus.confirmed,
         OrderStatus.pickedUp,
         OrderStatus.inTransit,
