@@ -63,7 +63,8 @@ jobs:
       - name: Syntax check
         run: |
           for f in app.js config.js image-upload.js location-input.js \
-                   order-status.js overseas-status.js pricing-form.js; do
+                   order-status.js overseas-status.js pricing-form.js \
+                   promo-eligibility.js tracking.js; do
             node --check "$f"
           done
 

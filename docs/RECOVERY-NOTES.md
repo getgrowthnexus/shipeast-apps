@@ -68,6 +68,12 @@ Full-history backup with every original branch name:
    somewhere safe outside git, and put them in the secrets above. Without the
    secrets CI still builds and publishes, but labels the APK a debug-signed
    test build.
+   **Update 2026-09-29:** new release keystores were created on the owner's PC
+   (`Downloads\ShipEast Keys`, outside git; back it up). Certificate SHA-256:
+   - customer `CF:4A:C0:23:40:48:6A:D6:EA:FA:D4:8A:BC:75:C9:6D:3D:71:59:8B:1A:0D:AD:AD:2C:5E:3D:F0:5E:E0:4B:E3`
+   - driver `8F:CE:F8:2F:D0:99:89:86:31:04:17:BF:E9:FC:76:23:9B:B6:06:AE:B6:1B:1E:F1:0F:40:0F:5C:28:B7:0B:1B`
+   The admin deploy secret `FIREBASE_SERVICE_ACCOUNT_SHIPEAST_1A1F6` was added
+   the same day, and `firestore.rules` was published from the console.
 4. Any phone whose installed app was signed with a different key (debug, or
    the lost `f0a74f…` key) must uninstall once before installing the new
    build. After that, updates install normally.
