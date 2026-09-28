@@ -132,10 +132,20 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      # The github reporter turns each failing test into an annotation on the
-      # run summary, which is readable without signing in — raw job logs are not.
       - name: Test
-        run: flutter test --reporter github
+        run: |
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee "$RUNNER_TEMP/flutter-test.log"
+      # Raw job logs need a signed-in repo admin to read; annotations are public
+      # on the run summary. Lift each failure's detail into one, so a red build
+      # says which test broke and why to anyone looking at it.
+      - name: Surface failing tests
+        if: failure()
+        run: |
+          body="$(grep -n -B2 -A60 '\[E\]' "$RUNNER_TEMP/flutter-test.log" | head -250)"
+          [ -z "$body" ] && body="$(tail -120 "$RUNNER_TEMP/flutter-test.log")"
+          body="${body//'%'/'%25'}"; body="${body//$'\r'/'%0D'}"; body="${body//$'\n'/'%0A'}"
+          echo "::error title=Failing Flutter tests (${{ matrix.app }})::$body"
 
   # The rules suite is the highest-value gate in this workflow. The plan's own
   # risk register ranks "rules deploy blocks a legitimate flow" as the most
