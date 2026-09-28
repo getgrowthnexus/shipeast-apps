@@ -11,48 +11,75 @@
 
    Edit all three, or none.
 
-   Note on labels: LABEL below is operator-facing and intentionally differs
-   from the Dart `OrderStatus.label`, which is customer-facing. An admin wants
-   the state name ("Confirmed"); a customer wants to know what is happening to
-   their food ("Driver Assigned"). Same states, different audiences.        */
+   Labels: the client asked for one set of words in all three apps (admin
+   round, Sep 2026), so LABEL below matches the Dart `OrderStatus.label`.
+   "Pending" survives only as the panel's broad filter for PRE_DRIVER.
+
+     Order Placed → Awaiting Merchant → Preparing → Awaiting Driver →
+     Driver Assigned → Picked Up → Out for Delivery → Delivered
+     (or Cancelled / Failed Delivery)                                      */
 
 export const PENDING = 'pending';
+export const AWAITING_MERCHANT = 'awaiting_merchant';
+export const PREPARING = 'preparing';
+export const AWAITING_DRIVER = 'awaiting_driver';
 export const CONFIRMED = 'confirmed';
 export const PICKED_UP = 'picked_up';
 export const IN_TRANSIT = 'in_transit';
 export const DELIVERED = 'delivered';
 export const CANCELLED = 'cancelled';
+export const FAILED_DELIVERY = 'failed_delivery';
 
 /** Every canonical status. 'accepted' is absent — no app ever wrote it. */
-export const ALL = [PENDING, CONFIRMED, PICKED_UP, IN_TRANSIT, DELIVERED, CANCELLED];
+export const ALL = [PENDING, AWAITING_MERCHANT, PREPARING, AWAITING_DRIVER,
+  CONFIRMED, PICKED_UP, IN_TRANSIT, DELIVERED, CANCELLED, FAILED_DELIVERY];
+
+/** Before a driver has it — the panel's broad "Pending" filter. */
+export const PRE_DRIVER = [PENDING, AWAITING_MERCHANT, PREPARING, AWAITING_DRIVER];
+
+/** A driver (or the admin) may assign a driver from any of these. */
+export const CLAIMABLE = PRE_DRIVER;
 
 /** Non-terminal: still someone's responsibility. */
-export const ACTIVE = [PENDING, CONFIRMED, PICKED_UP, IN_TRANSIT];
+export const ACTIVE = [PENDING, AWAITING_MERCHANT, PREPARING, AWAITING_DRIVER,
+  CONFIRMED, PICKED_UP, IN_TRANSIT];
 
 /** States in which a driver holds the order. */
 export const DRIVER_HELD = [CONFIRMED, PICKED_UP, IN_TRANSIT];
 
-export const TERMINAL = [DELIVERED, CANCELLED];
+export const TERMINAL = [DELIVERED, CANCELLED, FAILED_DELIVERY];
 
 /** Legal forward transitions. Mirrored in the Dart copies and firestore.rules. */
 export const TRANSITIONS = {
-  [PENDING]: [CONFIRMED, CANCELLED],
+  [PENDING]: [AWAITING_MERCHANT, PREPARING, AWAITING_DRIVER, CONFIRMED, CANCELLED],
+  [AWAITING_MERCHANT]: [PREPARING, AWAITING_DRIVER, CONFIRMED, CANCELLED],
+  [PREPARING]: [AWAITING_DRIVER, CONFIRMED, CANCELLED],
+  [AWAITING_DRIVER]: [CONFIRMED, CANCELLED],
   [CONFIRMED]: [PICKED_UP, CANCELLED],
-  [PICKED_UP]: [IN_TRANSIT, CANCELLED],
-  [IN_TRANSIT]: [DELIVERED, CANCELLED],
+  [PICKED_UP]: [IN_TRANSIT, FAILED_DELIVERY, CANCELLED],
+  [IN_TRANSIT]: [DELIVERED, FAILED_DELIVERY, CANCELLED],
   [DELIVERED]: [],
-  [CANCELLED]: []
+  [CANCELLED]: [],
+  [FAILED_DELIVERY]: []
 };
 
-/** Operator-facing labels (see note above). */
+/** The one set of labels all three apps show (see note above). */
 export const LABEL = {
-  [PENDING]: 'Pending',
-  [CONFIRMED]: 'Confirmed',
+  [PENDING]: 'Order Placed',
+  [AWAITING_MERCHANT]: 'Awaiting Merchant',
+  [PREPARING]: 'Preparing',
+  [AWAITING_DRIVER]: 'Awaiting Driver',
+  [CONFIRMED]: 'Driver Assigned',
   [PICKED_UP]: 'Picked Up',
-  [IN_TRANSIT]: 'In Transit',
+  [IN_TRANSIT]: 'Out for Delivery',
   [DELIVERED]: 'Delivered',
-  [CANCELLED]: 'Cancelled'
+  [CANCELLED]: 'Cancelled',
+  [FAILED_DELIVERY]: 'Failed Delivery'
 };
+
+export function isPreDriver(s) {
+  return PRE_DRIVER.indexOf(s) !== -1;
+}
 
 export function isValid(s) {
   return ALL.indexOf(s) !== -1;

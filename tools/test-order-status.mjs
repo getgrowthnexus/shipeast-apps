@@ -29,15 +29,23 @@ const no = (v, m) => { if (v) throw new Error(m || 'expected false'); };
 // ── The dropdown ───────────────────────────────────────────────────────────
 
 check('dropdown offers current status plus legal successors only', () => {
-  eq(OS.selectableFrom(OS.PENDING), [OS.PENDING, OS.CONFIRMED, OS.CANCELLED]);
+  // Admin round: the client's stages. A new order can go to the merchant,
+  // straight to preparing, straight to a driver (packages), or be assigned.
+  eq(OS.selectableFrom(OS.PENDING), [OS.PENDING, OS.AWAITING_MERCHANT, OS.PREPARING,
+    OS.AWAITING_DRIVER, OS.CONFIRMED, OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.AWAITING_MERCHANT), [OS.AWAITING_MERCHANT, OS.PREPARING,
+    OS.AWAITING_DRIVER, OS.CONFIRMED, OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.PREPARING), [OS.PREPARING, OS.AWAITING_DRIVER, OS.CONFIRMED, OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.AWAITING_DRIVER), [OS.AWAITING_DRIVER, OS.CONFIRMED, OS.CANCELLED]);
   eq(OS.selectableFrom(OS.CONFIRMED), [OS.CONFIRMED, OS.PICKED_UP, OS.CANCELLED]);
-  eq(OS.selectableFrom(OS.PICKED_UP), [OS.PICKED_UP, OS.IN_TRANSIT, OS.CANCELLED]);
-  eq(OS.selectableFrom(OS.IN_TRANSIT), [OS.IN_TRANSIT, OS.DELIVERED, OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.PICKED_UP), [OS.PICKED_UP, OS.IN_TRANSIT, OS.FAILED_DELIVERY, OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.IN_TRANSIT), [OS.IN_TRANSIT, OS.DELIVERED, OS.FAILED_DELIVERY, OS.CANCELLED]);
 });
 
 check('terminal orders offer no onward move', () => {
   eq(OS.selectableFrom(OS.DELIVERED), [OS.DELIVERED]);
   eq(OS.selectableFrom(OS.CANCELLED), [OS.CANCELLED]);
+  eq(OS.selectableFrom(OS.FAILED_DELIVERY), [OS.FAILED_DELIVERY]);
 });
 
 check('no canonical status can move to the retired accepted status', () => {
@@ -110,9 +118,14 @@ check('driver-held and terminal never overlap', () => {
   for (const s of OS.DRIVER_HELD) no(OS.isTerminal(s), s);
 });
 
-check('vocabulary is exactly six statuses with no duplicates', () => {
-  eq(OS.ALL.length, 6);
-  eq(new Set(OS.ALL).size, 6);
+check("vocabulary is exactly the client's ten statuses with no duplicates", () => {
+  eq(OS.ALL.length, 10);
+  eq(new Set(OS.ALL).size, 10);
+  // One set of words in all three apps (client checklist, admin round).
+  eq(OS.LABEL[OS.PENDING], 'Order Placed');
+  eq(OS.LABEL[OS.CONFIRMED], 'Driver Assigned');
+  eq(OS.LABEL[OS.IN_TRANSIT], 'Out for Delivery');
+  eq(OS.PRE_DRIVER, [OS.PENDING, OS.AWAITING_MERCHANT, OS.PREPARING, OS.AWAITING_DRIVER]);
   for (const s of OS.ALL) ok(OS.LABEL[s], `no label for ${s}`);
 });
 

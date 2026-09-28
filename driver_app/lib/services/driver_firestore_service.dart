@@ -32,10 +32,15 @@ class DriverFirestoreService {
     return doc.exists ? doc.data() : null;
   }
 
+  /// The available-order pool: unclaimed orders in any pre-driver stage
+  /// (admin round — a driver may take a food order while it is still being
+  /// prepared, so a forgotten "ready" never leaves it stranded). Both filters
+  /// are what firestore.rules checks for a driver reading someone else's
+  /// order, so they must stay in the query.
   static Stream<List<Map<String, dynamic>>> pendingOrdersStream() =>
       _db
           .collection('orders')
-          .where('status', isEqualTo: OrderStatus.pending)
+          .where('status', whereIn: OrderStatus.claimable)
           .where('driverId', isNull: true)
           .snapshots()
           .map((s) => s.docs
@@ -65,7 +70,7 @@ class DriverFirestoreService {
   /// Claims an order for [driverUid].
   ///
   /// Runs in a transaction that aborts if the order already has a driver or has
-  /// moved off `pending` — two drivers tapping Accept at the same instant would
+  /// left the claimable stages — two drivers tapping Accept at the same instant would
   /// otherwise both succeed with a blind `update()`, and the second write would
   /// silently steal the first driver's order.
   ///
@@ -92,7 +97,7 @@ class DriverFirestoreService {
       final claimed = existingDriver != null &&
           (existingDriver as String).isNotEmpty &&
           existingDriver != driverUid;
-      if (claimed || status != OrderStatus.pending) {
+      if (claimed || !OrderStatus.isClaimable(status)) {
         throw StateError(orderTakenCode);
       }
 

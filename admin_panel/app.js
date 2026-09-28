@@ -262,15 +262,16 @@ var STATUS_TONE={
   Available:'success',
   pending:'info',Pending:'info','Pending Approval':'info',
   confirmed:'warning',in_transit:'warning',picked_up:'warning',
+  awaiting_merchant:'info',preparing:'warning',awaiting_driver:'info',failed_delivery:'danger',
   'On the Way':'warning','On Delivery':'warning','Picked Up':'warning',
   cancelled:'danger',rejected:'danger',Cancelled:'danger',Closed:'danger',Suspended:'danger',
   Rejected:'danger',
   Expired:'neutral',Offline:'neutral',Inactive:'neutral','Used up':'neutral',
   Scheduled:'info',Paused:'warning',Ended:'neutral',Deactivated:'neutral'
 };
-var STATUS_LABEL={in_transit:'In Transit',picked_up:'Picked Up',
-  confirmed:'Confirmed',delivered:'Delivered',pending:'Pending',cancelled:'Cancelled',
-  approved:'Approved',rejected:'Rejected'};
+// Order statuses read the same in all three apps (client checklist, admin
+// round) — the words come from order-status.js.
+var STATUS_LABEL=Object.assign({approved:'Approved',rejected:'Rejected'},OrderStatus.LABEL);
 /* Order type (P5-01). Food is the overwhelming majority and every pre-Phase-5
    order is one, so it gets no badge — a badge on everything is a badge on
    nothing. Only the kinds that need different handling are called out. */
@@ -630,7 +631,10 @@ function startListeners(){
             cancelledBy:o.cancelledBy||'',
             cancellationReason:o.cancellationReason||'',
             assignedBy:o.assignedBy||'',
-            stamps:{createdAt:o.createdAt,acceptedAt:o.acceptedAt,
+            failureReason:o.failureReason||'',
+            stamps:{createdAt:o.createdAt,awaitingMerchantAt:o.awaitingMerchantAt,
+              preparingAt:o.preparingAt,awaitingDriverAt:o.awaitingDriverAt,
+              failedAt:o.failedAt,acceptedAt:o.acceptedAt,
               assignedAt:o.assignedAt,pickedUpAt:o.pickedUpAt,
               inTransitAt:o.inTransitAt,deliveredAt:o.deliveredAt,
               cancelledAt:o.cancelledAt,ratedAt:o.ratedAt},
@@ -914,6 +918,20 @@ function startListeners(){
     ));
   }catch(e){ console.warn('promoCodes init:',e.message); }
 
+  // ACTION NEEDED — which alerts an admin has resolved.
+  try{
+    unsubscribers.push(onSnapshot(collection(db,'actionAlerts'),
+      function(snap){
+        resolvedAlerts={};
+        snap.docs.forEach(function(d){ resolvedAlerts[d.id]=true; });
+        renderActionNeeded();
+      },
+      function(e){ console.warn('actionAlerts:',e.message); }
+    ));
+    var anTimer=setInterval(renderActionNeeded,60000);
+    unsubscribers.push(function(){ clearInterval(anTimer); });
+  }catch(e){ console.warn('actionAlerts init:',e.message); }
+
   // NOTIFICATION OPENS — written by the customer app when a broadcast is
   // tapped ({notificationId}_{uid}); counted here for "opened" / tap rate.
   try{
@@ -996,13 +1014,235 @@ function hourlyCounts(list){
   return out;
 }
 
+// ══════════════════════ ORDER ROWS ══════════════════════
+/* Client checklist: "make the orders more compact, like two lines, so it is
+   easier to scroll". One renderer for the dashboard and the Orders page:
+     #ABCD1234  Chris Brown → Morant Bay, St. Thomas            J$3,100
+     Island Grill · Driver Touseef · Cash on Delivery · 8:32 PM  [status]  */
+function orderArea(addr){
+  // Mirror of AreaName.short in the driver app: the last two parts, no country.
+  var parts=String(addr||'').split(',').map(function(p){ return p.trim(); })
+    .filter(function(p){ return p&&p!=='—'&&p.toLowerCase()!=='jamaica'; });
+  return parts.slice(-2).join(', ');
+}
+function orderRow(o){
+  var oid=esc(o._docId||o.id), area=orderArea(o.address);
+  var drv=o.driver&&o.driver!=='—'?'Driver '+o.driver:'No driver yet';
+  return '<div class="orow" data-action="view-order" data-oid="'+oid+'" role="button" tabindex="0" '+
+      'aria-label="Order '+esc(shortId(o.id))+', '+esc(o.customer)+', '+esc(STATUS_LABEL[o.status]||o.status)+'">'+
+    '<div class="orow-a"><span class="cell-id">'+esc(shortId(o.id))+'</span>'+typeBadge(o.type)+
+      ' <b class="orow-who">'+esc(o.customer)+'</b>'+
+      (area?'<span class="orow-to"> → '+esc(area)+'</span>':'')+'</div>'+
+    '<div class="orow-amt num">'+esc(o.amount)+'</div>'+
+    '<div class="orow-b">'+esc(o.merchant)+' · '+esc(drv)+' · '+esc(o.payment)+' · <span class="num">'+esc(o.time)+'</span></div>'+
+    '<div class="orow-st">'+badge(o.status)+'</div>'+
+  '</div>';
+}
+function orderRowsSkeleton(n){
+  var out='';
+  for(var i=0;i<n;i++) out+='<div class="orow"><div class="orow-a"><span class="sk sk-line" style="width:55%"></span></div>'+
+    '<div class="orow-b"><span class="sk sk-line" style="width:75%"></span></div></div>';
+  return out;
+}
+
+// ══════════════════════ ACTION NEEDED ══════════════════════
+/* Client checklist (admin round). Worked out live, never stored — only
+   "resolved" is (actionAlerts/{id}), so a cleared alert stays cleared for
+   every admin. Triggers, per the client:
+     delayed order    active and 15+ min past its estimated delivery
+                      (placed time + the merchant's ETA upper bound)
+     no driver        Awaiting Driver with nobody on it for 10+ min
+     merchant silent  Awaiting Merchant for 10+ min
+     order not moved  still "Order Placed" after 10 min
+     driver offline   holding an order but went offline
+     delivery failed  Failed Delivery in the last 7 days
+     requests         a Shop & Deliver request unreviewed for 30+ min
+     drivers          an application to review; an expired document
+   "Payment failed" needs online payments, which do not exist yet (cash only),
+   so it has no trigger. */
+var resolvedAlerts={};
+var ACTION_RULES={delayMin:15,merchantMin:10,placedMin:10,driverMin:10,requestMin:30,failedDays:7};
+function stampDate(t){ return t&&t.toDate?t.toDate():(t instanceof Date?t:null); }
+function etaMaxMinutes(o){
+  var m=o.merchantId?merchants.find(function(x){ return x.id===o.merchantId; }):null;
+  var nums=String(m&&m.deliveryTime||'').match(/\d+/g);
+  if(nums&&nums.length) return Math.max.apply(null,nums.map(Number));
+  return o.type==='package'?60:45;
+}
+function computeActionAlerts(){
+  var now=Date.now(), out=[];
+  var minsSince=function(d){ return d?Math.floor((now-d.getTime())/60000):0; };
+  var add=function(a){ if(!resolvedAlerts[a.id]) out.push(a); };
+  orders.forEach(function(o){
+    var oid=o._docId||o.id, ref=shortId(o.id), st=o.stamps||{};
+    var where=o.merchant+(orderArea(o.address)?' → '+orderArea(o.address):'');
+    var open={kind:'order',oid:oid};
+    if(o.status===OrderStatus.PENDING&&minsSince(o._ts)>=ACTION_RULES.placedMin){
+      add(Object.assign({id:'placed_'+oid,tone:'warning',title:'Order '+ref+' has not moved for '+minsSince(o._ts)+' min',detail:where+' · still Order Placed'},open));
+    }
+    if(o.status===OrderStatus.AWAITING_MERCHANT){
+      var mw=minsSince(stampDate(st.awaitingMerchantAt)||o._ts);
+      if(mw>=ACTION_RULES.merchantMin) add(Object.assign({id:'merchant_'+oid,tone:'warning',title:o.merchant+' has not accepted '+ref,detail:'Waiting '+mw+' min · call the merchant'},open));
+    }
+    if(o.status===OrderStatus.AWAITING_DRIVER&&!o.driverId){
+      var dw=minsSince(stampDate(st.awaitingDriverAt)||o._ts);
+      if(dw>=ACTION_RULES.driverMin) add(Object.assign({id:'nodriver_'+oid,tone:'danger',title:'No driver for '+ref+' ('+dw+' min)',detail:where},open));
+    }
+    if(OrderStatus.ACTIVE.indexOf(o.status)>-1&&o._ts){
+      var late=Math.floor((now-o._ts.getTime())/60000)-etaMaxMinutes(o);
+      if(late>=ACTION_RULES.delayMin) add(Object.assign({id:'delayed_'+oid,tone:'danger',title:'Order '+ref+' is '+late+' min late',detail:where+' · '+(STATUS_LABEL[o.status]||o.status)},open));
+    }
+    if(OrderStatus.isDriverHeld(o.status)&&o.driverId){
+      var d=drivers.find(function(x){ return x.id===o.driverId; });
+      if(d&&!d.isOnline) add(Object.assign({id:'offline_'+oid+'_'+d.id,tone:'danger',title:d.name+' went offline during '+ref,detail:where+' · '+(STATUS_LABEL[o.status]||o.status)},open));
+    }
+    if(o.status===OrderStatus.FAILED_DELIVERY){
+      var fd=stampDate(st.failedAt)||o._ts;
+      if(fd&&now-fd.getTime()<ACTION_RULES.failedDays*86400000){
+        add(Object.assign({id:'failed_'+oid,tone:'danger',title:'Delivery failed: '+ref,detail:(o.failureReason||'No reason recorded')+' · '+where},open));
+      }
+    }
+  });
+  inquiries.forEach(function(i){
+    if(Overseas.normalise(i.status)!==Overseas.NEW||!i.createdAt) return;
+    var w=minsSince(i.createdAt instanceof Date?i.createdAt:stampDate(i.createdAt));
+    if(w>=ACTION_RULES.requestMin) add({id:'request_'+i.id,tone:'warning',kind:'request',iid:i.id,
+      title:'Shop & Deliver request from '+i.customerName+' waiting '+w+' min',detail:'For '+i.recipientName+' · '+i.recipientParish});
+  });
+  drivers.forEach(function(d){
+    if(d.rawStatus==='pending') add({id:'application_'+d.id,tone:'info',kind:'driver',did:d.id,
+      title:'Driver application from '+d.name,detail:'Review documents and approve'});
+    if(d.rawStatus==='approved'){
+      [['licence',d.licenceExp],['insurance',d.insuranceExp]].forEach(function(p){
+        if(docState(p[1])==='expired') add({id:'doc_'+d.id+'_'+p[0]+'_'+p[1].getTime(),tone:'warning',kind:'driver',did:d.id,
+          title:d.name+'’s '+p[0]+' has expired',detail:'Expired '+longDate(p[1])});
+      });
+    }
+  });
+  var rank={danger:0,warning:1,info:2};
+  return out.sort(function(a,b){ return rank[a.tone]-rank[b.tone]; });
+}
+var actionShowAll=false;
+function renderActionNeeded(){
+  var list=$('action-list'), cnt=$('an-count'); if(!list) return;
+  if(!loadedOnce.orders){ list.innerHTML='<div class="empty-copy">Checking…</div>'; return; }
+  var all=computeActionAlerts();
+  if(cnt) cnt.textContent=all.length?String(all.length):'';
+  var card=$('action-card'); if(card) card.classList.toggle('an-clear',!all.length);
+  if(!all.length){ list.innerHTML='<div class="empty-copy">Nothing needs attention right now.</div>'; return; }
+  var shown=actionShowAll?all:all.slice(0,6);
+  list.innerHTML=shown.map(function(a){
+    var open=a.kind==='order'?'<button class="pa-btn" data-action="view-order" data-oid="'+esc(a.oid)+'">Open</button>'
+      :a.kind==='request'?'<button class="pa-btn" data-action="view-inquiry" data-iid="'+esc(a.iid)+'">Open</button>'
+      :'<button class="pa-btn" data-action="view-driver" data-id="'+esc(a.did)+'">Open</button>';
+    return '<div class="an-item an-'+a.tone+'"><span class="an-dot" aria-hidden="true"></span>'+
+      '<div class="an-txt"><b>'+esc(a.title)+'</b><div class="cell-mute sm">'+esc(a.detail)+'</div></div>'+
+      '<div class="an-acts">'+open+'<button class="pa-btn" data-action="an-resolve" data-id="'+esc(a.id)+'">Resolve</button></div></div>';
+  }).join('')+
+  (all.length>6?'<button class="btn btn-ghost btn-sm an-more" data-action="an-toggle">'+(actionShowAll?'Show fewer':'Show all '+all.length)+'</button>':'');
+}
+function resolveAlert(id){
+  resolvedAlerts[id]=true; renderActionNeeded();
+  setDoc(doc(db,'actionAlerts',id),{resolvedAt:serverTimestamp(),
+    resolvedBy:auth.currentUser?(auth.currentUser.email||auth.currentUser.uid):''})
+    .catch(function(e){ delete resolvedAlerts[id]; renderActionNeeded(); toast('error',e.message,'Could not resolve'); });
+}
+
+// ══════════════════════ CREATE ORDER ══════════════════════
+/* Client checklist (admin round): a phone order entered by the office. The
+   customer is an account (their app then shows it) or just a name and phone.
+   Items are typed one per line, "2 x Jerk Chicken @ 1200". */
+function parseOrderItems(text){
+  var items=[],bad=[];
+  String(text||'').split(/\n+/).forEach(function(line){
+    var l=line.trim(); if(!l) return;
+    var m=l.match(/^(\d+)\s*[x×*]\s*(.+?)\s*@\s*(?:J?\$)?\s*([\d,]+(?:\.\d+)?)$/i);
+    if(!m){ bad.push(l); return; }
+    var qty=parseInt(m[1],10), price=Math.round(Number(m[3].replace(/,/g,'')));
+    if(!(qty>0)||!(price>=0)){ bad.push(l); return; }
+    items.push({name:m[2].slice(0,120),price:price,quantity:qty});
+  });
+  return {items:items,bad:bad};
+}
+function createOrderTotals(){
+  var p=parseOrderItems(($('co-items')||{}).value);
+  var sub=p.items.reduce(function(s,i){ return s+i.price*i.quantity; },0);
+  var fee=Math.max(0,Math.round(Number(($('co-fee')||{}).value)||0));
+  var svc=Math.max(0,Math.round(Number(($('co-service')||{}).value)||0));
+  return {parsed:p,subtotal:sub,fee:fee,service:svc,total:sub+fee+svc};
+}
+function syncCreateOrderTotal(){ var t=$('co-total'); if(t) t.textContent=money(createOrderTotals().total); }
+function openCreateOrder(){
+  $('co-customer').innerHTML='<option value="">No account — enter name and phone</option>'+
+    customers.filter(function(c){ return !c.disabled; }).slice().sort(function(a,b){ return a.name.localeCompare(b.name); })
+      .map(function(c){ return '<option value="'+esc(c.id)+'">'+esc(c.name)+(c.phone&&c.phone!=='—'?' — '+esc(phoneFmt(c.phone)):'')+'</option>'; }).join('');
+  $('co-merchant').innerHTML=merchants.filter(function(m){ return m.active; }).slice().sort(function(a,b){ return a.name.localeCompare(b.name); })
+    .map(function(m){ return '<option value="'+esc(m.id)+'">'+esc(m.name)+(m.open?'':' (closed)')+'</option>'; }).join('');
+  ['co-name','co-phone','co-address','co-items'].forEach(function(id){ $(id).value=''; });
+  $('co-stage').value='awaiting_merchant'; $('co-service').value='0';
+  syncCreateOrderMerchant();
+  syncCreateOrderTotal();
+  openModal('modal-order');
+}
+function syncCreateOrderMerchant(){
+  var m=merchants.find(function(x){ return x.id===$('co-merchant').value; });
+  $('co-fee').value=m?String(m.deliveryFee||0):'0';
+  syncCreateOrderTotal();
+}
+function syncCreateOrderCustomer(){
+  var c=customers.find(function(x){ return x.id===$('co-customer').value; });
+  if(!c) return;
+  $('co-name').value=c.name!=='—'?c.name:'';
+  $('co-phone').value=c.phone!=='—'?phoneFmt(c.phone):'';
+  // Their most recent delivery address, if any — the office can overwrite it.
+  var last=customerOrders(c.id).find(function(o){ return o.address&&o.address!=='—'; });
+  if(last&&!$('co-address').value) $('co-address').value=last.address;
+}
+function saveCreateOrder(){
+  var name=$('co-name').value.trim(), addr=$('co-address').value.trim();
+  var m=merchants.find(function(x){ return x.id===$('co-merchant').value; });
+  var t=createOrderTotals();
+  if(!name){ toast('warning','Enter the customer’s name.'); $('co-name').focus(); return; }
+  if(!addr){ toast('warning','Enter the delivery address.'); $('co-address').focus(); return; }
+  if(!m){ toast('warning','Choose a merchant.'); return; }
+  if(t.parsed.bad.length){ toast('warning','Could not read: “'+t.parsed.bad[0]+'”. Use “2 x Jerk Chicken @ 1200”.'); $('co-items').focus(); return; }
+  if(!t.parsed.items.length){ toast('warning','Add at least one item.'); $('co-items').focus(); return; }
+  var btn=$('co-save-btn'); btn.disabled=true; btn.innerHTML='<span class="spin"></span>Creating…';
+  var stage=$('co-stage').value;
+  var data={
+    customerId:$('co-customer').value||'',customerName:name,
+    customerPhone:phoneFmt($('co-phone').value)||'',
+    merchantId:m.id,merchantName:m.name,merchantAddr:m.address||'',
+    pickupLat:m.lat,pickupLng:m.lng,
+    items:t.parsed.items,subtotal:t.subtotal,deliveryFee:t.fee,serviceFee:t.service,
+    discount:0,promoCode:null,total:t.total,
+    paymentMethod:$('co-payment').value||'Cash on Delivery',
+    status:stage,type:'food',deliveryAddress:addr,
+    createdAt:serverTimestamp(),driverId:null,rated:false,
+    createdBy:'admin',createdByEmail:auth.currentUser?(auth.currentUser.email||''):''
+  };
+  if(stage===OrderStatus.AWAITING_MERCHANT) data.awaitingMerchantAt=serverTimestamp();
+  if(stage===OrderStatus.AWAITING_DRIVER) data.awaitingDriverAt=serverTimestamp();
+  addDoc(collection(db,'orders'),data).then(function(ref){
+    btn.disabled=false; btn.textContent='Create Order';
+    closeModal('modal-order');
+    toast('success','Order '+shortId(ref.id)+' created for '+name+' — '+money(t.total)+'.');
+  }).catch(function(e){
+    btn.disabled=false; btn.textContent='Create Order';
+    toast('error',e.message,'Could not create order');
+  });
+}
+
 // ══════════════════════ DASHBOARD ══════════════════════
 function renderDashboard(){
   var now=new Date();
   var todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   var todayOrders=orders.filter(function(o){ return o._ts&&o._ts>=todayStart; });
   var deliveredToday=todayOrders.filter(function(o){ return isDeliveredStatus(o.status); });
-  var pendingOrders=orders.filter(function(o){ return o.status==='pending'||o.status==='Pending'; }).length;
+  // Client checklist: "Pending is not clear". The card counts orders that
+  // are ready and need a driver; the sub-line counts the rest still before one.
+  var awaitingDriver=orders.filter(function(o){ return o.status===OrderStatus.AWAITING_DRIVER&&!o.driverId; }).length;
+  var preDriverOther=orders.filter(function(o){ return OrderStatus.isPreDriver(o.status)&&o.status!==OrderStatus.AWAITING_DRIVER; }).length;
   var revenueToday=deliveredToday.reduce(function(s,o){ return s+(o.rawTotal!=null?o.rawTotal:parseAmt(o.amount)); },0);
   // DB-3: Online = approved and toggled on; On Delivery = a subset of those
   // currently carrying an order; Available = online and free right now.
@@ -1011,7 +1251,9 @@ function renderDashboard(){
 
   countUp($('stat-orders'),todayOrders.length);
   countUp($('stat-revenue'),revenueToday,money);
-  countUp($('stat-pending'),pendingOrders);
+  countUp($('stat-pending'),awaitingDriver);
+  var psub=$('stat-pending-sub');
+  if(psub) psub.textContent=preDriverOther?preDriverOther+' more placed / with merchant':'Ready for a driver';
   countUp($('drv-online'),onlineDrv.length);
   countUp($('drv-ondel'),onDelivery);
   countUp($('drv-avail'),onlineDrv.length-onDelivery);
@@ -1019,10 +1261,11 @@ function renderDashboard(){
   var sp1=$('spark-orders'); if(sp1) sp1.innerHTML=sparkline(hourlyCounts(todayOrders),'accent');
   var sp2=$('spark-revenue'); if(sp2) sp2.innerHTML=sparkline(hourlyCounts(deliveredToday),'money');
 
-  var tbody=$('dash-tbody');
-  if(!loadedOnce.orders){ tbody.innerHTML=skeletonRows(8,5); return; }
+  renderActionNeeded();
+  var tbody=$('dash-list');
+  if(!loadedOnce.orders){ tbody.innerHTML=orderRowsSkeleton(5); return; }
   if(!orders.length){
-    tbody.innerHTML=emptyRow(8,'box','No orders yet','New customer orders will appear here the moment they are placed.');
+    tbody.innerHTML=emptyState('box','No orders yet','New customer orders will appear here the moment they are placed.');
     return;
   }
   // DB-9: when the dashboard search has a term, show matches from ALL orders
@@ -1036,44 +1279,37 @@ function renderDashboard(){
       }).slice(0,15)
     : orders.slice(0,10);
   if(dq&&!dashRows.length){
-    tbody.innerHTML=emptyRow(8,'search','No matching orders','Nothing matched “'+esc(dq)+'”. Open the Orders tab for the full history and filters.');
+    tbody.innerHTML=emptyState('search','No matching orders','Nothing matched “'+esc(dq)+'”. Open the Orders tab for the full history and filters.');
     return;
   }
-  tbody.innerHTML=dashRows.map(function(o){
-    var dest=(o.address&&o.address!=='—')?o.address:'—';
-    // DB-5: recent orders now show the destination and open on a row click.
-    return '<tr class="row-click" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'">'+
-      '<td><span class="cell-id">'+esc(shortId(o.id))+'</span>'+typeBadge(o.type)+'</td>'+
-      // The column is a fixed width now, so a long name ellipsises rather than
-      // widening it. title= is what gives it back — nothing in a table is ever
-      // the only place a value can be read, but it must not become unreadable.
-      '<td title="'+esc(o.customer)+'">'+esc(o.customer)+'</td>'+
-      '<td title="'+esc(o.merchant)+'">'+esc(o.merchant)+'</td>'+
-      '<td class="cell-mute cell-clip" title="'+esc(dest)+'">'+esc(dest)+'</td>'+
-      '<td class="cell-mute" title="'+esc(o.driver)+'">'+esc(o.driver)+'</td>'+
-      '<td class="right cell-strong">'+esc(o.amount)+'</td>'+
-      '<td>'+badge(o.status)+'</td>'+
-      '<td><button class="aicon ai-v" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'" title="View order" aria-label="View order">'+icon('view')+'</button></td>'+
-    '</tr>';
-  }).join('');
+  tbody.innerHTML=dashRows.map(orderRow).join('');
 }
 
 // ══════════════════════ ORDERS ══════════════════════
 // Canonical set, plus the display-label variants legacy rows still carry.
-function isActiveStatus(s){ return OrderStatus.ACTIVE.indexOf(s)>-1||['Pending','On the Way','Confirmed','Picked Up'].indexOf(s)>-1; }
 function isDeliveredStatus(s){ return s==='delivered'||s==='Delivered'; }
 function isCancelledStatus(s){ return s==='cancelled'||s==='Cancelled'; }
+/* The Orders tab buckets (client checklist): "Pending" survives only as the
+   broad bucket for everything before a driver except Awaiting Driver, which
+   gets its own tab because it is the one an operator acts on. */
+var ORDER_TABS=[
+  {k:'All',lbl:'All',test:function(){ return true; }},
+  {k:'Pending',lbl:'Pending',test:function(s){ return OrderStatus.isPreDriver(s)&&s!==OrderStatus.AWAITING_DRIVER||s==='Pending'; }},
+  {k:'AwaitingDriver',lbl:'Awaiting Driver',test:function(s){ return s===OrderStatus.AWAITING_DRIVER; }},
+  {k:'Active',lbl:'Active',test:function(s){ return OrderStatus.isDriverHeld(s)||['On the Way','Confirmed','Picked Up'].indexOf(s)>-1; }},
+  {k:'Completed',lbl:'Completed',test:isDeliveredStatus},
+  {k:'Cancelled',lbl:'Cancelled / Failed',test:function(s){ return isCancelledStatus(s)||s===OrderStatus.FAILED_DELIVERY; }}
+];
+function orderInTab(o,k){
+  var t=ORDER_TABS.find(function(x){ return x.k===k; });
+  return !t||t.test(o.status);
+}
 function updateOrdersTabs(){
-  var counts={
-    All:orders.length,
-    Active:orders.filter(function(o){ return isActiveStatus(o.status); }).length,
-    Completed:orders.filter(function(o){ return isDeliveredStatus(o.status); }).length,
-    Cancelled:orders.filter(function(o){ return isCancelledStatus(o.status); }).length
-  };
   var tabs=$('orders-tabs'); if(!tabs) return;
-  tabs.innerHTML=['All','Active','Completed','Cancelled'].map(function(k){
-    return '<div class="tab'+(ordersFilter===k?' active':'')+'" data-filter="'+k+'" role="tab" tabindex="0">'+
-      k+' <b class="num">'+counts[k]+'</b></div>';
+  tabs.innerHTML=ORDER_TABS.map(function(t){
+    var n=orders.filter(function(o){ return t.test(o.status); }).length;
+    return '<div class="tab'+(ordersFilter===t.k?' active':'')+'" data-filter="'+t.k+'" role="tab" tabindex="0">'+
+      esc(t.lbl)+' <b class="num">'+n+'</b></div>';
   }).join('');
 }
 /* OR-3: fills the Merchant / Driver / Payment dropdowns from whatever the loaded
@@ -1141,22 +1377,19 @@ function clearOrderFilters(){
 
 function renderOrders(){
   updateOrdersTabs();
-  var tbody=$('orders-tbody'); if(!tbody) return;
-  if(!loadedOnce.orders){ tbody.innerHTML=skeletonRows(9,7); return; }
+  var tbody=$('orders-list'); if(!tbody) return;
+  if(!loadedOnce.orders){ tbody.innerHTML=orderRowsSkeleton(7); return; }
   var search=(($('orders-search')||{}).value||'').toLowerCase();
   var f=ordersAdv, area=f.area.toLowerCase();
   var advActive=f.status||f.date||f.merchant||f.driver||f.payment||f.area||f.type;
   var rows=orders.filter(function(o){
-    var tm=ordersFilter==='All'||
-      (ordersFilter==='Active'&&isActiveStatus(o.status))||
-      (ordersFilter==='Completed'&&isDeliveredStatus(o.status))||
-      (ordersFilter==='Cancelled'&&isCancelledStatus(o.status));
+    var tm=orderInTab(o,ordersFilter);
     // Match the full id (an admin may paste it from the console) and the short
     // #ABCD1234 form the tables now show, with or without the leading '#'.
     var q=search.replace(/^#/,'');
     var sm=!search||o.id.toLowerCase().includes(q)||shortId(o.id).toLowerCase().includes(search)||o.customer.toLowerCase().includes(search)||o.merchant.toLowerCase().includes(search);
     // OR-3 advanced filters.
-    var am=(!f.status||o.status===f.status)&&
+    var am=(!f.status||o.status===f.status||(f.status==='pre_driver'&&OrderStatus.isPreDriver(o.status)))&&
       orderInDateRange(o,f.date)&&
       (!f.merchant||o.merchant===f.merchant)&&
       (!f.driver||o.driver===f.driver)&&
@@ -1172,29 +1405,17 @@ function renderOrders(){
     var at=a._ts?a._ts.getTime():0, bt=b._ts?b._ts.getTime():0;
     return f.sort==='oldest'?at-bt:bt-at;
   });
+  // Client answer (admin round): the search box keeps a descriptive
+  // placeholder; a search shows its result count separately.
+  var countEl=$('orders-count');
+  if(countEl) countEl.textContent=(search||advActive)?rows.length+' result'+(rows.length===1?'':'s'):'';
   if(!rows.length){
     tbody.innerHTML=(search||advActive)
-      ? emptyRow(9,'search','No matching orders','Nothing matched the current search and filters. Clear a filter to widen the list.')
-      : emptyRow(9,'box','Nothing in “'+ordersFilter+'”','No orders currently sit in this state.');
+      ? emptyState('search','No matching orders','Nothing matched the current search and filters. Clear a filter to widen the list.')
+      : emptyState('box','Nothing in “'+((ORDER_TABS.find(function(t){ return t.k===ordersFilter; })||{}).lbl||ordersFilter)+'”','No orders currently sit in this state.');
     return;
   }
-  tbody.innerHTML=rows.map(function(o){
-    // DB-5: the whole row opens the order, not just the icon button. The button
-    // stays for keyboard users and as an affordance.
-    return '<tr class="row-click" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'">'+
-      // Beside the id, not in its own column: a package job needs to be
-      // obvious at a glance, and the orders table is already nine columns wide.
-      '<td><span class="cell-id">'+esc(shortId(o.id))+'</span>'+typeBadge(o.type)+'</td>'+
-      '<td title="'+esc(o.customer)+'">'+esc(o.customer)+'</td>'+
-      '<td title="'+esc(o.merchant)+'">'+esc(o.merchant)+'</td>'+
-      '<td class="cell-mute" title="'+esc(o.driver)+'">'+esc(o.driver)+'</td>'+
-      '<td class="right cell-strong">'+esc(o.amount)+'</td>'+
-      '<td><span class="bdg bg-neutral plain">'+esc(o.payment)+'</span></td>'+
-      '<td>'+badge(o.status)+'</td>'+
-      '<td class="cell-mute num">'+esc(o.time)+'</td>'+
-      '<td><button class="aicon ai-v" data-action="view-order" data-oid="'+esc(o._docId||o.id)+'" title="View order" aria-label="View order">'+icon('view')+'</button></td>'+
-    '</tr>';
-  }).join('');
+  tbody.innerHTML=rows.map(orderRow).join('');
 }
 
 // ══════════════════════ ORDER SIDE PANEL ══════════════════════
@@ -1215,11 +1436,14 @@ function openOrderPanel(oid){
   if(!o) return;
   $('sp-sub').textContent='Order Details';
   $('sp-title').textContent=shortId(o.id);
-  var steps=['Placed','Confirmed','Picked Up','On the Way','Delivered'];
-  var sfMap={pending:1,confirmed:2,picked_up:3,in_transit:4,delivered:5,
-    Pending:1,Confirmed:2,'Picked Up':3,'On the Way':4,Delivered:5};
+  // Same six steps as the customer's tracker; the badge underneath names the
+  // exact stage (e.g. Awaiting Merchant sits on "Placed").
+  var steps=['Placed','Preparing','Driver Assigned','Picked Up','Out for Delivery','Delivered'];
+  var sfMap={pending:1,awaiting_merchant:1,preparing:2,awaiting_driver:2,confirmed:3,
+    picked_up:4,in_transit:5,delivered:6,
+    Pending:1,Confirmed:3,'Picked Up':4,'On the Way':5,Delivered:6};
   var idx=sfMap[o.status]||1;
-  if(isCancelledStatus(o.status)) idx=0;
+  if(isCancelledStatus(o.status)||o.status===OrderStatus.FAILED_DELIVERY) idx=0;
   var flow='<div class="sf">';
   steps.forEach(function(s,i){
     var state=i<idx-1?'done':(i===idx-1?'done current':'');
@@ -1281,10 +1505,12 @@ function openOrderPanel(oid){
   /* Every transition timestamp, in lifecycle order. Only the ones that
      happened are listed — a row of em-dashes for a stage the order has not
      reached reads as missing data rather than as the future. */
-  var stampRows=[['createdAt','Placed'],['acceptedAt','Driver accepted'],
+  var stampRows=[['createdAt','Placed'],['awaitingMerchantAt','Sent to merchant'],
+    ['preparingAt','Preparing'],['awaitingDriverAt','Ready for a driver'],
+    ['acceptedAt','Driver accepted'],
     ['assignedAt','Admin assigned'],['pickedUpAt','Picked up'],
-    ['inTransitAt','On the way'],['deliveredAt','Delivered'],
-    ['cancelledAt','Cancelled'],['ratedAt','Rated']]
+    ['inTransitAt','Out for delivery'],['deliveredAt','Delivered'],
+    ['failedAt','Delivery failed'],['cancelledAt','Cancelled'],['ratedAt','Rated']]
     .map(function(pair){
       var v=fmtStamp((o.stamps||{})[pair[0]]);
       return v?row(pair[1],'<span class="sp-val sm num">'+esc(v)+'</span>',true):'';
@@ -1294,9 +1520,13 @@ function openOrderPanel(oid){
       (o.assignedBy?row('Assigned by','<span class="sp-val sm">'+esc(o.assignedBy)+'</span>',true):'')+
     '</div>':'';
 
+  var failHtml=o.status===OrderStatus.FAILED_DELIVERY?
+    '<div class="sp-sec"><div class="sp-sec-title">Delivery Failed</div>'+
+      row('Reason','<span class="sp-val sm">'+esc(o.failureReason||'No reason recorded')+'</span>',true)+
+    '</div>':'';
   $('sp-body').innerHTML=
     '<div class="sp-sec"><div class="sp-sec-title">Status Flow</div>'+flow+'</div>'+
-    cancelHtml+
+    cancelHtml+failHtml+
     '<div class="sp-sec"><div class="sp-sec-title">Customer</div>'+
       row('Name',esc(o.customer))+row('Phone',esc(phoneFmt(o.custPhone)))+
       row('Delivery Address','<span class="sp-val sm">'+esc(o.address)+'</span>',true)+
@@ -1341,6 +1571,11 @@ function openOrderPanel(oid){
             return '<option value="'+esc(s)+'"'+(o.status===s?' selected':'')+'>'+esc(STATUS_LABEL[s]||s)+'</option>';
           }).join('')+
         '</select></div>'+
+      // Only asked when it applies — a failed delivery needs a reason.
+      (OrderStatus.selectableFrom(o.status).indexOf(OrderStatus.FAILED_DELIVERY)>-1
+        ?'<div class="fr"><label for="sp-fail-reason">If the delivery failed — why? <small>(optional)</small></label>'+
+          '<input id="sp-fail-reason" maxlength="200" placeholder="Customer unreachable at the address"/></div>'
+        :'')+
       '<button class="btn btn-primary btn-block" id="sp-save-btn" data-action="save-order" data-oid="'+esc(o._docId)+'">'+
         icon('check')+'Save Changes</button>'+
     '</div>';
@@ -1423,9 +1658,10 @@ function saveOrderChanges(docId){
           upd.driverPhone=drv.phone||null;
           upd.assignedBy=auth.currentUser?auth.currentUser.email:'admin';
           upd.assignedAt=serverTimestamp();
-          // The fix for defect 1: a pending order must advance to confirmed in
-          // the SAME write, or no driver query will ever return it.
-          if(curStatus===OrderStatus.PENDING&&!changingStatus){
+          // The fix for defect 1: an order before a driver must advance to
+          // Driver Assigned in the SAME write, or no driver query will ever
+          // return it. Any pre-driver stage (admin round).
+          if(OrderStatus.isPreDriver(curStatus)&&!changingStatus){
             upd.status=OrderStatus.CONFIRMED;
           }
         }
@@ -1436,9 +1672,9 @@ function saveOrderChanges(docId){
           upd.driverPhone=null;
           upd.assignedBy=null;
           upd.assignedAt=null;
-          // Back into the available pool, which filters on pending.
+          // Back into the available pool — ready and waiting for a driver.
           if(!changingStatus&&OrderStatus.isDriverHeld(curStatus)){
-            upd.status=OrderStatus.PENDING;
+            upd.status=OrderStatus.AWAITING_DRIVER;
           }
         }
 
@@ -1452,6 +1688,16 @@ function saveOrderChanges(docId){
           if(status===OrderStatus.CANCELLED){
             upd.cancelledAt=serverTimestamp();
             upd.cancelledBy='admin';
+          }
+          // When each of the client's stages happened (admin round).
+          var STAGE_STAMP={awaiting_merchant:'awaitingMerchantAt',preparing:'preparingAt',
+            awaiting_driver:'awaitingDriverAt',picked_up:'pickedUpAt',in_transit:'inTransitAt',
+            failed_delivery:'failedAt'};
+          if(STAGE_STAMP[status]) upd[STAGE_STAMP[status]]=serverTimestamp();
+          if(status===OrderStatus.FAILED_DELIVERY){
+            var why=(($('sp-fail-reason')||{}).value||'').trim();
+            upd.failureReason=why||'Recorded by admin';
+            upd.failedBy='admin';
           }
         }
 
@@ -2085,13 +2331,15 @@ function assignFromDriver(id){
   var d=drivers.find(function(x){ return x.id===id; }); if(!d) return;
   if(d.rawStatus!=='approved'){ toast('warning','Only an approved driver can be assigned.'); return; }
   // Unclaimed orders still waiting for a driver.
-  var pool=orders.filter(function(o){ return o.status==='pending'&&!o.driverId; });
+  var pool=orders.filter(function(o){ return OrderStatus.isPreDriver(o.status)&&!o.driverId; })
+    // Ready ones first — they are the ones actually waiting.
+    .sort(function(a,b){ return (b.status===OrderStatus.AWAITING_DRIVER)-(a.status===OrderStatus.AWAITING_DRIVER); });
   if(!pool.length){ toast('info','No unassigned orders are waiting right now.'); return; }
   $('cf-ico').className='m-ico'; $('cf-ico').innerHTML=icon('drivers','ic-lg');
   $('cf-title').textContent='Assign '+d.name+' to an order';
   $('cf-body').innerHTML='<select id="cf-assign-order" style="width:100%;margin-top:8px">'+
     pool.slice(0,50).map(function(o){
-      return '<option value="'+esc(o._docId||o.id)+'">'+esc(shortId(o.id))+' — '+esc(o.merchant)+' → '+esc(o.customer)+' ('+esc(o.amount)+')</option>';
+      return '<option value="'+esc(o._docId||o.id)+'">'+esc(shortId(o.id))+' — '+esc(o.merchant)+' → '+esc(o.customer)+' ('+esc(o.amount)+') · '+esc(STATUS_LABEL[o.status]||o.status)+'</option>';
     }).join('')+'</select>';
   var ok=$('cf-ok'); ok.textContent='Assign order'; ok.className='btn btn-primary';
   confirmResolve=function(confirmed){
@@ -2109,7 +2357,7 @@ function assignFromDriver(id){
         if(cur.driverId) throw new Error('Another driver already has that order.');
         tx.update(ref,{
           driverId:d.id,driverName:d.name,driverPhone:d.phone,
-          status:OrderStatus.PENDING===cur.status?OrderStatus.CONFIRMED:cur.status,
+          status:OrderStatus.isPreDriver(cur.status)?OrderStatus.CONFIRMED:cur.status,
           assignedBy:auth.currentUser?auth.currentUser.email:'admin',
           assignedAt:serverTimestamp(),acceptedAt:serverTimestamp(),updatedAt:serverTimestamp()
         });
@@ -2277,7 +2525,7 @@ function openDriverPanel(id){
     '<div class="sp-sec"><div class="sp-sec-title">Performance</div>'+
       '<div class="sp-row"><span class="sp-lbl">Total Deliveries</span><span class="sp-val money">'+d.trips+'</span></div>'+
       row('Avg Rating',driverStars(d),false)+
-      row('Account',badge(d.rawStatus))+'</div>'+
+      row('Account',badge({approved:'Approved',pending:'Pending Approval',paused:'Paused',suspended:'Suspended',rejected:'Rejected'}[d.rawStatus]||d.rawStatus))+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Rating Breakdown</div>'+rh+'</div>'+
     '<div class="sp-sec"><div class="sp-sec-title">Recent Deliveries</div>'+recentHtml+'</div>';
   openSidePanel();
@@ -2348,8 +2596,16 @@ function parishIn(address){
   for(var i=0;i<JAMAICA_PARISHES.length;i++){
     if(a.indexOf(JAMAICA_PARISHES[i].toLowerCase())>-1) return JAMAICA_PARISHES[i];
   }
+  // Whole words only, so "Bath" is not found inside "Bathurst Street".
+  for(var town in TOWN_PARISH){ if(new RegExp('\\b'+town+'\\b').test(a)) return TOWN_PARISH[town]; }
   return '';
 }
+/* Towns an address often names instead of the parish — the service area
+   first (St. Thomas, Kingston & St. Andrew). Extend as orders show new ones. */
+var TOWN_PARISH={'morant bay':'St. Thomas','yallahs':'St. Thomas','port morant':'St. Thomas',
+  'seaforth':'St. Thomas','bath':'St. Thomas','golden grove':'St. Thomas','white horses':'St. Thomas',
+  'eleven mile':'St. Thomas','bull bay':'St. Andrew','half way tree':'St. Andrew','papine':'St. Andrew',
+  'constant spring':'St. Andrew','liguanea':'St. Andrew','portmore':'St. Catherine','spanish town':'St. Catherine'};
 /* Everything the tags and stats need about one customer, in one pass. */
 function customerFacts(c){
   var list=customerOrders(c.id);
@@ -4804,8 +5060,12 @@ document.addEventListener('click',function(e){
   if(t.closest('#add-merchant-btn')){ openMerchantModal('add'); return; }
   if(t.closest('#of-clear')){ clearOrderFilters(); return; }
   // DB-7 dashboard quick actions.
+  if(t.closest('[data-action="qa-create-order"]')){ openCreateOrder(); return; }
   if(t.closest('[data-action="qa-add-merchant"]')){ openMerchantModal('add'); return; }
-  if(t.closest('[data-action="qa-assign-driver"]')){ navTo('orders'); toast('info','Open an order to assign a driver.'); return; }
+  if(t.closest('[data-action="qa-assign-driver"]')){
+    navTo('orders'); ordersFilter='AwaitingDriver'; renderOrders();
+    toast('info','Orders waiting for a driver. Open one to assign.'); return;
+  }
   if(t.closest('[data-action="qa-send-notif"]')){ navTo('notifications'); return; }
 
   var pb=t.closest('.pb'); if(pb){ setPeriod(pb.getAttribute('data-period')); return; }
@@ -4831,6 +5091,9 @@ document.addEventListener('click',function(e){
       iid=btn.getAttribute('data-iid');
   switch(action){
     case 'view-order':      openOrderPanel(oid); break;
+    case 'an-resolve':      resolveAlert(id); break;
+    case 'an-toggle':       actionShowAll=!actionShowAll; renderActionNeeded(); break;
+    case 'save-order-new':  saveCreateOrder(); break;
     case 'view-customer':   openCustomerPanel(cid); break;
     case 'toggle-customer': toggleCustomerDisabled(cid); break;
     case 'customer-tags':   editCustomerTags(cid); break;
@@ -4903,6 +5166,8 @@ document.addEventListener('change',function(e){
   if(e.target.id==='pc-type'||e.target.id==='pc-valid'||e.target.id==='pc-valid-time') updPromoPreview();
   if(e.target.id==='pc-elig-scope') syncEligScope();
   if(e.target.id==='n-dest') syncNotifDest();
+  if(e.target.id==='co-merchant') syncCreateOrderMerchant();
+  if(e.target.id==='co-customer') syncCreateOrderCustomer();
   if(e.target.id==='n-target') syncNotifTarget();
   // The note under the Status dropdown says what the chosen value does to the
   // driver's app, so it has to follow the dropdown.
@@ -4928,10 +5193,12 @@ document.addEventListener('input',function(e){
   if(e.target.id==='m-location') applyLocationPaste();
   if(e.target.id==='m-lat'||e.target.id==='m-lng') syncLocationHint();
   if(['pc-code','pc-disc','pc-valid','pc-start','pc-min','pc-maxdisc'].indexOf(e.target.id)>-1) updPromoPreview();
+  if(['co-items','co-fee','co-service'].indexOf(e.target.id)>-1) syncCreateOrderTotal();
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&(e.target.id==='l-email'||e.target.id==='l-pass')){ doLogin(); return; }
   if(e.key==='Enter'&&e.target.classList.contains('tab')){ e.target.click(); return; }
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('orow')){ e.preventDefault(); e.target.click(); return; }
   if(e.key==='Escape'){
     if($('bell-menu')&&$('bell-menu').classList.contains('open')){ toggleBell(false); return; }
     if($('modal-confirm').classList.contains('open')){ settleConfirm(false); return; }
@@ -4981,8 +5248,7 @@ window.addEventListener('resize',function(){
    silently collapse a column. A tbody absent from this map keeps every column
    visible. */
 var MOBILE_PRIMARY={
-  'orders-tbody':    [0,1,4,6],  // Order ID · Customer · Total · Status
-  'dash-tbody':      [0,1,5,6],  // Order ID · Customer · Amount · Status
+  // Orders and the dashboard are two-line lists now, not tables (admin round).
   // drivers-tbody removed — the Drivers roster is a card grid now (DV-1…DV-8).
   // No 'merchants-tbody' — Merchants is a card grid, not a table, so it never
   // needs the row-card fold. It already reads as one record per card at every

@@ -85,7 +85,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       // the window the customer is most likely to be checking.
       if (label == 'Active') return OrderStatus.isActive(status);
       if (label == 'Completed') return status == OrderStatus.delivered;
-      if (label == 'Cancelled') return status == OrderStatus.cancelled;
+      // A failed delivery also ended without the order arriving (admin round).
+      if (label == 'Cancelled') {
+        return status == OrderStatus.cancelled ||
+            status == OrderStatus.failedDelivery;
+      }
       return false;
     }).toList();
   }
@@ -223,8 +227,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final shortId = orderId.length > 8
         ? '#${orderId.substring(0, 8).toUpperCase()}'
         : '#${orderId.toUpperCase()}';
-    final finished =
-        status == OrderStatus.delivered || status == OrderStatus.cancelled;
+    final finished = OrderStatus.isTerminal(status);
 
     return SeOrderCard(
       merchantName: order['merchantName'] as String? ?? 'Merchant',
@@ -302,7 +305,8 @@ class SeOrderCard extends StatelessWidget {
   /// Keyed off the canonical sets rather than individual statuses, so a status
   /// added later inherits a sensible colour instead of falling through to grey.
   static ({Color color, Color tint}) toneFor(String status) {
-    if (status == OrderStatus.cancelled) {
+    if (status == OrderStatus.cancelled ||
+        status == OrderStatus.failedDelivery) {
       return (color: SeColors.dangerInk, tint: SeColors.dangerSoft);
     }
     if (status == OrderStatus.delivered) {
@@ -315,7 +319,10 @@ class SeOrderCard extends StatelessWidget {
   }
 
   static IconData iconFor(String status) {
-    if (status == OrderStatus.cancelled) return SeIcons.close;
+    if (status == OrderStatus.cancelled ||
+        status == OrderStatus.failedDelivery) {
+      return SeIcons.close;
+    }
     if (status == OrderStatus.delivered) return SeIcons.checkCircle;
     if (OrderStatus.isActive(status)) return SeIcons.bike;
     return SeIcons.orders;

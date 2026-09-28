@@ -37,8 +37,10 @@ ShipEast is a courier and bearer service in St. Thomas and Kingston, Jamaica
   `overseas-status.js`, `promo-eligibility.js`, `pricing-form.js`,
   `image-upload.js`, `location-input.js`), styles in `css/` loaded in order
   tokens → shell → components → pages → responsive.
-- Order status vocabulary (`pending, confirmed, picked_up, in_transit,
-  delivered, cancelled`) exists in four copies — both apps'
+- Order status vocabulary (`pending, awaiting_merchant, preparing,
+  awaiting_driver, confirmed, picked_up, in_transit, delivered, cancelled,
+  failed_delivery` — shown as Order Placed … Failed Delivery, same words in
+  all three apps) exists in four copies — both apps'
   `models/order_status.dart`, `admin_panel/order-status.js`,
   `functions/src/orderStatus.ts`. `tools/check-status-parity.mjs` fails CI if
   they drift; change all four together.

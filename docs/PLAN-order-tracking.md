@@ -2,6 +2,14 @@
 
 Client checklist item 17 (Sep 2026). Status: **planned, not started.**
 
+> **Update — admin round (Sep 2026):** the client specified the stages themselves:
+> Order Placed → Awaiting Merchant → Preparing → Awaiting Driver → Driver Assigned →
+> Picked Up → Out for Delivery → Delivered (or Cancelled / Failed Delivery). These are now
+> **built** as statuses (`SCHEMA.md` §orders.status), with rider assignment kept as the
+> `confirmed` status ("Driver Assigned") rather than a separate field, and the admin moving
+> the merchant stages by hand. What remains of this plan is the **merchant portal** (so the
+> restaurant moves its own stages) and GPS. The target model below is kept for reference.
+
 ## What the client asked for
 
 The customer's tracker should read:

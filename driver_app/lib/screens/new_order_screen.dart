@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../driver_constants.dart';
+import '../models/order_status.dart';
 import '../models/order_type.dart';
 import '../services/driver_firestore_service.dart';
 import '../theme/se_colors.dart';
@@ -49,6 +50,13 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   bool get _isPackage => OrderType.isPackage(widget.order['type']);
   String get _merchantName =>
       widget.order['merchantName'] as String? ?? 'Merchant';
+
+  /// Where the merchant is with the order, when it is not ready yet.
+  String? get _kitchenNote => switch (widget.order['status']) {
+        OrderStatus.awaitingMerchant => 'Waiting for the merchant to confirm',
+        OrderStatus.preparing => 'Preparing — ready soon',
+        _ => null,
+      };
   String get _customerName =>
       widget.order['customerName'] as String? ?? 'Customer';
   String get _deliveryAddress =>
@@ -431,6 +439,16 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                     ],
                   ),
                   Text(_merchantName, style: SeType.title),
+                  // Admin round: an order can be offered while the merchant
+                  // is still on it, so say so — the driver may have to wait.
+                  if (_kitchenNote != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 2),
+                      child: Text(_kitchenNote!,
+                          style: SeType.bodyS.copyWith(
+                              color: SeColors.warningInk,
+                              fontWeight: FontWeight.w600)),
+                    ),
                   if (_merchantAddress != '—')
                     Text(_merchantAddress,
                         style:

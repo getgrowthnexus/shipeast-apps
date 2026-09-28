@@ -58,12 +58,31 @@ service cloud.firestore {
     // tools/check-status-parity.mjs for the apps; this copy is covered by the
     // rules test suite.
 
+    // Admin round (Sep 2026): the client's stages — Order Placed → Awaiting
+    // Merchant → Preparing → Awaiting Driver → Driver Assigned → Picked Up →
+    // Out for Delivery → Delivered, or Cancelled / Failed Delivery. Kitchen
+    // stages may be skipped (packages), and a driver may be assigned from any
+    // stage before one (see claimableStatuses).
     function legalTransition(from, to) {
-      return (from == 'pending'    && to in ['confirmed', 'cancelled'])
-          || (from == 'confirmed'  && to in ['picked_up', 'cancelled'])
-          || (from == 'picked_up'  && to in ['in_transit', 'cancelled'])
-          || (from == 'in_transit' && to in ['delivered', 'cancelled']);
-      // 'delivered' and 'cancelled' are terminal: no clause, so nothing passes.
+      return (from == 'pending'           && to in ['awaiting_merchant', 'preparing', 'awaiting_driver', 'confirmed', 'cancelled'])
+          || (from == 'awaiting_merchant' && to in ['preparing', 'awaiting_driver', 'confirmed', 'cancelled'])
+          || (from == 'preparing'         && to in ['awaiting_driver', 'confirmed', 'cancelled'])
+          || (from == 'awaiting_driver'   && to in ['confirmed', 'cancelled'])
+          || (from == 'confirmed'         && to in ['picked_up', 'cancelled'])
+          || (from == 'picked_up'         && to in ['in_transit', 'failed_delivery', 'cancelled'])
+          || (from == 'in_transit'        && to in ['delivered', 'failed_delivery', 'cancelled']);
+      // 'delivered', 'cancelled' and 'failed_delivery' are terminal: no
+      // clause, so nothing passes.
+    }
+
+    function isApprovedDriver() {
+      return exists(/databases/$(database)/documents/drivers/$(uid()))
+             && get(/databases/$(database)/documents/drivers/$(uid())).data.status == 'approved';
+    }
+
+    // Before a driver has it; a driver may claim an unassigned order in any.
+    function claimableStatuses() {
+      return ['pending', 'awaiting_merchant', 'preparing', 'awaiting_driver'];
     }
 
     function statusUnchangedOrLegal() {
@@ -186,15 +205,32 @@ service cloud.firestore {
 
       allow read: if isAdmin()
                   || (signedIn() && existing().customerId == uid())
-                  || (signedIn() && existing().driverId == uid());
+                  || (signedIn() && existing().driverId == uid())
+                  // The available-order pool (pendingOrdersStream) and the
+                  // claim transaction's read. Without this clause an approved
+                  // driver could not see or accept any unclaimed order — the
+                  // query asks for driverId == null, which the clause above can
+                  // never match. Only approved drivers, only unclaimed orders
+                  // in a claimable stage; the query's own filters satisfy it.
+                  || (signedIn()
+                      && existing().driverId == null
+                      && existing().status in claimableStatuses()
+                      && isApprovedDriver());
 
       // Created only by the customer placing it, always unclaimed and pending.
       // The arithmetic invariant is enforced here so a modified client cannot
       // submit a total that does not follow from its own line items
       // (SCHEMA.md §orders: subtotal + deliveryFee + serviceFee - discount).
-      allow create: if signedIn()
-                    && incoming().customerId == uid()
-                    && incoming().status == 'pending'
+      // Admin round: "Create Order" — the office takes an order by phone and
+      // enters it for the customer (their uid, or '' for someone without the
+      // app). Same money rules as a customer's order; it may start at the
+      // stage the operator already knows (sent to the merchant, or ready).
+      allow create: if ((signedIn()
+                         && incoming().customerId == uid()
+                         && incoming().status == 'pending')
+                     || (isAdmin()
+                         && incoming().customerId is string
+                         && incoming().status in ['pending', 'awaiting_merchant', 'awaiting_driver']))
                     && incoming().driverId == null
                     // P5-01. `type` distinguishes a courier job from a food
                     // delivery. Defaulted rather than required, because every
@@ -223,7 +259,8 @@ service cloud.firestore {
       // Never the money, never the driver, never the items.
       function customerCancelling() {
         return existing().customerId == uid()
-               && existing().status == 'pending'
+               // Admin round: until the merchant starts preparing it.
+               && existing().status in ['pending', 'awaiting_merchant']
                && incoming().status == 'cancelled'
                && changed().hasOnly([
                     'status', 'cancelledAt', 'cancelledBy', 'cancellationReason'
@@ -242,7 +279,7 @@ service cloud.firestore {
       // Claiming: only an unclaimed pending order, and only for themselves.
       function driverClaiming() {
         return existing().driverId == null
-               && existing().status == 'pending'
+               && existing().status in claimableStatuses()
                && incoming().driverId == uid()
                && incoming().status == 'confirmed'
                && changed().hasOnly([
@@ -324,7 +361,9 @@ service cloud.firestore {
       function adminUnassigning() {
         return existing().driverId != null
                && incoming().driverId == null
-               && incoming().status == 'pending'
+               // Back to the queue: 'awaiting_driver' (admin round), or the
+               // original 'pending' that older panels write.
+               && incoming().status in ['pending', 'awaiting_driver']
                && existing().status in ['confirmed', 'picked_up', 'in_transit'];
       }
 

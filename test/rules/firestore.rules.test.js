@@ -1091,3 +1091,94 @@ describe('Admin round — notification opens', () => {
     await assertSucceeds(getDoc(doc(asAdmin(), `notificationOpens/n1_${CUSTOMER}`)));
   });
 });
+
+describe('Admin round — the client\'s order stages', () => {
+  test('an admin moves an order through the merchant stages', async () => {
+    await seed('orders/s1', order());
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'orders/s1'), { status: 'awaiting_merchant' }));
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'orders/s1'), { status: 'preparing' }));
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'orders/s1'), { status: 'awaiting_driver' }));
+    // …and never backwards.
+    await assertFails(updateDoc(doc(asAdmin(), 'orders/s1'), { status: 'preparing' }));
+  });
+
+  test('a package order can skip straight to awaiting a driver', async () => {
+    await seed('orders/s2', order());
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'orders/s2'), { status: 'awaiting_driver' }));
+  });
+
+  test('a driver may claim during any pre-driver stage, but not a held one', async () => {
+    for (const [id, status] of [['c1', 'awaiting_merchant'], ['c2', 'preparing'], ['c3', 'awaiting_driver']]) {
+      await seed(`orders/${id}`, order({ status }));
+      await assertSucceeds(updateDoc(doc(asDriver(), `orders/${id}`), {
+        driverId: DRIVER, driverName: 'D', driverPhone: '876', status: 'confirmed', acceptedAt: new Date()
+      }));
+    }
+    await seed('orders/c4', order({ status: 'delivered' }));
+    await assertFails(updateDoc(doc(asDriver(), 'orders/c4'), {
+      driverId: DRIVER, status: 'confirmed'
+    }));
+  });
+
+  test('a driver can report a failed delivery on their own order', async () => {
+    await seed('orders/f1', order({ driverId: DRIVER, status: 'in_transit' }));
+    await assertSucceeds(updateDoc(doc(asDriver(), 'orders/f1'), { status: 'failed_delivery' }));
+    // Terminal: nothing moves it on.
+    await assertFails(updateDoc(doc(asAdmin(), 'orders/f1'), { status: 'delivered' }));
+  });
+
+  test('a customer can cancel while awaiting the merchant, not once preparing', async () => {
+    await seed('orders/x1', order({ status: 'awaiting_merchant' }));
+    await assertSucceeds(updateDoc(doc(asCustomer(), 'orders/x1'), {
+      status: 'cancelled', cancelledAt: new Date(), cancelledBy: 'customer', cancellationReason: 'Changed my mind'
+    }));
+    await seed('orders/x2', order({ status: 'preparing' }));
+    await assertFails(updateDoc(doc(asCustomer(), 'orders/x2'), {
+      status: 'cancelled', cancelledAt: new Date(), cancelledBy: 'customer', cancellationReason: 'Changed my mind'
+    }));
+  });
+
+  test('an admin can return an order to awaiting a driver when unassigning', async () => {
+    await seed('orders/u1', order({ driverId: DRIVER, status: 'confirmed' }));
+    await assertSucceeds(updateDoc(doc(asAdmin(), 'orders/u1'), { driverId: null, status: 'awaiting_driver' }));
+  });
+});
+
+describe('Admin round — the driver order pool is readable', () => {
+  test('an approved driver can read an unclaimed order; a pending driver cannot', async () => {
+    await seed('orders/p1', order({ status: 'awaiting_driver' }));
+    await seed(`drivers/${DRIVER}`, { name: 'D', status: 'approved', totalTrips: 0 });
+    await assertSucceeds(getDoc(doc(asDriver(), 'orders/p1')));
+    await seed(`drivers/${OTHER_DRIVER}`, { name: 'O', status: 'pending', totalTrips: 0 });
+    await assertFails(getDoc(doc(asOtherDriver(), 'orders/p1')));
+  });
+
+  test('a claimed or finished order is not in the pool', async () => {
+    await seed(`drivers/${OTHER_DRIVER}`, { name: 'O', status: 'approved', totalTrips: 0 });
+    await seed('orders/p2', order({ driverId: DRIVER, status: 'confirmed' }));
+    await assertFails(getDoc(doc(asOtherDriver(), 'orders/p2')));
+    await seed('orders/p3', order({ status: 'cancelled' }));
+    await assertFails(getDoc(doc(asOtherDriver(), 'orders/p3')));
+  });
+
+  test('a customer cannot browse other people\'s unclaimed orders', async () => {
+    await seed('orders/p4', order({ customerId: OTHER_CUSTOMER }));
+    await assertFails(getDoc(doc(asCustomer(), 'orders/p4')));
+  });
+});
+
+describe('Admin round — Create Order', () => {
+  test('an admin can enter a phone order, with the same money rules', async () => {
+    await assertSucceeds(addDoc(collection(asAdmin(), 'orders'),
+      order({ customerId: '', customerName: 'Walk-in', status: 'awaiting_merchant', createdBy: 'admin' })));
+    await assertSucceeds(addDoc(collection(asAdmin(), 'orders'), order({ customerId: CUSTOMER })));
+    // Not already claimed or finished, and the total must still add up.
+    await assertFails(addDoc(collection(asAdmin(), 'orders'), order({ status: 'delivered' })));
+    await assertFails(addDoc(collection(asAdmin(), 'orders'), order({ driverId: DRIVER })));
+    await assertFails(addDoc(collection(asAdmin(), 'orders'), order({ total: 1 })));
+  });
+
+  test('a customer still cannot create an order at a later stage', async () => {
+    await assertFails(addDoc(collection(asCustomer(), 'orders'), order({ status: 'awaiting_driver' })));
+  });
+});

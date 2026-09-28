@@ -57,8 +57,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           icon: SeIcons.checkCircle
         );
       case OrderStatus.cancelled:
+      case OrderStatus.failedDelivery:
         return (
-          label: 'Cancelled',
+          label: OrderStatus.label(status),
           hue: SeColors.danger,
           tint: SeColors.dangerTint,
           icon: SeIcons.close
@@ -78,7 +79,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     if (_activeTab == 1) {
       return all.where((o) => o['status'] == OrderStatus.delivered).toList();
     }
-    return all.where((o) => o['status'] == OrderStatus.cancelled).toList();
+    // Failed deliveries sit with cancellations: both are jobs that ended
+    // without a delivery (admin round).
+    return all
+        .where((o) =>
+            o['status'] == OrderStatus.cancelled ||
+            o['status'] == OrderStatus.failedDelivery)
+        .toList();
   }
 
   @override

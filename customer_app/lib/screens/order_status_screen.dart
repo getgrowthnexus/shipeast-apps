@@ -80,7 +80,9 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   /// stepper has no node to highlight, and a negative width factor throws.
   /// Before this, `cancelled` fell to step 0 and the screen cheerfully
   /// displayed "Order Confirmed" on a cancelled order.
-  bool get _isCancelled => _status == OrderStatus.cancelled;
+  bool get _isCancelled =>
+      _status == OrderStatus.cancelled ||
+      _status == OrderStatus.failedDelivery;
 
   bool get _delivered => _status == OrderStatus.delivered;
 
@@ -99,7 +101,12 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   /// riding to the merchant, and cancelling out from under them is an
   /// operational decision, not a customer one. From there the customer is
   /// routed to support.
-  bool get _canCancel => _order != null && _status == OrderStatus.pending;
+  // Admin round: also while it waits for the merchant — nothing has been
+  // cooked yet. Mirrors customerCancelling() in firestore.rules.
+  bool get _canCancel =>
+      _order != null &&
+      (_status == OrderStatus.pending ||
+          _status == OrderStatus.awaitingMerchant);
 
   bool _cancelling = false;
 
@@ -116,16 +123,12 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
   // nothing. A wrong ETA is worse than no ETA, and this screen already declines
   // to fake a map for the same reason. Revisit with the maps work (P5-05).
 
-  static const _stepNames = [
-    'Order placed',
-    'Driver assigned',
-    'Picked up',
-    'On the way',
-    'Delivered',
-  ];
+  // Admin round: the client's stages, same words in all three apps.
+  static const _stepNames = OrderStatus.stepTitles;
 
   static const _stepIcons = [
     SeIcons.checkCircle,
+    SeIcons.food,
     SeIcons.user,
     SeIcons.box,
     SeIcons.bike,
@@ -136,17 +139,22 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
     final merchantName = _order?['merchantName'] as String? ?? 'the merchant';
     switch (index) {
       case 0:
-        // The old copy claimed "$merchantName accepted your order", which was
-        // wrong even before this change — no merchant accepts anything in this
-        // system. Only a driver ever accepts an order.
-        return 'Sent to $merchantName';
+        return _status == OrderStatus.awaitingMerchant
+            ? 'Waiting for $merchantName to confirm'
+            : 'Sent to $merchantName';
       case 1:
-        return 'A driver accepted and is heading to $merchantName';
+        // Awaiting Driver is this step finished: ready, and a driver is next.
+        // A package skips the kitchen and lands here directly.
+        return _status == OrderStatus.awaitingDriver
+            ? 'Ready — finding a driver'
+            : '$merchantName is preparing your order';
       case 2:
-        return 'Your order is with the driver';
+        return 'A driver accepted and is heading to $merchantName';
       case 3:
-        return 'Heading to you now';
+        return 'Your order is with the driver';
       case 4:
+        return 'Heading to you now';
+      case 5:
         return 'Delivered — thanks for ordering';
       default:
         return '';
@@ -352,8 +360,10 @@ class _OrderStatusScreenState extends State<OrderStatusScreen>
         .contains('cash');
 
     return SePageScaffold(
-      title: OrderStatus.label(OrderStatus.cancelled),
-      subtitle: 'This order is no longer being delivered.',
+      title: OrderStatus.label(_status),
+      subtitle: _status == OrderStatus.failedDelivery
+          ? 'We could not complete this delivery.'
+          : 'This order is no longer being delivered.',
       trailing: _reference.isEmpty
           ? null
           : Text(_reference,

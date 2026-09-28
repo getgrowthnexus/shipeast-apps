@@ -14,7 +14,8 @@ import 'package:shipeast_customer/models/order_status.dart';
 bool _matches(String tab, String status) => switch (tab) {
       'Active' => OrderStatus.isActive(status),
       'Completed' => status == OrderStatus.delivered,
-      'Cancelled' => status == OrderStatus.cancelled,
+      'Cancelled' => status == OrderStatus.cancelled ||
+          status == OrderStatus.failedDelivery,
       _ => false,
     };
 
@@ -67,8 +68,8 @@ void main() {
 
   group('badge label', () {
     test('names the actual state, never the coarse bucket or raw value', () {
-      expect(OrderStatus.label(OrderStatus.pickedUp), 'Order Picked Up');
-      expect(OrderStatus.label(OrderStatus.inTransit), 'On the Way');
+      expect(OrderStatus.label(OrderStatus.pickedUp), 'Picked Up');
+      expect(OrderStatus.label(OrderStatus.inTransit), 'Out for Delivery');
       expect(OrderStatus.label(OrderStatus.confirmed), 'Driver Assigned');
     });
 

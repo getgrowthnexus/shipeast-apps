@@ -127,14 +127,28 @@ This is the single most important decision in this document. Today the customer 
 `accepted` / `in_transit` (which nothing writes), the driver writes `confirmed` / `picked_up`
 (which the customer does not understand), and the admin offers all seven unvalidated.
 
+**Admin round (Sep 2026):** the client split "Pending" into their own stages and asked that all
+three apps show the same words. The six original values are unchanged (only their labels
+moved), so no existing order needed migrating. Label in `OrderStatus.label` / `LABEL`:
+
 ```
-pending      order placed, no driver has claimed it
-confirmed    a driver has claimed it and is en route to the merchant
-picked_up    the driver has the goods
-in_transit   the driver is en route to the customer     ← new; currently never written
-delivered    terminal, success
-cancelled    terminal, failure
+pending            Order Placed        placed; nobody has acted on it
+awaiting_merchant  Awaiting Merchant   waiting for the merchant to accept   ← admin round
+preparing          Preparing           merchant / shopper is preparing it   ← admin round
+awaiting_driver    Awaiting Driver     ready (or needs no prep), no driver  ← admin round
+confirmed          Driver Assigned     a driver claimed it / was assigned
+picked_up          Picked Up           the driver has the goods
+in_transit         Out for Delivery    the driver is en route to the customer
+delivered          Delivered           terminal, success
+cancelled          Cancelled           terminal
+failed_delivery    Failed Delivery     terminal: could not be delivered     ← admin round
 ```
+
+The admin moves orders through the merchant stages by hand until a merchant portal exists
+(`docs/PLAN-order-tracking.md`); packages skip them. A driver may claim from any pre-driver
+stage so a forgotten "ready" never strands an order. "Pending" survives only as the admin's
+broad filter for the pre-driver stages. Stage times: `awaitingMerchantAt`, `preparingAt`,
+`awaitingDriverAt`, `failedAt` (+ `failureReason`, `failedBy`).
 
 `accepted` is **removed from the vocabulary entirely**. It was never written by any app.
 
@@ -142,18 +156,26 @@ cancelled    terminal, failure
 (P1-01), the admin dropdown (P1-06), and `firestore.rules` (P2-01).
 
 ```
-pending    → confirmed | cancelled
-confirmed  → picked_up | cancelled
-picked_up  → in_transit | cancelled
-in_transit → delivered  | cancelled
-delivered  → (terminal — no transitions out)
-cancelled  → (terminal — no transitions out)
+pending           → awaiting_merchant | preparing | awaiting_driver | confirmed | cancelled
+awaiting_merchant → preparing | awaiting_driver | confirmed | cancelled
+preparing         → awaiting_driver | confirmed | cancelled
+awaiting_driver   → confirmed | cancelled
+confirmed         → picked_up | cancelled
+picked_up         → in_transit | failed_delivery | cancelled
+in_transit        → delivered | failed_delivery | cancelled
+delivered, cancelled, failed_delivery → (terminal — no transitions out)
 ```
+
+A customer may cancel while `pending` or `awaiting_merchant`. The admin may also **create** an
+order (Create Order, a phone order) starting at `pending`, `awaiting_merchant` or
+`awaiting_driver`; `customerId` is then the customer's uid or `''` for someone without the app,
+and `createdBy: 'admin'`. An approved driver may **read** any unclaimed order in a pre-driver
+stage — that is what the available-order pool needs.
 
 **Administrative reversal — the one exception.** The table above describes the *forward* path a
 driver walks. Unassignment is not on it: when an admin clears the driver from a held order, the
-order returns to `pending` so it re-enters the available pool (`confirmed`/`picked_up`/`in_transit`
-→ `pending`).
+order returns to `awaiting_driver` (admin round; older panels wrote `pending`, still accepted) so it
+re-enters the available pool.
 
 This is deliberately **not** added to `transitions`. Widening the table would also permit a *driver*
 to push an order backwards, which is exactly what the table exists to prevent. It is instead a
@@ -167,9 +189,10 @@ unassignment code (P1-07) contradicting each other.
 
 | Set | Members | Used by |
 |---|---|---|
-| `active` | `pending`, `confirmed`, `picked_up`, `in_transit` | customer history "Active" tab |
+| `preDriver` / `claimable` | `pending`, `awaiting_merchant`, `preparing`, `awaiting_driver` | driver offer pool, admin "Pending" filter |
+| `active` | the four above + `confirmed`, `picked_up`, `in_transit` | customer history "Active" tab |
 | `driverHeld` | `confirmed`, `picked_up`, `in_transit` | driver `activeOrderStream` — **all three**, not two (audit §2.4) |
-| `terminal` | `delivered`, `cancelled` | history, analytics |
+| `terminal` | `delivered`, `cancelled`, `failed_delivery` | history, analytics |
 
 Status strings are **never written as literals**. They come from the shared constant (P1-01), and
 raw status values are **never rendered to a user** — always through `OrderStatus.label`.

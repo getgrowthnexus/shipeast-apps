@@ -535,3 +535,37 @@
 /* Promo preview card: the max-uses line (PR-*). */
 .pc-max{font-size:12px;opacity:.9;margin-top:2px;font-variant-numeric:tabular-nums;}
 .pc-max:empty{display:none;}
+
+/* ── Two-line order rows (client checklist, admin round) ─────────────────── */
+.olist{display:flex;flex-direction:column;}
+.orow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;align-items:center;
+  padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;}
+.orow:last-child{border-bottom:0;}
+.orow:hover,.orow:focus-visible{background:var(--accent-wash);outline:none;}
+.orow-a,.orow-b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.orow-a{font-size:13.5px;color:var(--ink);}
+.orow-who{font-weight:600;}
+.orow-to{color:var(--ink-2);}
+.orow-b{font-size:12px;color:var(--ink-3);}
+.orow-amt{font-weight:700;text-align:right;}
+.orow-st{justify-self:end;}
+#orders-count{display:block;margin:0 0 8px;color:var(--ink-3);font-size:12.5px;}
+#orders-count:empty{display:none;}
+
+/* ── Action Needed ─────────────────────────────────────────────────────── */
+.an-card .card-title{display:flex;align-items:center;gap:8px;}
+.an-count{background:var(--danger);color:#fff;border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700;}
+.an-count:empty{display:none;}
+.an-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);}
+.an-item:first-child{border-top:0;}
+.an-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--info);}
+.an-danger .an-dot{background:var(--danger);}
+.an-warning .an-dot{background:var(--warning);}
+.an-txt{flex:1;min-width:0;font-size:13px;}
+.an-txt b{font-weight:600;}
+.an-acts{display:flex;gap:4px;flex-shrink:0;}
+.an-more{margin-top:6px;}
+@media (max-width:640px){
+  .an-item{flex-wrap:wrap;}
+  .an-acts{width:100%;justify-content:flex-end;}
+}

@@ -338,10 +338,10 @@
           </div>
           <div class="sc ac-info">
             <div class="sc-top">
-              <div><div class="sc-lbl">Pending Orders</div><div class="sc-val num" id="stat-pending">0</div></div>
+              <div><div class="sc-lbl">Awaiting Driver</div><div class="sc-val num" id="stat-pending">0</div></div>
               <div class="sc-chip c-info"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg></div>
             </div>
-            <div class="sc-sub">Awaiting a driver</div>
+            <div class="sc-sub" id="stat-pending-sub">Ready for a driver</div>
           </div>
           <!-- Checklist DB-3: three named states instead of one "Active Drivers"
                figure. Available = online and not on a delivery. -->
@@ -363,6 +363,9 @@
              live one or two clicks deep. "Create Order" is a net-new admin form
              and is tracked separately. -->
         <div class="qa-row">
+          <button class="btn btn-primary btn-sm" data-action="qa-create-order">
+            <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Create Order
+          </button>
           <button class="btn btn-outline btn-sm" data-action="qa-add-merchant">
             <svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add Merchant
           </button>
@@ -372,6 +375,12 @@
           <button class="btn btn-outline btn-sm" data-action="qa-send-notif">
             <svg class="ic" aria-hidden="true"><use href="#i-send"/></svg>Send Notification
           </button>
+        </div>
+        <!-- Client checklist (admin round): "Action Needed" — problems worked
+             out live from orders, drivers and requests, each resolvable. -->
+        <div class="card an-card" id="action-card">
+          <div class="card-title">Action Needed <span class="an-count num" id="an-count"></span></div>
+          <div id="action-list"><div class="empty-copy">Checking…</div></div>
         </div>
         <!-- Checklist DB-9: a search box on the main screen. Matches across
              every order (id, customer, merchant), not just the recent ten. -->
@@ -384,14 +393,8 @@
           <!-- Every table declares its columns. See the .tc-* vocabulary in
                components.css: the class names a ROLE, the role fixes the width,
                and the width is the same on every page that shows that role. -->
-          <div class="tbl-wrap"><table>
-            <colgroup>
-              <col class="tc-ref-type"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-name"/>
-              <col class="tc-money"/><col class="tc-badge"/><col class="tc-act1"/>
-            </colgroup>
-            <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Destination</th><th>Driver</th><th class="right">Amount</th><th>Status</th><th>View</th></tr></thead>
-            <tbody id="dash-tbody"></tbody>
-          </table></div>
+          <!-- Client checklist: two lines per order so a long list scrolls. -->
+          <div class="olist" id="dash-list"></div>
         </div>
       </section>
 
@@ -413,12 +416,17 @@
         <div class="fbar" id="orders-filters">
           <select id="of-status" aria-label="Filter by status">
             <option value="">Any status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
+            <option value="pre_driver">Pending (any stage before a driver)</option>
+            <option value="pending">Order Placed</option>
+            <option value="awaiting_merchant">Awaiting Merchant</option>
+            <option value="preparing">Preparing</option>
+            <option value="awaiting_driver">Awaiting Driver</option>
+            <option value="confirmed">Driver Assigned</option>
             <option value="picked_up">Picked Up</option>
-            <option value="in_transit">In Transit</option>
+            <option value="in_transit">Out for Delivery</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
+            <option value="failed_delivery">Failed Delivery</option>
           </select>
           <select id="of-date" aria-label="Filter by date">
             <option value="">Any date</option>
@@ -441,14 +449,8 @@
           </select>
           <button class="btn btn-ghost btn-sm" id="of-clear" type="button" hidden>Clear filters</button>
         </div>
-        <div class="card"><div class="tbl-wrap"><table class="t-wide">
-          <colgroup>
-            <col class="tc-ref-type"/><col class="tc-flex"/><col class="tc-flex"/><col class="tc-flex"/>
-            <col class="tc-money"/><col class="tc-chip"/><col class="tc-badge"/><col class="tc-date"/><col class="tc-act1"/>
-          </colgroup>
-          <thead><tr><th>Order ID</th><th>Customer</th><th>Merchant</th><th>Driver</th><th class="right">Total</th><th>Payment</th><th>Status</th><th>Time</th><th>View</th></tr></thead>
-          <tbody id="orders-tbody"></tbody>
-        </table></div></div>
+        <div class="sec-count num" id="orders-count"></div>
+        <div class="card"><div class="olist" id="orders-list"></div></div>
       </section>
 
       <!-- ── DRIVERS ── -->
@@ -1139,6 +1141,51 @@
     <div class="m-actions">
       <button class="btn btn-outline" id="mer-cancel-btn" data-close="modal-merchant">Cancel</button>
       <button class="btn btn-primary" id="mer-save-btn" data-action="save-merchant">Add Merchant</button>
+    </div>
+  </div>
+</div>
+
+<!-- Client checklist (admin round): Create Order — a phone order entered by
+     the office. Same fields and money rules as a customer's order. -->
+<div class="mbg" id="modal-order" role="dialog" aria-labelledby="ord-modal-title">
+  <div class="mbox wide">
+    <div class="m-title" id="ord-modal-title">Create Order</div>
+    <div class="fset">
+      <div class="fset-title">Customer</div>
+      <div class="mg">
+        <div class="fr"><label for="co-customer">Customer account</label>
+          <select id="co-customer"></select></div>
+        <div class="fr"><label for="co-name">Name *</label><input id="co-name" maxlength="120" placeholder="Customer name"/></div>
+      </div>
+      <div class="mg">
+        <div class="fr"><label for="co-phone">Phone</label><input id="co-phone" maxlength="40" placeholder="1-876-000-0000"/></div>
+        <div class="fr"><label for="co-address">Delivery address *</label><input id="co-address" maxlength="300" placeholder="12 Queen St, Morant Bay, St. Thomas"/></div>
+      </div>
+    </div>
+    <div class="fset">
+      <div class="fset-title">Order</div>
+      <div class="mg">
+        <div class="fr"><label for="co-merchant">Merchant *</label><select id="co-merchant"></select></div>
+        <div class="fr"><label for="co-stage">Start at</label>
+          <select id="co-stage">
+            <option value="awaiting_merchant">Awaiting Merchant (send to the merchant)</option>
+            <option value="pending">Order Placed</option>
+            <option value="awaiting_driver">Awaiting Driver (ready now)</option>
+          </select></div>
+      </div>
+      <div class="fr"><label for="co-items">Items * <small>(one per line: quantity x name @ price — e.g. “2 x Jerk Chicken @ 1200”)</small></label>
+        <textarea id="co-items" rows="4" placeholder="2 x Jerk Chicken @ 1200&#10;1 x Festival @ 150"></textarea></div>
+      <div class="mg">
+        <div class="fr"><label for="co-fee">Delivery fee (J$)</label><input id="co-fee" type="number" min="0" step="1"/></div>
+        <div class="fr"><label for="co-service">Service fee (J$)</label><input id="co-service" type="number" min="0" step="1" value="0"/></div>
+      </div>
+      <div class="fr"><label for="co-payment">Payment</label>
+        <select id="co-payment"><option>Cash on Delivery</option></select></div>
+      <div class="sp-row"><span class="sp-lbl">Total</span><span class="sp-val money num" id="co-total">J$0</span></div>
+    </div>
+    <div class="m-actions">
+      <button class="btn btn-outline" data-close="modal-order">Cancel</button>
+      <button class="btn btn-primary" id="co-save-btn" data-action="save-order-new">Create Order</button>
     </div>
   </div>
 </div>

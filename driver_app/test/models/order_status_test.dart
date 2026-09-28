@@ -8,22 +8,47 @@ import 'package:shipeast_driver/models/order_status.dart';
 /// — it would pass for any map, including a wrong one. Hardcoding it means a
 /// change to the lifecycle must be made deliberately in two places.
 void main() {
-  /// Every legal edge, per SCHEMA.md §orders.status.
+  /// Every legal edge, per SCHEMA.md §orders.status (admin round: the
+  /// client's ten stages).
   const legal = <(String, String)>[
+    (OrderStatus.pending, OrderStatus.awaitingMerchant),
+    (OrderStatus.pending, OrderStatus.preparing),
+    (OrderStatus.pending, OrderStatus.awaitingDriver),
     (OrderStatus.pending, OrderStatus.confirmed),
     (OrderStatus.pending, OrderStatus.cancelled),
+    (OrderStatus.awaitingMerchant, OrderStatus.preparing),
+    (OrderStatus.awaitingMerchant, OrderStatus.awaitingDriver),
+    (OrderStatus.awaitingMerchant, OrderStatus.confirmed),
+    (OrderStatus.awaitingMerchant, OrderStatus.cancelled),
+    (OrderStatus.preparing, OrderStatus.awaitingDriver),
+    (OrderStatus.preparing, OrderStatus.confirmed),
+    (OrderStatus.preparing, OrderStatus.cancelled),
+    (OrderStatus.awaitingDriver, OrderStatus.confirmed),
+    (OrderStatus.awaitingDriver, OrderStatus.cancelled),
     (OrderStatus.confirmed, OrderStatus.pickedUp),
     (OrderStatus.confirmed, OrderStatus.cancelled),
     (OrderStatus.pickedUp, OrderStatus.inTransit),
+    (OrderStatus.pickedUp, OrderStatus.failedDelivery),
     (OrderStatus.pickedUp, OrderStatus.cancelled),
     (OrderStatus.inTransit, OrderStatus.delivered),
+    (OrderStatus.inTransit, OrderStatus.failedDelivery),
     (OrderStatus.inTransit, OrderStatus.cancelled),
   ];
 
   group('values', () {
-    test('the canonical set is exactly six statuses', () {
-      expect(OrderStatus.all, hasLength(6));
-      expect(OrderStatus.all.toSet(), hasLength(6), reason: 'no duplicates');
+    test("the canonical set is exactly the client's ten statuses", () {
+      expect(OrderStatus.all, hasLength(10));
+      expect(OrderStatus.all.toSet(), hasLength(10), reason: 'no duplicates');
+    });
+
+    test('the original six keep their stored values', () {
+      // No live order needs migrating: only the labels changed.
+      expect(OrderStatus.pending, 'pending');
+      expect(OrderStatus.confirmed, 'confirmed');
+      expect(OrderStatus.pickedUp, 'picked_up');
+      expect(OrderStatus.inTransit, 'in_transit');
+      expect(OrderStatus.delivered, 'delivered');
+      expect(OrderStatus.cancelled, 'cancelled');
     });
 
     test("'accepted' is not in the vocabulary", () {
@@ -46,6 +71,9 @@ void main() {
     test('active is the non-terminal statuses', () {
       expect(OrderStatus.active, [
         OrderStatus.pending,
+        OrderStatus.awaitingMerchant,
+        OrderStatus.preparing,
+        OrderStatus.awaitingDriver,
         OrderStatus.confirmed,
         OrderStatus.pickedUp,
         OrderStatus.inTransit,
@@ -80,9 +108,20 @@ void main() {
       );
     });
 
-    test('pending is active but not driver-held', () {
-      expect(OrderStatus.isActive(OrderStatus.pending), isTrue);
-      expect(OrderStatus.isDriverHeld(OrderStatus.pending), isFalse);
+    test('pre-driver states are active, claimable, and not driver-held', () {
+      for (final s in OrderStatus.preDriver) {
+        expect(OrderStatus.isActive(s), isTrue, reason: s);
+        expect(OrderStatus.isClaimable(s), isTrue, reason: s);
+        expect(OrderStatus.isDriverHeld(s), isFalse, reason: s);
+      }
+    });
+
+    test('a driver can claim from every pre-driver state', () {
+      // Early claims are deliberate (the kitchen stages are manual for now).
+      for (final s in OrderStatus.claimable) {
+        expect(OrderStatus.canTransition(s, OrderStatus.confirmed), isTrue,
+            reason: s);
+      }
     });
 
     test('membership helpers agree with their lists', () {
@@ -113,7 +152,7 @@ void main() {
     });
 
     test('terminal states have no way out', () {
-      for (final terminal in [OrderStatus.delivered, OrderStatus.cancelled]) {
+      for (final terminal in OrderStatus.terminal) {
         for (final to in OrderStatus.all) {
           expect(OrderStatus.canTransition(terminal, to), isFalse,
               reason: '$terminal -> $to must be rejected');
@@ -160,17 +199,30 @@ void main() {
   });
 
   group('step', () {
-    test('advances one index per forward transition', () {
+    test("maps the client's stages onto the six tracker steps", () {
       expect(OrderStatus.step(OrderStatus.pending), 0);
-      expect(OrderStatus.step(OrderStatus.confirmed), 1);
-      expect(OrderStatus.step(OrderStatus.pickedUp), 2);
-      expect(OrderStatus.step(OrderStatus.inTransit), 3);
-      expect(OrderStatus.step(OrderStatus.delivered), 4);
+      expect(OrderStatus.step(OrderStatus.awaitingMerchant), 0);
+      expect(OrderStatus.step(OrderStatus.preparing), 1);
+      expect(OrderStatus.step(OrderStatus.awaitingDriver), 1);
+      expect(OrderStatus.step(OrderStatus.confirmed), 2);
+      expect(OrderStatus.step(OrderStatus.pickedUp), 3);
+      expect(OrderStatus.step(OrderStatus.inTransit), 4);
+      expect(OrderStatus.step(OrderStatus.delivered), 5);
+      expect(OrderStatus.stepTitles, hasLength(OrderStatus.stepCount));
     });
 
-    test('cancelled is -1, not a step on the happy path', () {
+    test('cancelled and failed delivery are -1, not steps on the happy path', () {
       // Callers must branch on this. A negative widthFactor throws.
       expect(OrderStatus.step(OrderStatus.cancelled), -1);
+      expect(OrderStatus.step(OrderStatus.failedDelivery), -1);
+    });
+
+    test("labels match the client's wording", () {
+      expect(OrderStatus.label(OrderStatus.pending), 'Order Placed');
+      expect(OrderStatus.label(OrderStatus.awaitingDriver), 'Awaiting Driver');
+      expect(OrderStatus.label(OrderStatus.confirmed), 'Driver Assigned');
+      expect(OrderStatus.label(OrderStatus.inTransit), 'Out for Delivery');
+      expect(OrderStatus.label(OrderStatus.failedDelivery), 'Failed Delivery');
     });
 
     test('unknown statuses fall back to 0 rather than throwing', () {
@@ -182,7 +234,9 @@ void main() {
     test('every non-cancelled status maps into the tracker', () {
       for (final s in OrderStatus.all) {
         final i = OrderStatus.step(s);
-        if (s == OrderStatus.cancelled) continue;
+        if (s == OrderStatus.cancelled || s == OrderStatus.failedDelivery) {
+          continue;
+        }
         expect(i, greaterThanOrEqualTo(0), reason: s);
         expect(i, lessThan(OrderStatus.stepCount), reason: s);
       }
@@ -190,7 +244,8 @@ void main() {
 
     test('stepCount matches the number of happy-path steps', () {
       final steps = OrderStatus.all
-          .where((s) => s != OrderStatus.cancelled)
+          .where((s) =>
+              s != OrderStatus.cancelled && s != OrderStatus.failedDelivery)
           .map(OrderStatus.step)
           .toSet();
       expect(steps, hasLength(OrderStatus.stepCount));

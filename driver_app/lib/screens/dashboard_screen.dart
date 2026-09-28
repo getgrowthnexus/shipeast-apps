@@ -915,7 +915,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ? (isPackage ? 'Head to pickup' : 'Head to merchant')
                           : isReadyToDepart
                               ? 'Start delivery'
-                              : 'On the way',
+                              : 'Out for delivery',
                       style: SeType.h3,
                     ),
                   ],
